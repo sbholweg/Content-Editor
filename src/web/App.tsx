@@ -1,3 +1,4 @@
+import { APP_NAME } from "../shared/app";
 import React, { useCallback, useEffect, useState } from "react";
 import { api, AuthError, setToken } from "./api";
 import { Editor } from "./Editor";
@@ -56,9 +57,9 @@ function Login({ onDone }: { onDone: () => void }) {
         }
       }}
     >
-      <h1 className="serif">Reel Editor</h1>
+      <h1 className="serif">{APP_NAME}</h1>
       <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
-      <button className="btn dark" type="submit">Log in</button>
+      <button className="btn primary" type="submit">Log in</button>
       {error ? <p className="error">{error}</p> : null}
     </form>
   );

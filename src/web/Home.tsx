@@ -1,3 +1,4 @@
+import { APP_NAME } from "../shared/app";
 import React, { useEffect, useRef, useState } from "react";
 import type { Project } from "../shared/types";
 import { api } from "./api";
@@ -31,12 +32,12 @@ export function Home({ onOpen, onAuthError }: { onOpen: (id: string) => void; on
   return (
     <main className="page stack">
       <header>
-        <h1 className="serif">Reel Editor</h1>
-        <p className="muted">Upload a talking reel. You'll get captions, highlighted words and your brand styling.</p>
+        <h1 className="serif">{APP_NAME}</h1>
+        <p className="muted">Upload a talking reel. We'll cut it, caption it and style it in your brand. You just tweak.</p>
       </header>
 
       <input ref={input} type="file" accept="video/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
-      <button className="btn dark big" disabled={uploading !== null} onClick={() => input.current?.click()}>
+      <button className="btn primary big" disabled={uploading !== null} onClick={() => input.current?.click()}>
         {uploading === null ? "＋ Upload a reel" : `Uploading… ${Math.round(uploading * 100)}%`}
       </button>
       {uploading !== null ? (

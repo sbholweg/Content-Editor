@@ -1,13 +1,14 @@
-# Content Editor
+# Content Studio (working name)
 
 A phone-friendly editor for talking reels. Upload a video from your camera roll and it:
 
 1. Converts it to a standard format (iPhone HEVC/.mov works).
-2. Transcribes every word with exact timing (whisper.cpp, runs on your own server, free).
-3. Picks the words to highlight and adds a few emojis (Claude, with a built-in fallback if no API key is set).
-4. Writes a hook title for the top of the reel (you can change it).
-5. Shows a live preview with your brand fonts and colors. Tap any word in the transcript to make it a key word, fix it, or add an emoji.
-6. Exports a 1080×1920 MP4 you can save straight to your camera roll.
+2. Lets you cut it by the word, remove pauses, and cut "um"s and "uh"s.
+3. Transcribes every word with exact timing (whisper.cpp, runs on your own server, free).
+4. Picks the words to highlight and adds a few emojis (Claude, with a built-in fallback if no API key is set).
+5. Writes a hook title for the top of the reel (you can change it).
+6. Shows a live preview with your brand fonts and colors. Tap any word in the transcript to make it a key word, fix it, or add an emoji.
+7. Exports a 1080×1920 MP4 you can save straight to your camera roll.
 
 ## How it fits together
 

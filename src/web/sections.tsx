@@ -101,26 +101,71 @@ export function ColoursCard(props: BrandProps) {
   );
 }
 
-const EMOJIS = ["🔥", "💰", "✨", "💡", "🚀", "❤️", "😂", "👀", "✅", "❌", "⏰", "📈", "🙌", "💸", "🎯"];
+const EMOJIS = ["🔥", "💰", "✨", "💡", "🚀", "💜", "😂", "👀", "✅", "❌", "⏰", "📈", "🙌", "💸", "🎯"];
+const FILLER = /^(u+m+|u+h+|uhm+|erm+|hmm+|mm+|ah+)[,.!?]*$/i;
 
-export function KeyWordsCard({
-  words, timeMs, onChange, onSeek, onAuto,
+const formatLength = (ms: number) => {
+  const total = Math.round(ms / 1000);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+};
+
+export function WordsCard({
+  words, outputTimes, timeMs, lengthMs, removePauses, onChange, onRemovePauses, onSeek, onAuto,
 }: {
   words: Word[];
+  // Where each kept word lands in the cut video (cut words aren't included).
+  outputTimes: Map<string, { startMs: number; endMs: number }>;
   timeMs: number;
+  lengthMs: number;
+  removePauses: boolean;
   onChange: (words: Word[]) => void;
+  onRemovePauses: (on: boolean) => void;
   onSeek: (ms: number) => void;
   onAuto: () => Promise<void>;
 }) {
+  const [mode, setMode] = useState<"style" | "cut">("style");
   const [selected, setSelected] = useState<string | null>(null);
   const [autoBusy, setAutoBusy] = useState(false);
   const word = words.find((w) => w.id === selected);
   const update = (patch: Partial<Word>) => onChange(words.map((w) => (w.id === selected ? { ...w, ...patch } : w)));
+  const fillerCount = words.filter((w) => FILLER.test(w.text.trim()) && !w.cut).length;
+  const cutCount = words.filter((w) => w.cut).length;
 
   return (
-    <Card title="Key words">
+    <Card title="Your words">
       <div className="row">
-        <Label>What you say · bold = key word · tap a word to change it</Label>
+        <Label>Tap a word to</Label>
+        <span className="grow" />
+        <span className="length">{formatLength(lengthMs)} long</span>
+      </div>
+      <Options
+        value={mode}
+        onChange={(m) => {
+          setMode(m);
+          setSelected(null);
+        }}
+        options={[
+          { value: "style", label: "Highlight & edit", note: "bold = key word" },
+          { value: "cut", label: "Cut", note: "struck out = removed" },
+        ]}
+      />
+
+      <div className="row">
+        <button className={`chip ${removePauses ? "accent" : ""}`} onClick={() => onRemovePauses(!removePauses)}>
+          {removePauses ? "✓ Pauses removed" : "Remove pauses"}
+        </button>
+        <button
+          className="chip"
+          disabled={fillerCount === 0}
+          onClick={() => onChange(words.map((w) => (FILLER.test(w.text.trim()) ? { ...w, cut: true } : w)))}
+        >
+          {fillerCount > 0 ? `Cut ${fillerCount} um${fillerCount === 1 ? "" : "s"} & uhs` : "No ums found"}
+        </button>
+        {cutCount > 0 ? (
+          <button className="chip" onClick={() => onChange(words.map((w) => ({ ...w, cut: false })))}>
+            Undo all cuts
+          </button>
+        ) : null}
         <span className="grow" />
         <button
           className="chip"
@@ -131,24 +176,29 @@ export function KeyWordsCard({
             setAutoBusy(false);
           }}
         >
-          {autoBusy ? "Thinking…" : "✨ Let AI pick"}
+          {autoBusy ? "Thinking…" : "✨ Let AI pick key words"}
         </button>
       </div>
 
       {words.length === 0 ? <p className="muted">No speech was found in this video.</p> : null}
 
-      <p className="transcript">
+      <p className={`transcript ${mode === "cut" ? "cutting" : ""}`}>
         {words.map((w) => {
-          const now = timeMs >= w.startMs && timeMs < w.endMs;
+          const out = outputTimes.get(w.id);
+          const now = out !== undefined && timeMs >= out.startMs && timeMs < out.endMs;
           return (
             <React.Fragment key={w.id}>
               <span
                 role="button"
                 tabIndex={0}
-                className={["tw", w.highlight && "key", now && "now", selected === w.id && "sel"].filter(Boolean).join(" ")}
+                className={["tw", w.highlight && "key", w.cut && "cut", now && "now", selected === w.id && "sel"].filter(Boolean).join(" ")}
                 onClick={() => {
+                  if (mode === "cut") {
+                    onChange(words.map((x) => (x.id === w.id ? { ...x, cut: !x.cut } : x)));
+                    return;
+                  }
                   setSelected(w.id);
-                  onSeek(w.startMs);
+                  if (out) onSeek(out.startMs);
                 }}
               >
                 {w.emoji ? `${w.emoji} ` : ""}
@@ -159,11 +209,11 @@ export function KeyWordsCard({
         })}
       </p>
 
-      {word ? (
+      {word && mode === "style" ? (
         <div className="word-editor">
           <div className="row">
             <input className="grow" value={word.text} onChange={(e) => update({ text: e.target.value })} />
-            <button className={`chip ${word.highlight ? "dark" : ""}`} onClick={() => update({ highlight: !word.highlight })}>
+            <button className={`chip ${word.highlight ? "accent" : ""}`} onClick={() => update({ highlight: !word.highlight })}>
               {word.highlight ? "Key word ✓" : "Make key word"}
             </button>
           </div>
@@ -180,11 +230,11 @@ export function KeyWordsCard({
             <button
               className="link danger"
               onClick={() => {
-                onChange(words.filter((w) => w.id !== selected));
+                update({ cut: true });
                 setSelected(null);
               }}
             >
-              Remove word
+              Cut this word
             </button>
           </div>
         </div>

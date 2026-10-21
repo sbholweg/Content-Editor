@@ -5,6 +5,8 @@ export type Word = {
   endMs: number;
   highlight: boolean;
   emoji?: string;
+  // Removed from the video.
+  cut?: boolean;
 };
 
 export type CaptionStyle = "clean" | "pill" | "pop" | "accent";
@@ -34,7 +36,9 @@ export type ReelProps = {
   hookText: string;
   words: Word[];
   brand: BrandKit;
+  // Length of the original, uncut video.
   durationMs: number;
+  removePauses: boolean;
 };
 
 export type ProjectStatus = "uploaded" | "processing" | "ready" | "error";
@@ -57,5 +61,6 @@ export type Project = {
   height: number;
   hookText: string;
   words: Word[];
+  removePauses: boolean;
   render: RenderState;
 };

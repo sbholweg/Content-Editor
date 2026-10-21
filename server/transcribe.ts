@@ -12,6 +12,9 @@ export async function transcribeWords(wavPath: string): Promise<Word[]> {
     whisperCppVersion: config.whisperVersion,
     model: config.whisperModel,
     tokenLevelTimestamps: true,
+    // Whisper tends to skip filler words; an example prompt containing them nudges it to keep
+    // "um"/"uh" in the transcript so they can be cut.
+    additionalArgs: [["--prompt", "Um, so, uh, I was like, hmm, you know, I mean, um."]],
   });
   const { captions } = toCaptions({ whisperCppOutput: output });
 

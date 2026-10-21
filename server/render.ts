@@ -32,6 +32,7 @@ async function renderProject(id: string) {
       words: project.words,
       brand: await readBrand(),
       durationMs: project.durationMs,
+      removePauses: project.removePauses,
     };
     const browserExecutable = process.env.REMOTION_BROWSER || null;
     const composition = await selectComposition({ serveUrl, id: "Reel", inputProps, browserExecutable });

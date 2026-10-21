@@ -61,6 +61,7 @@ app.post("/api/projects", upload.single("video"), async (req, res) => {
     step: "Preparing video",
     durationMs: 0,
     hookText: "",
+    removePauses: true,
     width: 0,
     height: 0,
     words: [],
@@ -105,6 +106,7 @@ app.patch("/api/projects/:id", async (req, res) => {
   const patch: Partial<Project> = {};
   if (Array.isArray(req.body?.words)) patch.words = req.body.words as Word[];
   if (typeof req.body?.hookText === "string") patch.hookText = req.body.hookText.slice(0, 200);
+  if (typeof req.body?.removePauses === "boolean") patch.removePauses = req.body.removePauses;
   res.json(await updateProject(project.id, patch));
 });
 

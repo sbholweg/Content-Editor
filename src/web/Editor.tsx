@@ -1,9 +1,10 @@
 import { Player, type PlayerRef } from "@remotion/player";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { durationInFrames, Reel, REEL_FPS, REEL_HEIGHT, REEL_WIDTH } from "../remotion/Reel";
+import { outputFrames, Reel, REEL_FPS, REEL_HEIGHT, REEL_WIDTH } from "../remotion/Reel";
+import { buildTimeline } from "../shared/timeline";
 import type { BrandKit, Project, ReelProps, Word } from "../shared/types";
 import { api, mediaUrl } from "./api";
-import { ColoursCard, HookCard, KeyWordsCard, SubtitlesCard } from "./sections";
+import { ColoursCard, HookCard, SubtitlesCard, WordsCard } from "./sections";
 
 function useDebounced<T>(fn: (value: T) => void, ms: number) {
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -21,6 +22,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   const [brand, setBrand] = useState<BrandKit | null>(null);
   const [words, setWords] = useState<Word[]>([]);
   const [hookText, setHookText] = useState("");
+  const [removePauses, setRemovePauses] = useState(false);
   const [error, setError] = useState("");
   const [timeMs, setTimeMs] = useState(0);
   const [exportFile, setExportFile] = useState<File | null>(null);
@@ -44,6 +46,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
       if (!p) return;
       setWords(p.words);
       setHookText(p.hookText);
+      setRemovePauses(p.removePauses);
     });
     api.getBrand().then(setBrand, onAuthError);
   }, [load, onAuthError]);
@@ -115,10 +118,16 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   const inputProps: ReelProps | null = useMemo(
     () =>
       project && brand
-        ? { videoSrc: mediaUrl(id, "video.mp4"), hookText, words, brand, durationMs: project.durationMs }
+        ? { videoSrc: mediaUrl(id, "video.mp4"), hookText, words, brand, durationMs: project.durationMs, removePauses }
         : null,
-    [project?.durationMs, brand, words, hookText, id],
+    [project?.durationMs, brand, words, hookText, removePauses, id],
   );
+
+  const timeline = useMemo(
+    () => buildTimeline(words, project?.durationMs ?? 0, removePauses),
+    [words, project?.durationMs, removePauses],
+  );
+  const outputTimes = useMemo(() => new Map(timeline.words.map((w) => [w.id, w])), [timeline]);
 
   const exportReel = async () => {
     setExportFile(null);
@@ -180,12 +189,12 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   ) : project.render.status === "done" && !changedSinceExport ? (
     <>
       <button className="btn grow" onClick={exportReel}>Export again</button>
-      <button className="btn dark grow" disabled={!exportFile} onClick={saveVideo}>
+      <button className="btn primary grow" disabled={!exportFile} onClick={saveVideo}>
         {exportFile ? "Save video" : "Preparing…"}
       </button>
     </>
   ) : (
-    <button className="btn dark grow" onClick={exportReel}>Export video</button>
+    <button className="btn primary grow" onClick={exportReel}>Export video</button>
   );
 
   return (
@@ -204,7 +213,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
                 ref={player}
                 component={Reel}
                 inputProps={inputProps}
-                durationInFrames={durationInFrames(project.durationMs)}
+                durationInFrames={outputFrames(inputProps)}
                 fps={REEL_FPS}
                 compositionWidth={REEL_WIDTH}
                 compositionHeight={REEL_HEIGHT}
@@ -219,10 +228,18 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
 
         <div className="settings-col">
           <HookCard hookText={hookText} onHookText={updateHook} brand={brand} onBrand={updateBrand} />
-          <KeyWordsCard
+          <WordsCard
             words={words}
+            outputTimes={outputTimes}
             timeMs={timeMs}
+            lengthMs={timeline.durationMs}
+            removePauses={removePauses}
             onChange={updateWords}
+            onRemovePauses={(on) => {
+              setRemovePauses(on);
+              setChangedSinceExport(true);
+              void api.saveProject(id, { removePauses: on }).catch(onAuthError);
+            }}
             onSeek={(ms) => player.current?.seekTo(Math.round((ms / 1000) * REEL_FPS))}
             onAuto={async () => {
               try {
