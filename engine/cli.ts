@@ -1,0 +1,267 @@
+// Engine commands, run as `npm run engine -- <command>`. Claude uses these to edit reels;
+// they talk to the editor server, so any open editor updates live.
+import { spawnSync } from "node:child_process";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { config } from "../server/config.ts";
+import { buildTimeline } from "../src/shared/timeline.ts";
+import type { Asset, BrandKit, Project } from "../src/shared/types.ts";
+
+const base = `http://127.0.0.1:${config.port}`;
+let token = "";
+
+async function call<T>(method: string, route: string, body?: unknown): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(base + route, {
+      method,
+      headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch {
+    fail(`The editor isn't running. Start it with "npm run local" (leave it running), then try again.`);
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) fail(data.error ?? `Request failed (${res.status})`);
+  return data as T;
+}
+
+function fail(message: string): never {
+  console.error(`✗ ${message}`);
+  process.exit(1);
+}
+
+async function login() {
+  if (!config.appPassword) return;
+  token = (await call<{ token: string }>("POST", "/api/login", { password: config.appPassword })).token;
+}
+
+async function resolveId(arg: string | undefined): Promise<string> {
+  const projects = await call<Project[]>("GET", "/api/projects");
+  if (!arg || arg === "latest") {
+    const latest = projects.find((p) => !p.parentId);
+    if (!latest) fail("There are no reels yet. Put a clip in the inbox folder and run: npm run engine -- import");
+    return latest.id;
+  }
+  const match = projects.filter((p) => p.id.startsWith(arg));
+  if (match.length !== 1) fail(match.length ? `"${arg}" matches more than one reel; use more characters.` : `No reel with id "${arg}". Run: npm run engine -- list`);
+  return match[0].id;
+}
+
+const fmt = (ms: number) => {
+  const total = Math.round(ms / 1000);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+};
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const editorUrl = (id: string) => `http://localhost:${config.port}/#/p/${id}`;
+
+async function waitFor(id: string, done: (p: Project) => boolean, label: string): Promise<Project> {
+  let last = "";
+  for (;;) {
+    const p = await call<Project>("GET", `/api/projects/${id}`);
+    if (p.status === "error") fail(`${p.originalName}: ${p.error}`);
+    if (p.render.status === "error") fail(`Export failed: ${p.render.error}`);
+    if (done(p)) return p;
+    const now = p.status === "processing" ? `${label}: ${p.step ?? "working"}…` : `${label}: exporting ${Math.round(p.render.progress * 100)}%`;
+    if (now !== last) console.log(now);
+    last = now;
+    await sleep(2000);
+  }
+}
+
+function describe(p: Project, assets: Asset[]) {
+  const timeline = buildTimeline(p.words, p.durationMs, p.removePauses);
+  const s = p.style;
+  const lines = [
+    `Reel ${p.id}${p.variantLabel ? ` (trial reel: ${p.variantLabel})` : ""}`,
+    `  Open in the editor: ${editorUrl(p.id)}`,
+    `  From: ${p.originalName} · status ${p.status} · ${fmt(timeline.durationMs)} after cuts (${fmt(p.durationMs)} raw) · pauses ${p.removePauses ? "removed" : "kept"} · export ${p.render.status}`,
+    `  Hook: ${p.hookText ? `"${p.hookText}"` : "(none)"} · ${s.displayFont} ${s.hookColor} at ${s.hookPosition}, ${s.hookDurationMs ? `${s.hookDurationMs / 1000}s` : "whole video"}`,
+    `  Captions: ${s.captionMode === "single" ? "one word at a time" : `phrase, ${s.wordsPerLine} words`} · ${s.font} ${s.fontSize}px ${s.textColor} · ${s.textEffect} · at ${s.position}${s.uppercase ? " · ALL CAPS" : ""}`,
+    `  Key words: ${s.style === "pill" ? `bubble ${s.highlightColor} with ${s.highlightTextColor} text` : s.style === "color" ? `coloured text ${s.highlightColor}` : `serif word ${s.highlightColor}`}`,
+    "",
+    "  Words ([n] = word number, *word* = key word, ~word~ = cut):",
+  ];
+  let line = "  ";
+  p.words.forEach((w, i) => {
+    let t = w.text;
+    if (w.highlight) t = `*${t}*`;
+    if (w.cut) t = `~${t}~`;
+    const piece = `[${i}]${w.emoji ? w.emoji : ""}${t} `;
+    if (line.length + piece.length > 100) {
+      lines.push(line.trimEnd());
+      line = "  ";
+    }
+    line += piece;
+  });
+  if (line.trim()) lines.push(line.trimEnd());
+  const index = new Map(p.words.map((w, i) => [w.id, i]));
+  if (p.overlays.length) {
+    lines.push("", "  Media:");
+    for (const o of p.overlays) {
+      const a = assets.find((x) => x.id === o.assetId);
+      lines.push(`  - ${o.id}: ${a ? `${a.name} (${a.kind})` : "missing"} · ${o.placement} · words [${index.get(o.startWordId)}]-[${index.get(o.endWordId)}]`);
+    }
+  }
+  lines.push("", `  Post caption: ${p.postCaption ? `\n    ${p.postCaption.replace(/\n/g, "\n    ")}` : "(none yet)"}`);
+  return lines.join("\n");
+}
+
+async function readEdits(arg: string | undefined) {
+  let text: string;
+  if (!arg || arg === "-") {
+    const chunks: Buffer[] = [];
+    for await (const c of process.stdin) chunks.push(c as Buffer);
+    text = Buffer.concat(chunks).toString("utf8");
+  } else if (arg.trim().startsWith("{")) {
+    text = arg;
+  } else {
+    text = await fs.readFile(arg, "utf8");
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    fail("The edits must be valid JSON.");
+  }
+}
+
+const VIDEO = /\.(mov|mp4|m4v|webm)$/i;
+
+const commands: Record<string, (args: string[]) => Promise<void>> = {
+  async doctor() {
+    const has = (cmd: string, args: string[]) => spawnSync(cmd, args, { stdio: "ignore", shell: process.platform === "win32" }).status === 0;
+    const node = Number(process.versions.node.split(".")[0]);
+    const exe = process.platform === "win32" ? "whisper-cli.exe" : "whisper-cli";
+    const whisper = await fs.stat(path.join(config.whisperDir, "build", "bin", exe)).then(() => true, () => false);
+    const model = await fs.stat(path.join(config.whisperDir, `ggml-${config.whisperModel}.bin`)).then((s) => s.size > 0, () => false);
+    const env = await fs.stat(path.join(config.root, ".env")).then(() => true, () => false);
+    const running = await fetch(`${base}/api/auth-required`).then(() => true, () => false);
+    const checks: [boolean, string, string][] = [
+      [node >= 22, `Node.js ${process.versions.node}`, "Install Node.js 22 or newer (Windows: winget install OpenJS.NodeJS.LTS · Mac: brew install node)"],
+      [has("ffmpeg", ["-version"]), "ffmpeg", "Install ffmpeg (Windows: winget install Gyan.FFmpeg · Mac: brew install ffmpeg), then open a new terminal"],
+      [env || Boolean(config.appPassword), ".env settings file", "Copy .env.example to .env and set APP_PASSWORD"],
+      [whisper && model, "Speech-to-text engine", "Run: npm run setup (takes a few minutes the first time)"],
+      [running, `Editor running at http://localhost:${config.port}`, "Start it with: npm run local (and leave it running)"],
+    ];
+    for (const [ok, what, fix] of checks) console.log(`${ok ? "✓" : "✗"} ${what}${ok ? "" : `\n    → ${fix}`}`);
+    console.log(`\nInbox folder (drop raw clips here): ${config.inboxDir}\nOutputs folder (finished reels): ${config.outputsDir}`);
+  },
+
+  async list() {
+    const projects = await call<Project[]>("GET", "/api/projects");
+    if (!projects.length) return console.log("No reels yet.");
+    for (const p of projects) {
+      const len = fmt(buildTimeline(p.words, p.durationMs, p.removePauses).durationMs);
+      console.log(`${p.id.slice(0, 8)}  ${p.createdAt.slice(0, 16).replace("T", " ")}  ${len}  ${p.status}/${p.render.status}  ${p.variantLabel ? `[trial: ${p.variantLabel}] ` : ""}${p.hookText || p.originalName}`);
+    }
+  },
+
+  async import(args) {
+    const autopilot = args.includes("--do-it-all");
+    let files = args.filter((a) => !a.startsWith("--"));
+    const fromInbox = files.length === 0;
+    if (fromInbox) {
+      await fs.mkdir(config.inboxDir, { recursive: true });
+      files = (await fs.readdir(config.inboxDir)).filter((f) => VIDEO.test(f)).map((f) => path.join(config.inboxDir, f));
+      if (!files.length) return console.log(`The inbox is empty. Put raw clips in: ${config.inboxDir}`);
+    }
+    const imported: Project[] = [];
+    for (const file of files) {
+      console.log(`Importing ${path.basename(file)}…`);
+      const p = await call<Project>("POST", "/api/import", { path: path.resolve(file), autopilot });
+      imported.push(await waitFor(p.id, (x) => x.status === "ready" && (!autopilot || x.render.status === "done"), path.basename(file)));
+      // Once imported, clips move to inbox/done so they aren't imported twice (the file itself is
+      // untouched). If importing failed, the clip stays in the inbox to try again.
+      if (fromInbox) {
+        await fs.mkdir(path.join(config.inboxDir, "done"), { recursive: true });
+        await fs.rename(file, path.join(config.inboxDir, "done", path.basename(file)));
+      }
+    }
+    const assets = await call<Asset[]>("GET", "/api/library");
+    for (const p of imported) console.log(`\n${describe(p, assets)}\n`);
+  },
+
+  async show(args) {
+    const id = await resolveId(args[0]);
+    const [p, assets] = await Promise.all([call<Project>("GET", `/api/projects/${id}`), call<Asset[]>("GET", "/api/library")]);
+    console.log(describe(p, assets));
+  },
+
+  async apply(args) {
+    const id = await resolveId(args[0]);
+    const edits = await readEdits(args[1]);
+    const p = await call<Project>("POST", `/api/projects/${id}/apply`, { edits });
+    console.log(`✓ Updated. The editor shows the change now.\n\n${describe(p, await call<Asset[]>("GET", "/api/library"))}`);
+  },
+
+  async export(args) {
+    const id = await resolveId(args[0]);
+    await call("POST", `/api/projects/${id}/render`);
+    await waitFor(id, (p) => p.render.status === "done", "Export");
+    console.log(`✓ Exported. Saved in ${config.outputsDir} (the newest file).`);
+  },
+
+  async trials(args) {
+    const id = await resolveId(args[0]);
+    const trials = await call<Project[]>("POST", `/api/projects/${id}/trial-reels`);
+    for (const t of trials) {
+      await waitFor(t.id, (p) => p.render.status === "done", `Trial reel (${t.variantLabel})`);
+      console.log(`✓ ${t.variantLabel}: "${t.hookText}"`);
+    }
+    console.log(`Saved in ${config.outputsDir}`);
+  },
+
+  async caption(args) {
+    const id = await resolveId(args[0]);
+    const p = await call<Project>("POST", `/api/projects/${id}/caption`, { cta: args.slice(1).join(" ") });
+    console.log(p.postCaption);
+  },
+
+  async looks() {
+    const brand = await call<BrandKit>("GET", "/api/brand");
+    console.log(`Default look: ${JSON.stringify(brand.defaultStyle)}`);
+    for (const l of brand.looks) console.log(`"${l.name}": ${JSON.stringify(l.style)}`);
+    console.log(`\nBusiness: ${JSON.stringify(brand.business)}\nSaved calls to action: ${JSON.stringify(brand.ctaKeywords)}`);
+  },
+
+  async brand(args) {
+    // Saves brand-wide settings, e.g. {"business": {...}} or {"defaultStyle": {...}}.
+    const current = await call<BrandKit>("GET", "/api/brand");
+    const edits = await readEdits(args[0]);
+    const next = {
+      ...current,
+      ...edits,
+      business: { ...current.business, ...edits.business },
+      defaultStyle: { ...current.defaultStyle, ...edits.defaultStyle },
+    };
+    await call("PUT", "/api/brand", next);
+    console.log("✓ Saved.");
+  },
+
+  async library() {
+    const assets = await call<Asset[]>("GET", "/api/library");
+    if (!assets.length) return console.log("The library is empty. Add GIFs, images or b-roll from the editor (Visuals tab).");
+    for (const a of assets) console.log(`${a.id.slice(0, 8)}  ${a.kind.padEnd(5)}  ${a.name}`);
+  },
+};
+
+const HELP = `Engine commands (npm run engine -- <command>):
+  doctor                     check setup and show the inbox/outputs folders
+  import [files] [--do-it-all]  import clips (default: everything in the inbox folder)
+  list                       list reels
+  show [id|latest]           show a reel: words with numbers, hook, look, media, caption
+  apply [id|latest] <json>   change a reel (JSON text, a .json file, or - for stdin)
+  caption [id] [call to action]  write the post caption
+  export [id|latest]         export to the outputs folder
+  trials [id|latest]         make 3 trial reels and export them
+  looks                      show the default look, saved looks, business profile
+  brand <json>               save business profile / default look / calls to action
+  library                    list GIFs, images and b-roll`;
+
+const [command, ...args] = process.argv.slice(2);
+if (!command || !commands[command]) {
+  console.log(HELP);
+  process.exit(command ? 1 : 0);
+}
+if (command !== "doctor") await login();
+await commands[command](args);

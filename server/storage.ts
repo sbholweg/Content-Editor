@@ -3,6 +3,7 @@ import path from "node:path";
 import { DEFAULT_BRAND, normalizeBrand, normalizeStyle } from "../src/shared/brand.ts";
 import type { BrandKit, Project } from "../src/shared/types.ts";
 import { config } from "./config.ts";
+import { broadcast } from "./events.ts";
 
 export const projectsDir = path.join(config.dataDir, "projects");
 const brandFile = path.join(config.dataDir, "brand.json");
@@ -34,14 +35,25 @@ export async function writeProject(project: Project) {
   const file = projectFile(project.id, "project.json");
   await fs.writeFile(`${file}.tmp`, JSON.stringify(project, null, 2));
   await fs.rename(`${file}.tmp`, file);
+  broadcast({ type: "project", id: project.id, rev: project.rev ?? 0 });
 }
 
-export async function updateProject(id: string, patch: Partial<Project>) {
-  const project = await readProject(id);
-  if (!project) throw new Error(`Project ${id} not found`);
-  const next = { ...project, ...patch };
-  await writeProject(next);
-  return next;
+// Saves are serialized per reel so two changes arriving together (say, an export progress
+// update and an edit from Claude) can't overwrite each other.
+const saveQueues = new Map<string, Promise<unknown>>();
+
+export function updateProject(id: string, patch: Partial<Project> | ((p: Project) => Partial<Project>)) {
+  const run = async () => {
+    const project = await readProject(id);
+    if (!project) throw new Error(`Project ${id} not found`);
+    const changes = typeof patch === "function" ? patch(project) : patch;
+    const next = { ...project, ...changes, rev: (project.rev ?? 0) + 1 };
+    await writeProject(next);
+    return next;
+  };
+  const result = (saveQueues.get(id) ?? Promise.resolve()).then(run, run);
+  saveQueues.set(id, result.catch(() => {}));
+  return result;
 }
 
 export async function listProjects(): Promise<Project[]> {
@@ -55,6 +67,7 @@ export async function listProjects(): Promise<Project[]> {
 export async function deleteProject(id: string) {
   if (!isValidId(id)) return;
   await fs.rm(projectDir(id), { recursive: true, force: true });
+  broadcast({ type: "project-deleted", id });
 }
 
 export async function readBrand(): Promise<BrandKit> {
@@ -67,4 +80,5 @@ export async function readBrand(): Promise<BrandKit> {
 
 export async function writeBrand(brand: BrandKit) {
   await fs.writeFile(brandFile, JSON.stringify(brand, null, 2));
+  broadcast({ type: "brand" });
 }

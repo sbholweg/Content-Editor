@@ -2,7 +2,7 @@ import { APP_NAME } from "../shared/app";
 import React, { useEffect, useRef, useState } from "react";
 import type { Project } from "../shared/types";
 import { IDEA_STARTERS } from "../shared/library";
-import { api } from "./api";
+import { api, onEngineEvents } from "./api";
 
 export function Home({ onOpen, onAuthError }: { onOpen: (id: string) => void; onAuthError: (err: unknown) => void }) {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -13,6 +13,17 @@ export function Home({ onOpen, onAuthError }: { onOpen: (id: string) => void; on
 
   useEffect(() => {
     api.listProjects().then(setProjects, onAuthError);
+    // Reels imported by Claude appear here without a refresh.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const stop = onEngineEvents((event) => {
+      if (event.type === "brand") return;
+      clearTimeout(timer);
+      timer = setTimeout(() => api.listProjects().then(setProjects, onAuthError), 500);
+    });
+    return () => {
+      clearTimeout(timer);
+      stop();
+    };
   }, [onAuthError]);
 
   const onFile = async (file: File | undefined) => {

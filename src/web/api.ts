@@ -34,6 +34,22 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return data as T;
 }
 
+export type EngineEvent = { type: "project"; id: string; rev: number } | { type: "project-deleted"; id: string } | { type: "brand" };
+
+// Listens for changes made outside this page (for example by Claude) so it can refresh live.
+export function onEngineEvents(handler: (event: EngineEvent) => void) {
+  const token = getToken();
+  const source = new EventSource(`/api/events${token ? `?t=${token}` : ""}`);
+  source.onmessage = (e) => {
+    try {
+      handler(JSON.parse(e.data));
+    } catch {
+      // ignore malformed messages
+    }
+  };
+  return () => source.close();
+}
+
 export const libraryUrl = (file: string) => {
   const token = getToken();
   return `/media/library/${file}${token ? `?t=${token}` : ""}`;

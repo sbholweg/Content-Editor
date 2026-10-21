@@ -3,12 +3,15 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import express from "express";
 import multer from "multer";
+import { z } from "zod";
 import { normalizeBrand, normalizeStyle } from "../src/shared/brand.ts";
-import { isFiller } from "../src/shared/words.ts";
+import { applyEdits, ReelEdits } from "../src/shared/edits.ts";
 import type { BrandKit, Overlay, Project, Word } from "../src/shared/types.ts";
+import { isFiller } from "../src/shared/words.ts";
 import { accessToken, checkPassword, requireAuth } from "./auth.ts";
-import { config } from "./config.ts";
 import { writeCaption } from "./caption.ts";
+import { config } from "./config.ts";
+import { subscribe } from "./events.ts";
 import { planEdit } from "./highlights.ts";
 import { extractAudio, normalizeVideo, probe } from "./media.ts";
 import { queueRender } from "./render.ts";
@@ -17,9 +20,9 @@ import {
   deleteProject, ensureDirs, listProjects, projectDir, projectFile, projectsDir,
   readBrand, readProject, updateProject, writeBrand, writeProject,
 } from "./storage.ts";
+import { addAsset, deleteAsset, libraryDir, listAssets } from "./library.ts";
 import { transcribeWords } from "./transcribe.ts";
 import { createTrialReels } from "./trials.ts";
-import { addAsset, deleteAsset, libraryDir, listAssets } from "./library.ts";
 
 await ensureDirs();
 
@@ -60,15 +63,28 @@ await fs.mkdir(path.join(config.dataDir, "uploads"), { recursive: true });
 
 app.post("/api/projects", upload.single("video"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "Please choose a video file" });
+  res.json(await createProject(req.file.originalname, req.body?.autopilot === "1", (dest) => fs.rename(req.file!.path, dest)));
+});
+
+// Used by the engine commands: brings in a clip already on this computer (e.g. from the inbox
+// folder). The file is copied, never moved or changed.
+app.post("/api/import", async (req, res) => {
+  const source = String(req.body?.path ?? "");
+  if (!/\.(mov|mp4|m4v|webm)$/i.test(source)) return res.status(400).json({ error: "Only .mov, .mp4, .m4v or .webm videos can be imported." });
+  if (!(await fs.stat(source).catch(() => null))?.isFile()) return res.status(404).json({ error: `File not found: ${source}` });
+  res.json(await createProject(path.basename(source), req.body?.autopilot === true, (dest) => fs.copyFile(source, dest)));
+});
+
+async function createProject(originalName: string, autopilot: boolean, placeOriginal: (dest: string) => Promise<void>) {
   const id = crypto.randomUUID();
   await fs.mkdir(projectDir(id), { recursive: true });
-  const original = projectFile(id, `original${path.extname(req.file.originalname) || ".mp4"}`);
-  await fs.rename(req.file.path, original);
+  const original = projectFile(id, `original${path.extname(originalName) || ".mp4"}`);
+  await placeOriginal(original);
 
   const project: Project = {
     id,
     createdAt: new Date().toISOString(),
-    originalName: req.file.originalname,
+    originalName,
     status: "processing",
     step: "Preparing video",
     durationMs: 0,
@@ -83,9 +99,9 @@ app.post("/api/projects", upload.single("video"), async (req, res) => {
     render: { status: "idle", progress: 0 },
   };
   await writeProject(project);
-  res.json(project);
-  void processProject(id, original, req.body?.autopilot === "1");
-});
+  void processProject(id, original, autopilot);
+  return project;
+}
 
 // With autopilot ("Do it for me"), the reel is also cleaned up, captioned and exported
 // without the creator having to touch anything.
@@ -138,6 +154,20 @@ app.patch("/api/projects/:id", async (req, res) => {
   if (Array.isArray(req.body?.overlays)) patch.overlays = req.body.overlays as Overlay[];
   res.json(await updateProject(project.id, patch));
 });
+
+app.post("/api/projects/:id/apply", async (req, res) => {
+  const parsed = ReelEdits.safeParse(req.body?.edits ?? req.body);
+  if (!parsed.success) return res.status(400).json({ error: z.prettifyError(parsed.error) });
+  if (!(await readProject(req.params.id))) return res.status(404).json({ error: "Not found" });
+  try {
+    const [brand, library] = await Promise.all([readBrand(), listAssets()]);
+    res.json(await updateProject(req.params.id, (p) => applyEdits(p, parsed.data, brand, library)));
+  } catch (err) {
+    res.status(400).json({ error: (err as Error).message });
+  }
+});
+
+app.get("/api/events", subscribe);
 
 app.post("/api/projects/:id/auto-highlight", async (req, res) => {
   const project = await readProject(req.params.id);

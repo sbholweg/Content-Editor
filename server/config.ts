@@ -12,6 +12,9 @@ try {
 export const config = {
   port: Number(process.env.PORT ?? 3000),
   dataDir: path.resolve(process.env.DATA_DIR ?? path.join(root, "data")),
+  // Raw clips to import, and finished reels (with their captions) when running on your own computer.
+  inboxDir: path.resolve(process.env.INBOX_DIR ?? path.join(root, "inbox")),
+  outputsDir: path.resolve(process.env.OUTPUTS_DIR ?? path.join(root, "outputs")),
   whisperDir: path.resolve(process.env.WHISPER_DIR ?? path.join(root, "whisper.cpp")),
   // whisper.cpp release to build; see https://github.com/ggml-org/whisper.cpp/releases
   whisperVersion: process.env.WHISPER_VERSION ?? "1.7.6",

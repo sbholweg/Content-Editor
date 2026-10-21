@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { outputFrames, Reel, REEL_FPS, REEL_HEIGHT, REEL_WIDTH } from "../remotion/Reel";
 import { buildTimeline } from "../shared/timeline";
 import type { Asset, BrandKit, Overlay, Project, ReelProps, ReelStyle, Word } from "../shared/types";
-import { api, libraryUrl, mediaUrl } from "./api";
+import { api, libraryUrl, mediaUrl, onEngineEvents } from "./api";
 import { LibraryPicker, MediaCard } from "./Media";
 import { TrialReelsCard } from "./TrialReels";
 import { BusinessCard, CaptionsCard, HookCard, LooksCard, PostCaptionCard, SoundCard, WordsCard, formatLength } from "./sections";
@@ -58,21 +58,48 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
     }
   }, [id, onAuthError]);
 
+  // Takes the saved version of everything you can edit. If it differs from what was already
+  // shown (e.g. Claude changed the reel), the last export is out of date.
+  const adopted = useRef("");
+  const adopt = useCallback((p: Project) => {
+    const content = JSON.stringify([p.words, p.hookText, p.removePauses, p.postCaption, p.style, p.overlays]);
+    if (adopted.current && adopted.current !== content && p.render.status === "done") setChangedSinceExport(true);
+    adopted.current = content;
+    setWords(p.words);
+    setHookText(p.hookText);
+    setRemovePauses(p.removePauses);
+    setPostCaption(p.postCaption);
+    setLook(p.style);
+    setOverlays(p.overlays);
+  }, []);
+
   useEffect(() => {
     load().then((p) => {
       if (!p) return;
-      setWords(p.words);
-      setHookText(p.hookText);
-      setRemovePauses(p.removePauses);
-      setPostCaption(p.postCaption);
-      setLook(p.style);
-      setOverlays(p.overlays);
+      adopt(p);
       // Reels made with "Do it for me" open straight on the finished result.
       if (p.render.status !== "idle") setTab("finish");
     });
     api.getBrand().then(setBrand, onAuthError);
     api.listAssets().then(setAssets, onAuthError);
-  }, [load, onAuthError]);
+  }, [load, adopt, onAuthError]);
+
+  // When Claude (or another tab) changes this reel, show it right away. Changes are only
+  // taken over when you haven't edited in the last couple of seconds, so typing isn't lost.
+  const lastLocalEdit = useRef(0);
+  useEffect(
+    () =>
+      onEngineEvents(async (event) => {
+        if (event.type === "brand") return void api.getBrand().then(setBrand, onAuthError);
+        if (event.type !== "project" || event.id !== id) return;
+        const p = await load();
+        if (!p || Date.now() - lastLocalEdit.current < 2000) return;
+        adopt(p);
+        // Claude may have added media from the library.
+        api.listAssets().then(setAssets, onAuthError);
+      }),
+    [id, load, adopt, onAuthError],
+  );
 
   // Poll while the server is working on this reel.
   const busy = project?.status === "processing" || project?.render.status === "rendering";
@@ -115,6 +142,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   );
 
   const updateWords = (next: Word[]) => {
+    lastLocalEdit.current = Date.now();
     setWords(next);
     setChangedSinceExport(true);
     saveWords(next);
@@ -124,10 +152,12 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
     600,
   );
   const updatePostCaption = (text: string) => {
+    lastLocalEdit.current = Date.now();
     setPostCaption(text);
     savePostCaption(text);
   };
   const updateHook = (text: string) => {
+    lastLocalEdit.current = Date.now();
     setHookText(text);
     setChangedSinceExport(true);
     saveHook(text);
@@ -137,6 +167,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
     600,
   );
   const updateLook = (next: ReelStyle) => {
+    lastLocalEdit.current = Date.now();
     setLook(next);
     setChangedSinceExport(true);
     saveLook(next);
@@ -146,6 +177,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
     400,
   );
   const updateOverlays = (next: Overlay[]) => {
+    lastLocalEdit.current = Date.now();
     setOverlays(next);
     setChangedSinceExport(true);
     saveOverlays(next);
@@ -327,6 +359,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
               removePauses={removePauses}
               onChange={updateWords}
               onRemovePauses={(on) => {
+                lastLocalEdit.current = Date.now();
                 setRemovePauses(on);
                 setChangedSinceExport(true);
                 void api.saveProject(id, { removePauses: on }).catch(onAuthError);

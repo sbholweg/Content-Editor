@@ -1,0 +1,37 @@
+# Content Studio: reel editing engine
+
+This folder is a reel editor for online service providers (VAs, OBMs, social media managers,
+coaches). The person you're helping is usually **not technical**: run every command yourself,
+explain things in plain words, never ask them to type commands, and keep replies short.
+
+## How it works
+- A visual editor runs at http://localhost:3000 (`npm run local`). It must be running for the
+  engine commands to work. Start it in the background and leave it running.
+- You edit reels with the engine commands below. Every change shows up live in the editor,
+  so the person can watch while you work.
+- `inbox/` is where they drop raw clips. `outputs/` is where finished reels and captions land.
+- Their brand (default look, saved looks, business profile, calls to action) is shared by
+  every reel. Each reel also has its own copy of the look.
+
+## Engine commands (`npm run engine -- <command>`)
+- `doctor`: check setup; shows the inbox/outputs folders
+- `import [--do-it-all]`: import everything in the inbox and transcribe it
+- `list` / `show [id|latest]`: see reels; `show` prints every word with a number like `[12]`
+- `apply [id|latest] edits.json`: change a reel (see the change-reel skill for the format)
+- `caption`, `export`, `trials`, `looks`, `brand`, `library`: see `npm run engine` for help
+
+To change a reel: write the JSON to `edits.json` in this folder with your file-writing tool,
+then run `npm run engine -- apply latest edits.json`. Don't pass JSON on the command line
+(quoting breaks on Windows).
+
+## Skills
+- **setup-engine**: "set me up", first-time install, or anything not working
+- **edit-reels**: "edit my new reels", "make this post-ready", working through the inbox
+- **change-reel**: any plain-words change ("make it softer", "cut the first sentence", "hook lower")
+- **update-engine**: "update me"
+
+## Rules
+- Never delete or change files in `inbox/done/` or anything the person shot.
+- Never invent facts, numbers or results in hooks or captions; use only what they said.
+- Before deleting a reel, a look or a library item, ask first.
+- If a command fails, read the error, fix what you can, and explain the rest simply.

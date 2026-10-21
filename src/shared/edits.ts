@@ -1,0 +1,122 @@
+import { z } from "zod";
+import { normalizeStyle } from "./brand";
+import type { BrandKit, Project } from "./types";
+import { isFiller } from "./words";
+
+const indexes = z.array(z.number().int().nonnegative());
+const color = z.string().regex(/^#[0-9a-fA-F]{6}$/, "colors are hex like #8656F6");
+const position = z.enum(["top", "middle", "bottom"]);
+
+// Changes Claude (or a script) can make to a reel in one go. Word numbers are the
+// [n] numbers printed by `npm run engine -- show`.
+export const ReelEdits = z
+  .object({
+    hookText: z.string().max(200),
+    postCaption: z.string().max(2200),
+    removePauses: z.boolean(),
+    keyWords: indexes.describe("replace all key words with exactly these"),
+    addKeyWords: indexes,
+    removeKeyWords: indexes,
+    cut: indexes,
+    uncut: indexes,
+    cutFillers: z.boolean().describe("cut every um/uh"),
+    emojis: z.record(z.string(), z.string().nullable()).describe("word number -> emoji, or null to remove"),
+    fixWords: z.record(z.string(), z.string().min(1)).describe("word number -> corrected text"),
+    look: z.string().describe('a saved look name, or "default"'),
+    style: z
+      .object({
+        font: z.string(),
+        displayFont: z.string(),
+        hookColor: color,
+        hookPosition: position,
+        hookDurationMs: z.number().int().min(0),
+        textColor: color,
+        outlineColor: color,
+        highlightColor: color,
+        highlightTextColor: color,
+        style: z.enum(["pill", "color", "serif"]),
+        captionMode: z.enum(["phrase", "single"]),
+        textEffect: z.enum(["shadow", "outline"]),
+        position,
+        wordsPerLine: z.number().int().min(1).max(7),
+        uppercase: z.boolean(),
+        fontSize: z.number().min(30).max(140),
+      })
+      .partial()
+      .strict(),
+    addMedia: z.array(
+      z.object({
+        asset: z.string().describe("library item id or name"),
+        fromWord: z.number().int().nonnegative(),
+        toWord: z.number().int().nonnegative(),
+        placement: z.enum(["top", "middle", "bottom", "full"]).optional(),
+        size: z.number().min(0.3).max(0.95).optional(),
+      }),
+    ),
+    removeMedia: z.array(z.string()).describe("overlay ids"),
+  })
+  .partial()
+  .strict();
+
+export type ReelEdits = z.infer<typeof ReelEdits>;
+
+type Library = { id: string; name: string; kind: string }[];
+
+// Applies edits to a reel and returns the changed fields, or throws a readable error.
+export function applyEdits(project: Project, edits: ReelEdits, brand: BrandKit, library: Library): Partial<Project> {
+  const words = project.words.map((w) => ({ ...w }));
+  const at = (n: number) => {
+    if (!words[n]) throw new Error(`There is no word [${n}]; this reel has words 0-${words.length - 1}.`);
+    return words[n];
+  };
+
+  if (edits.keyWords) {
+    const keep = new Set(edits.keyWords.map((n) => (at(n), n)));
+    words.forEach((w, i) => (w.highlight = keep.has(i)));
+  }
+  edits.addKeyWords?.forEach((n) => (at(n).highlight = true));
+  edits.removeKeyWords?.forEach((n) => (at(n).highlight = false));
+  edits.cut?.forEach((n) => (at(n).cut = true));
+  edits.uncut?.forEach((n) => (at(n).cut = false));
+  if (edits.cutFillers) words.forEach((w) => isFiller(w.text) && (w.cut = true));
+  for (const [n, emoji] of Object.entries(edits.emojis ?? {})) at(Number(n)).emoji = emoji ?? undefined;
+  for (const [n, text] of Object.entries(edits.fixWords ?? {})) at(Number(n)).text = text;
+
+  const changes: Partial<Project> = { words };
+  if (edits.hookText !== undefined) changes.hookText = edits.hookText;
+  if (edits.postCaption !== undefined) changes.postCaption = edits.postCaption;
+  if (edits.removePauses !== undefined) changes.removePauses = edits.removePauses;
+
+  let style = project.style;
+  if (edits.look) {
+    const name = edits.look.trim().toLowerCase();
+    const saved = name === "default" ? brand.defaultStyle : brand.looks.find((l) => l.name.toLowerCase() === name)?.style;
+    if (!saved) throw new Error(`No saved look called "${edits.look}". Saved looks: default${brand.looks.map((l) => `, ${l.name}`).join("")}.`);
+    style = saved;
+  }
+  if (edits.style) style = normalizeStyle({ ...style, ...edits.style });
+  if (style !== project.style) changes.style = style;
+
+  let overlays = project.overlays;
+  if (edits.removeMedia?.length) overlays = overlays.filter((o) => !edits.removeMedia!.includes(o.id));
+  for (const m of edits.addMedia ?? []) {
+    const key = m.asset.toLowerCase();
+    const asset = library.find((a) => a.id === m.asset) ?? library.find((a) => a.name.toLowerCase() === key);
+    if (!asset) throw new Error(`No library item "${m.asset}". Library: ${library.map((a) => a.name).join(", ") || "(empty)"}.`);
+    const [from, to] = [Math.min(m.fromWord, m.toWord), Math.max(m.fromWord, m.toWord)];
+    overlays = [
+      ...overlays,
+      {
+        id: `ov-${Date.now()}-${overlays.length}`,
+        assetId: asset.id,
+        startWordId: at(from).id,
+        endWordId: at(to).id,
+        placement: m.placement ?? (asset.kind === "video" ? "full" : "middle"),
+        size: m.size ?? 0.6,
+      },
+    ];
+  }
+  if (overlays !== project.overlays) changes.overlays = overlays;
+
+  return changes;
+}

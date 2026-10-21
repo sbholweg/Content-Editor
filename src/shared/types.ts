@@ -108,6 +108,8 @@ export type RenderState = {
 
 export type Project = {
   id: string;
+  // Goes up by one on every save, so open editors can tell when someone else changed the reel.
+  rev?: number;
   createdAt: string;
   originalName: string;
   status: ProjectStatus;

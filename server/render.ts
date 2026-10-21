@@ -1,3 +1,4 @@
+import fs from "node:fs/promises";
 import path from "node:path";
 import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition } from "@remotion/renderer";
@@ -19,6 +20,18 @@ let queue: Promise<void> = Promise.resolve();
 
 export function queueRender(id: string) {
   queue = queue.then(() => renderProject(id)).catch((err) => console.error(err));
+}
+
+// Puts a copy of the finished reel, named after its hook, plus its post caption in the outputs folder.
+async function copyToOutputs(id: string) {
+  const project = await readProject(id);
+  if (!project) return;
+  const slug = (project.hookText || project.originalName).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50) || "reel";
+  const label = project.variantLabel ? `-trial-${project.variantLabel.toLowerCase().replace(/[^a-z]+/g, "-")}` : "";
+  const base = path.join(config.outputsDir, `${project.createdAt.slice(0, 10)}-${slug}${label}-${id.slice(0, 6)}`);
+  await fs.mkdir(config.outputsDir, { recursive: true });
+  await fs.copyFile(projectFile(id, "export.mp4"), `${base}.mp4`);
+  if (project.postCaption) await fs.writeFile(`${base}-caption.txt`, project.postCaption);
 }
 
 async function renderProject(id: string) {
@@ -57,6 +70,7 @@ async function renderProject(id: string) {
     });
     await writes;
     await updateProject(id, { render: { status: "done", progress: 1 } });
+    await copyToOutputs(id).catch((err) => console.error("Couldn't copy to the outputs folder:", err));
   } catch (err) {
     console.error(`Render failed for ${id}`, err);
     await updateProject(id, { render: { status: "error", progress: 0, error: String(err) } });

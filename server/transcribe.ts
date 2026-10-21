@@ -5,7 +5,11 @@ import { ensureWhisper } from "./setup-whisper.ts";
 
 // Runs whisper.cpp locally (free, no API key) and returns one entry per spoken word.
 export async function transcribeWords(wavPath: string): Promise<Word[]> {
-  await ensureWhisper();
+  await ensureWhisper().catch((err) => {
+    throw new Error(
+      `The speech-to-text engine isn't ready (${(err as Error).message}). Check your internet connection, then run "npm run setup".`,
+    );
+  });
   const output = await transcribe({
     inputPath: wavPath,
     whisperPath: config.whisperDir,

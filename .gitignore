@@ -3,3 +3,8 @@ dist/
 data/
 whisper.cpp/
 .env
+inbox/*
+!inbox/README.txt
+outputs/*
+!outputs/README.txt
+edits.json

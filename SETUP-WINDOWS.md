@@ -1,4 +1,7 @@
-# Run the editor on your Windows PC (free)
+# Run the editor on your Windows PC, by hand
+
+The easy way is to let Claude do this for you: see [GETTING-STARTED.md](GETTING-STARTED.md).
+These are the same steps, typed yourself.
 
 This runs the whole editor on your own computer. Your phone can use it too, as long as your
 PC is on and the editor is running.

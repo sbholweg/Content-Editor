@@ -1,6 +1,10 @@
 # Content Studio (working name)
 
-A phone-friendly editor for talking reels. Upload a video from your camera roll and it:
+A reel editing engine that runs on your own computer inside Claude Code. Claude edits your
+talking reels, and you watch and tweak them in the visual editor. **New here? Start with
+[GETTING-STARTED.md](GETTING-STARTED.md).**
+
+What it does with each clip:
 
 1. Converts it to a standard format (iPhone HEVC/.mov works).
 2. Lets you cut it by the word, remove pauses, and cut "um"s and "uh"s.
@@ -17,10 +21,15 @@ A phone-friendly editor for talking reels. Upload a video from your camera roll 
 | Web app | `src/web` | The screens you use on your phone |
 | Video design | `src/remotion` | How captions look and animate (same code for preview and export) |
 | Server | `server` | Uploads, transcription, AI highlights, exporting |
+| Engine commands | `engine` | What Claude runs to import, edit and export reels |
+| Claude's instructions | `CLAUDE.md`, `.claude/skills` | Setup, editing, plain-words changes, updates |
 
 ## Run it on your own computer
 
-On Windows, follow [SETUP-WINDOWS.md](SETUP-WINDOWS.md) (no coding needed).
+Follow [GETTING-STARTED.md](GETTING-STARTED.md): Claude does the setup. To do it by hand on
+Windows, see [SETUP-WINDOWS.md](SETUP-WINDOWS.md).
+
+Claude drives the engine with `npm run engine -- <command>` (see `CLAUDE.md` and `.claude/skills/`).
 
 For development (Node 22+ and ffmpeg):
 
