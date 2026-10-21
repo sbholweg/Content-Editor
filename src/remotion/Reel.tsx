@@ -2,11 +2,13 @@ import React from "react";
 import { AbsoluteFill, OffthreadVideo } from "remotion";
 import type { ReelProps } from "../shared/types";
 import { Captions } from "./Captions";
+import { Hook } from "./Hook";
 
-export const Reel: React.FC<ReelProps> = ({ videoSrc, words, brand }) => {
+export const Reel: React.FC<ReelProps> = ({ videoSrc, hookText, words, brand }) => {
   return (
     <AbsoluteFill style={{ backgroundColor: "black" }}>
       {videoSrc ? <OffthreadVideo src={videoSrc} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+      <Hook text={hookText} brand={brand} />
       <Captions words={words} brand={brand} />
     </AbsoluteFill>
   );

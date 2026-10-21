@@ -7,13 +7,17 @@ export type Word = {
   emoji?: string;
 };
 
-export type CaptionStyle = "pop" | "pill" | "accent";
+export type CaptionStyle = "clean" | "pill" | "pop" | "accent";
 export type CaptionPosition = "top" | "middle" | "bottom";
 
 export type BrandKit = {
   name: string;
   font: string;
-  accentFont: string;
+  // Used for the hook title and for "accent" highlighted words.
+  displayFont: string;
+  hookColor: string;
+  // How long the hook stays on screen. 0 = the whole video.
+  hookDurationMs: number;
   textColor: string;
   outlineColor: string;
   highlightColor: string;
@@ -27,6 +31,7 @@ export type BrandKit = {
 
 export type ReelProps = {
   videoSrc: string;
+  hookText: string;
   words: Word[];
   brand: BrandKit;
   durationMs: number;
@@ -50,6 +55,7 @@ export type Project = {
   durationMs: number;
   width: number;
   height: number;
+  hookText: string;
   words: Word[];
   render: RenderState;
 };

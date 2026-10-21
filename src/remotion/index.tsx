@@ -4,7 +4,7 @@ import { DEFAULT_BRAND } from "../shared/brand";
 import type { ReelProps } from "../shared/types";
 import { durationInFrames, Reel, REEL_FPS, REEL_HEIGHT, REEL_WIDTH } from "./Reel";
 
-const defaultProps: ReelProps = { videoSrc: "", words: [], brand: DEFAULT_BRAND, durationMs: 3000 };
+const defaultProps: ReelProps = { videoSrc: "", hookText: "", words: [], brand: DEFAULT_BRAND, durationMs: 3000 };
 
 const Root: React.FC = () => (
   <Composition

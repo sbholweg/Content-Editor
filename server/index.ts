@@ -6,7 +6,7 @@ import multer from "multer";
 import type { BrandKit, Project, Word } from "../src/shared/types.ts";
 import { accessToken, checkPassword, requireAuth } from "./auth.ts";
 import { config } from "./config.ts";
-import { planHighlights } from "./highlights.ts";
+import { planEdit } from "./highlights.ts";
 import { extractAudio, normalizeVideo, probe } from "./media.ts";
 import { queueRender } from "./render.ts";
 import { ensureWhisper } from "./setup-whisper.ts";
@@ -60,6 +60,7 @@ app.post("/api/projects", upload.single("video"), async (req, res) => {
     status: "processing",
     step: "Preparing video",
     durationMs: 0,
+    hookText: "",
     width: 0,
     height: 0,
     words: [],
@@ -80,8 +81,8 @@ async function processProject(id: string, original: string) {
     await extractAudio(video, audio);
     const words = await transcribeWords(audio);
     await updateProject(id, { words, step: "Picking words to highlight" });
-    const planned = await planHighlights(words);
-    await updateProject(id, { words: planned, status: "ready", step: undefined });
+    const plan = await planEdit(words);
+    await updateProject(id, { words: plan.words, hookText: plan.hook, status: "ready", step: undefined });
     await fs.rm(original, { force: true });
     await fs.rm(audio, { force: true });
   } catch (err) {
@@ -101,15 +102,17 @@ app.get("/api/projects/:id", async (req, res) => {
 app.patch("/api/projects/:id", async (req, res) => {
   const project = await readProject(req.params.id);
   if (!project) return res.status(404).json({ error: "Not found" });
-  const words = req.body?.words as Word[] | undefined;
-  if (!Array.isArray(words)) return res.status(400).json({ error: "words required" });
-  res.json(await updateProject(project.id, { words }));
+  const patch: Partial<Project> = {};
+  if (Array.isArray(req.body?.words)) patch.words = req.body.words as Word[];
+  if (typeof req.body?.hookText === "string") patch.hookText = req.body.hookText.slice(0, 200);
+  res.json(await updateProject(project.id, patch));
 });
 
 app.post("/api/projects/:id/auto-highlight", async (req, res) => {
   const project = await readProject(req.params.id);
   if (!project) return res.status(404).json({ error: "Not found" });
-  res.json(await updateProject(project.id, { words: await planHighlights(project.words) }));
+  const plan = await planEdit(project.words);
+  res.json(await updateProject(project.id, { words: plan.words, hookText: project.hookText || plan.hook }));
 });
 
 app.delete("/api/projects/:id", async (req, res) => {

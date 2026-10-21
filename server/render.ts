@@ -28,6 +28,7 @@ async function renderProject(id: string) {
     const tokenParam = accessToken ? `?t=${accessToken}` : "";
     const inputProps: ReelProps = {
       videoSrc: `http://127.0.0.1:${config.port}/media/${id}/video.mp4${tokenParam}`,
+      hookText: project.hookText,
       words: project.words,
       brand: await readBrand(),
       durationMs: project.durationMs,

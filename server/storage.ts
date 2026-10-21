@@ -21,7 +21,8 @@ export function isValidId(id: string) {
 export async function readProject(id: string): Promise<Project | null> {
   if (!isValidId(id)) return null;
   try {
-    return JSON.parse(await fs.readFile(projectFile(id, "project.json"), "utf8"));
+    const project = JSON.parse(await fs.readFile(projectFile(id, "project.json"), "utf8"));
+    return { hookText: "", ...project };
   } catch {
     return null;
   }

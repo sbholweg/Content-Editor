@@ -1,0 +1,43 @@
+import React from "react";
+import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import type { BrandKit } from "../shared/types";
+import { getFont } from "./fonts";
+
+// The title at the top of the reel ("nobody's saying it, so I will").
+export const Hook: React.FC<{ text: string; brand: BrandKit }> = ({ text, brand }) => {
+  const frame = useCurrentFrame();
+  const { fps, durationInFrames } = useVideoConfig();
+  const font = getFont(brand.displayFont);
+  if (!text.trim()) return null;
+
+  const endFrame = brand.hookDurationMs > 0 ? Math.round((brand.hookDurationMs / 1000) * fps) : durationInFrames;
+  if (frame >= endFrame) return null;
+
+  // Starts partway into its animation so the very first frame (often the reel's cover) already shows the hook.
+  const enter = spring({ frame: frame + 10, fps, config: { damping: 16, stiffness: 120 } });
+  const exit = interpolate(frame, [endFrame - 8, endFrame], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: "9%",
+        left: 90,
+        right: 90,
+        textAlign: "center",
+        fontFamily: font.fontFamily,
+        fontWeight: font.fontWeight,
+        fontStyle: font.fontStyle,
+        fontSize: 96,
+        lineHeight: 1.02,
+        color: brand.hookColor,
+        textShadow: "0 2px 8px rgba(0,0,0,0.35), 0 6px 40px rgba(0,0,0,0.35)",
+        opacity: enter * exit,
+        transform: `translateY(${(1 - enter) * 30}px)`,
+        textWrap: "balance",
+      }}
+    >
+      {text}
+    </div>
+  );
+};

@@ -3,8 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { durationInFrames, Reel, REEL_FPS, REEL_HEIGHT, REEL_WIDTH } from "../remotion/Reel";
 import type { BrandKit, Project, ReelProps, Word } from "../shared/types";
 import { api, mediaUrl } from "./api";
-import { BrandPanel } from "./BrandPanel";
-import { WordsPanel } from "./WordsPanel";
+import { ColoursCard, HookCard, KeyWordsCard, SubtitlesCard } from "./sections";
 
 function useDebounced<T>(fn: (value: T) => void, ms: number) {
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -21,7 +20,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   const [project, setProject] = useState<Project | null>(null);
   const [brand, setBrand] = useState<BrandKit | null>(null);
   const [words, setWords] = useState<Word[]>([]);
-  const [tab, setTab] = useState<"words" | "style">("words");
+  const [hookText, setHookText] = useState("");
   const [error, setError] = useState("");
   const [timeMs, setTimeMs] = useState(0);
   const [exportFile, setExportFile] = useState<File | null>(null);
@@ -41,7 +40,11 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   }, [id, onAuthError]);
 
   useEffect(() => {
-    load().then((p) => p && setWords(p.words));
+    load().then((p) => {
+      if (!p) return;
+      setWords(p.words);
+      setHookText(p.hookText);
+    });
     api.getBrand().then(setBrand, onAuthError);
   }, [load, onAuthError]);
 
@@ -51,7 +54,10 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
     if (!busy) return;
     const t = setInterval(async () => {
       const p = await load();
-      if (p && p.status === "ready" && project?.status === "processing") setWords(p.words);
+      if (p && p.status === "ready" && project?.status === "processing") {
+        setWords(p.words);
+        setHookText(p.hookText);
+      }
     }, 2000);
     return () => clearInterval(t);
   }, [busy, load, project?.status]);
@@ -70,7 +76,11 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   }, [id, project?.render.status, project?.render.progress, project?.createdAt]);
 
   const saveWords = useDebounced<Word[]>(
-    useCallback((w) => void api.saveWords(id, w).catch(onAuthError), [id, onAuthError]),
+    useCallback((w) => void api.saveProject(id, { words: w }).catch(onAuthError), [id, onAuthError]),
+    600,
+  );
+  const saveHook = useDebounced<string>(
+    useCallback((t) => void api.saveProject(id, { hookText: t }).catch(onAuthError), [id, onAuthError]),
     600,
   );
   const saveBrand = useDebounced<BrandKit>(
@@ -82,6 +92,11 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
     setWords(next);
     setChangedSinceExport(true);
     saveWords(next);
+  };
+  const updateHook = (text: string) => {
+    setHookText(text);
+    setChangedSinceExport(true);
+    saveHook(text);
   };
   const updateBrand = (next: BrandKit) => {
     setBrand(next);
@@ -100,9 +115,9 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   const inputProps: ReelProps | null = useMemo(
     () =>
       project && brand
-        ? { videoSrc: mediaUrl(id, "video.mp4"), words, brand, durationMs: project.durationMs }
+        ? { videoSrc: mediaUrl(id, "video.mp4"), hookText, words, brand, durationMs: project.durationMs }
         : null,
-    [project?.durationMs, brand, words, id],
+    [project?.durationMs, brand, words, hookText, id],
   );
 
   const exportReel = async () => {
@@ -141,7 +156,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
         <div className="spinner" />
         <h2>{project.step ?? "Working on it"}…</h2>
         <p className="muted">This usually takes about as long as the video itself. You can leave this page and come back.</p>
-        <button onClick={onBack}>Back to my reels</button>
+        <button className="btn" onClick={onBack}>Back to my reels</button>
       </main>
     );
   }
@@ -151,43 +166,60 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
       <main className="page stack center">
         <h2>Something went wrong</h2>
         <p className="error small">{project.error}</p>
-        <button onClick={onBack}>Back</button>
+        <button className="btn" onClick={onBack}>Back</button>
       </main>
     );
   }
 
   const rendering = project.render.status === "rendering";
+  const exportControls = rendering ? (
+    <div className="grow stack tight">
+      <span className="small">Exporting… {Math.round(project.render.progress * 100)}%</span>
+      <div className="bar"><div style={{ width: `${project.render.progress * 100}%` }} /></div>
+    </div>
+  ) : project.render.status === "done" && !changedSinceExport ? (
+    <>
+      <button className="btn grow" onClick={exportReel}>Export again</button>
+      <button className="btn dark grow" disabled={!exportFile} onClick={saveVideo}>
+        {exportFile ? "Save video" : "Preparing…"}
+      </button>
+    </>
+  ) : (
+    <button className="btn dark grow" onClick={exportReel}>Export video</button>
+  );
 
   return (
     <main className="editor">
-      <div className="topbar">
-        <button className="ghost" onClick={onBack}>‹ Reels</button>
-        <div className="tabs">
-          <button className={tab === "words" ? "on" : ""} onClick={() => setTab("words")}>Words</button>
-          <button className={tab === "style" ? "on" : ""} onClick={() => setTab("style")}>Style</button>
-        </div>
-      </div>
+      <header className="editor-head">
+        <button className="link" onClick={onBack}>‹ My reels</button>
+        <h1 className="serif title">{hookText || project.originalName}</h1>
+        <div className="head-export">{exportControls}</div>
+      </header>
 
-      <div className="preview">
-        {inputProps ? (
-          <Player
-            ref={player}
-            component={Reel}
-            inputProps={inputProps}
-            durationInFrames={durationInFrames(project.durationMs)}
-            fps={REEL_FPS}
-            compositionWidth={REEL_WIDTH}
-            compositionHeight={REEL_HEIGHT}
-            controls
-            clickToPlay
-            style={{ width: "100%", height: "100%" }}
-          />
-        ) : null}
-      </div>
+      <div className="workspace">
+        <aside className="preview-col">
+          <div className="preview">
+            {inputProps ? (
+              <Player
+                ref={player}
+                component={Reel}
+                inputProps={inputProps}
+                durationInFrames={durationInFrames(project.durationMs)}
+                fps={REEL_FPS}
+                compositionWidth={REEL_WIDTH}
+                compositionHeight={REEL_HEIGHT}
+                controls
+                clickToPlay
+                style={{ width: "100%", height: "100%" }}
+              />
+            ) : null}
+          </div>
+          {project.render.status === "error" ? <p className="error small">Export failed: {project.render.error}</p> : null}
+        </aside>
 
-      <div className="panel">
-        {tab === "words" ? (
-          <WordsPanel
+        <div className="settings-col">
+          <HookCard hookText={hookText} onHookText={updateHook} brand={brand} onBrand={updateBrand} />
+          <KeyWordsCard
             words={words}
             timeMs={timeMs}
             onChange={updateWords}
@@ -196,35 +228,19 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
               try {
                 const p = await api.autoHighlight(id);
                 setWords(p.words);
+                setHookText(p.hookText);
                 setChangedSinceExport(true);
               } catch (err) {
                 onAuthError(err);
               }
             }}
           />
-        ) : (
-          <BrandPanel brand={brand} onChange={updateBrand} />
-        )}
+          <SubtitlesCard brand={brand} onBrand={updateBrand} />
+          <ColoursCard brand={brand} onBrand={updateBrand} />
+        </div>
       </div>
 
-      <div className="exportbar">
-        {rendering ? (
-          <div className="grow stack tight">
-            <span className="small">Exporting… {Math.round(project.render.progress * 100)}%</span>
-            <div className="bar"><div style={{ width: `${project.render.progress * 100}%` }} /></div>
-          </div>
-        ) : project.render.status === "done" && !changedSinceExport ? (
-          <>
-            <button className="grow" onClick={exportReel}>Export again</button>
-            <button className="primary grow" disabled={!exportFile} onClick={saveVideo}>
-              {exportFile ? "Save video" : "Preparing…"}
-            </button>
-          </>
-        ) : (
-          <button className="primary grow" onClick={exportReel}>Export video</button>
-        )}
-      </div>
-      {project.render.status === "error" ? <p className="error small pad">Export failed: {project.render.error}</p> : null}
+      <div className="exportbar">{exportControls}</div>
     </main>
   );
 }

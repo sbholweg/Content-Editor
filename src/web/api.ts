@@ -48,7 +48,8 @@ export const api = {
   login: (password: string) => request<{ token: string }>("/api/login", { method: "POST", body: JSON.stringify({ password }) }),
   listProjects: () => request<Project[]>("/api/projects"),
   getProject: (id: string) => request<Project>(`/api/projects/${id}`),
-  saveWords: (id: string, words: Word[]) => request<Project>(`/api/projects/${id}`, { method: "PATCH", body: JSON.stringify({ words }) }),
+  saveProject: (id: string, patch: { words?: Word[]; hookText?: string }) =>
+    request<Project>(`/api/projects/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
   autoHighlight: (id: string) => request<Project>(`/api/projects/${id}/auto-highlight`, { method: "POST" }),
   deleteProject: (id: string) => request<{ ok: true }>(`/api/projects/${id}`, { method: "DELETE" }),
   render: (id: string) => request<Project>(`/api/projects/${id}/render`, { method: "POST" }),
