@@ -18,9 +18,11 @@ A phone-friendly editor for talking reels. Upload a video from your camera roll 
 | Video design | `src/remotion` | How captions look and animate (same code for preview and export) |
 | Server | `server` | Uploads, transcription, AI highlights, exporting |
 
-## Run it on a computer (for development)
+## Run it on your own computer
 
-Needs Node 22+ and ffmpeg.
+On Windows, follow [SETUP-WINDOWS.md](SETUP-WINDOWS.md) (no coding needed).
+
+For development (Node 22+ and ffmpeg):
 
 ```bash
 npm install

@@ -2,6 +2,13 @@ import path from "node:path";
 
 const root = path.resolve(import.meta.dirname, "..");
 
+// Settings can live in a .env file next to package.json (handy when running on your own computer).
+try {
+  process.loadEnvFile(path.join(root, ".env"));
+} catch {
+  // No .env file; use the environment as-is.
+}
+
 export const config = {
   port: Number(process.env.PORT ?? 3000),
   dataDir: path.resolve(process.env.DATA_DIR ?? path.join(root, "data")),

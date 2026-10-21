@@ -8,9 +8,10 @@
     "dev:server": "tsx watch server/index.ts",
     "dev:web": "vite",
     "build": "vite build",
-    "start": "NODE_ENV=production tsx server/index.ts",
+    "start": "tsx server/index.ts",
     "typecheck": "tsc --noEmit",
-    "setup": "tsx server/setup.ts"
+    "setup": "tsx server/setup.ts",
+    "local": "vite build && tsx server/index.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.131.0",
