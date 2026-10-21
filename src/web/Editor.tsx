@@ -4,7 +4,7 @@ import { outputFrames, Reel, REEL_FPS, REEL_HEIGHT, REEL_WIDTH } from "../remoti
 import { buildTimeline } from "../shared/timeline";
 import type { BrandKit, Project, ReelProps, Word } from "../shared/types";
 import { api, mediaUrl } from "./api";
-import { ColoursCard, HookCard, SubtitlesCard, WordsCard } from "./sections";
+import { CaptionsCard, HookCard, WordsCard } from "./sections";
 
 function useDebounced<T>(fn: (value: T) => void, ms: number) {
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -252,8 +252,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
               }
             }}
           />
-          <SubtitlesCard brand={brand} onBrand={updateBrand} />
-          <ColoursCard brand={brand} onBrand={updateBrand} />
+          <CaptionsCard brand={brand} onBrand={updateBrand} />
         </div>
       </div>
 

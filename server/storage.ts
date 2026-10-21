@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { DEFAULT_BRAND } from "../src/shared/brand.ts";
+import { DEFAULT_BRAND, normalizeBrand } from "../src/shared/brand.ts";
 import type { BrandKit, Project } from "../src/shared/types.ts";
 import { config } from "./config.ts";
 
@@ -57,7 +57,7 @@ export async function deleteProject(id: string) {
 
 export async function readBrand(): Promise<BrandKit> {
   try {
-    return { ...DEFAULT_BRAND, ...JSON.parse(await fs.readFile(brandFile, "utf8")) };
+    return normalizeBrand(JSON.parse(await fs.readFile(brandFile, "utf8")));
   } catch {
     return DEFAULT_BRAND;
   }

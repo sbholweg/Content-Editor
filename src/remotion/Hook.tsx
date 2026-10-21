@@ -3,6 +3,13 @@ import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import type { BrandKit } from "../shared/types";
 import { getFont } from "./fonts";
 
+// Where the hook's center sits. "bottom" stays above the area Instagram covers with its caption and buttons.
+export const HOOK_TOP: Record<BrandKit["hookPosition"], number> = {
+  top: 13,
+  middle: 42,
+  bottom: 62,
+};
+
 // The title at the top of the reel ("nobody's saying it, so I will").
 export const Hook: React.FC<{ text: string; brand: BrandKit }> = ({ text, brand }) => {
   const frame = useCurrentFrame();
@@ -21,7 +28,7 @@ export const Hook: React.FC<{ text: string; brand: BrandKit }> = ({ text, brand 
     <div
       style={{
         position: "absolute",
-        top: "9%",
+        top: `${HOOK_TOP[brand.hookPosition]}%`,
         left: 90,
         right: 90,
         textAlign: "center",
@@ -33,7 +40,7 @@ export const Hook: React.FC<{ text: string; brand: BrandKit }> = ({ text, brand 
         color: brand.hookColor,
         textShadow: "0 2px 8px rgba(0,0,0,0.35), 0 6px 40px rgba(0,0,0,0.35)",
         opacity: enter * exit,
-        transform: `translateY(${(1 - enter) * 30}px)`,
+        transform: `translateY(calc(-50% + ${(1 - enter) * 30}px))`,
         textWrap: "balance",
       }}
     >

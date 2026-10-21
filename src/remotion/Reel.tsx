@@ -42,7 +42,7 @@ export const Reel: React.FC<ReelProps> = ({ videoSrc, hookText, words, brand, du
           ))
         : null}
       <Hook text={hookText} brand={brand} />
-      <Captions words={timeline.words} brand={brand} />
+      <Captions words={timeline.words} brand={brand} hookText={hookText} />
     </AbsoluteFill>
   );
 };

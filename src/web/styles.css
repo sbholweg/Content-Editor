@@ -119,6 +119,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 
 
 .slider { display: flex; flex-direction: column; gap: 6px; }
 input[type="range"] { width: 100%; accent-color: var(--accent); }
+.divider { height: 1px; background: var(--line); margin: 6px 0; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .check { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; letter-spacing: 0.05em; }
 .check input { width: 18px; height: 18px; accent-color: var(--accent); }

@@ -22,6 +22,16 @@ export function HookCard({ hookText, onHookText, ...props }: BrandProps & { hook
       <FontOptions value={props.brand.displayFont} fonts={DISPLAY_FONTS} onChange={(v) => set("displayFont", v)} />
       <Label>Hook colour</Label>
       <Swatches value={props.brand.hookColor} onChange={(v) => set("hookColor", v)} />
+      <Label>Hook position</Label>
+      <Options
+        value={props.brand.hookPosition}
+        onChange={(v) => set("hookPosition", v)}
+        options={[
+          { value: "top", label: "Top", note: "top of the reel" },
+          { value: "middle", label: "Middle", note: "centre of the frame" },
+          { value: "bottom", label: "Lower", note: "above the Reels bar" },
+        ]}
+      />
       <Label>Stays on screen</Label>
       <Options
         value={props.brand.hookDurationMs}
@@ -36,25 +46,68 @@ export function HookCard({ hookText, onHookText, ...props }: BrandProps & { hook
   );
 }
 
-export function SubtitlesCard(props: BrandProps) {
+export function CaptionsCard(props: BrandProps) {
   const { brand } = props;
   const set = setter(props);
+  const bubble = brand.style === "pill";
   return (
-    <Card title="Subtitles">
-      <Label>Subtitle font</Label>
+    <Card title="Captions">
+      <Label>Caption style</Label>
+      <Options
+        value={brand.captionMode}
+        onChange={(v) => set("captionMode", v)}
+        options={[
+          { value: "phrase", label: "Phrase", note: "a few words at a time" },
+          { value: "single", label: "One word", note: "one word at a time, bigger" },
+        ]}
+      />
+
+      <Label>Caption font</Label>
       <FontOptions value={brand.font} fonts={SUBTITLE_FONTS} onChange={(v) => set("font", v)} />
-      <Label>Key word style</Label>
+
+      <Label>Caption colour</Label>
+      <Swatches value={brand.textColor} onChange={(v) => set("textColor", v)} />
+
+      <Label>Text edge</Label>
+      <Options
+        value={brand.textEffect}
+        onChange={(v) => set("textEffect", v)}
+        options={[
+          { value: "shadow", label: "Soft shadow", note: "clean & subtle" },
+          { value: "outline", label: "Outline", note: "bold, easy to read" },
+        ]}
+      />
+      {brand.textEffect === "outline" ? (
+        <>
+          <Label>Outline colour</Label>
+          <Swatches value={brand.outlineColor} onChange={(v) => set("outlineColor", v)} />
+        </>
+      ) : null}
+
+      <div className="divider" />
+
+      <Label>Key words</Label>
       <Options
         value={brand.style}
         onChange={(v) => set("style", v)}
         options={[
-          { value: "clean", label: "Clean", note: "serif key words" },
-          { value: "pill", label: "Pill", note: "colour block" },
-          { value: "pop", label: "Colour pop", note: "bold & bouncy" },
-          { value: "accent", label: "Accent", note: "outlined + serif" },
+          { value: "pill", label: "Bubble", note: "colour block behind the word" },
+          { value: "color", label: "Coloured text", note: "the word changes colour" },
+          { value: "serif", label: "Serif word", note: "coloured, in your hook font" },
         ]}
       />
-      <Label>Subtitle position</Label>
+      <Label>{bubble ? "Bubble colour" : "Key word colour"}</Label>
+      <Swatches value={brand.highlightColor} onChange={(v) => set("highlightColor", v)} />
+      {bubble ? (
+        <>
+          <Label>Text inside the bubble</Label>
+          <Swatches value={brand.highlightTextColor} onChange={(v) => set("highlightTextColor", v)} />
+        </>
+      ) : null}
+
+      <div className="divider" />
+
+      <Label>Caption position</Label>
       <Options
         value={brand.position}
         onChange={(v) => set("position", v)}
@@ -65,38 +118,15 @@ export function SubtitlesCard(props: BrandProps) {
         ]}
       />
       <div className="two">
-        <Slider label="Subtitle size" value={brand.fontSize} min={44} max={110} onChange={(v) => set("fontSize", v)} />
-        <Slider label={`Words at once · ${brand.wordsPerLine}`} value={brand.wordsPerLine} min={1} max={7} onChange={(v) => set("wordsPerLine", v)} />
+        <Slider label="Caption size" value={brand.fontSize} min={44} max={110} onChange={(v) => set("fontSize", v)} />
+        {brand.captionMode === "phrase" ? (
+          <Slider label={`Words at once · ${brand.wordsPerLine}`} value={brand.wordsPerLine} min={2} max={7} onChange={(v) => set("wordsPerLine", v)} />
+        ) : null}
       </div>
       <label className="check">
         <input type="checkbox" checked={brand.uppercase} onChange={(e) => set("uppercase", e.target.checked)} />
         ALL CAPS
       </label>
-    </Card>
-  );
-}
-
-export function ColoursCard(props: BrandProps) {
-  const { brand } = props;
-  const set = setter(props);
-  return (
-    <Card title="Colours">
-      <Label>Key word colour</Label>
-      <Swatches value={brand.highlightColor} onChange={(v) => set("highlightColor", v)} />
-      <Label>Subtitle colour</Label>
-      <Swatches value={brand.textColor} onChange={(v) => set("textColor", v)} />
-      {brand.style === "pill" ? (
-        <>
-          <Label>Text on the pill</Label>
-          <Swatches value={brand.highlightTextColor} onChange={(v) => set("highlightTextColor", v)} />
-        </>
-      ) : null}
-      {brand.style === "pop" || brand.style === "accent" || brand.style === "pill" ? (
-        <>
-          <Label>Outline</Label>
-          <Swatches value={brand.outlineColor} onChange={(v) => set("outlineColor", v)} />
-        </>
-      ) : null}
     </Card>
   );
 }

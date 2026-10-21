@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import express from "express";
 import multer from "multer";
+import { normalizeBrand } from "../src/shared/brand.ts";
 import type { BrandKit, Project, Word } from "../src/shared/types.ts";
 import { accessToken, checkPassword, requireAuth } from "./auth.ts";
 import { config } from "./config.ts";
@@ -133,7 +134,7 @@ app.post("/api/projects/:id/render", async (req, res) => {
 
 app.get("/api/brand", async (_req, res) => res.json(await readBrand()));
 app.put("/api/brand", async (req, res) => {
-  const brand = { ...(await readBrand()), ...(req.body as Partial<BrandKit>) };
+  const brand = normalizeBrand({ ...(await readBrand()), ...(req.body as Partial<BrandKit>) });
   await writeBrand(brand);
   res.json(brand);
 });

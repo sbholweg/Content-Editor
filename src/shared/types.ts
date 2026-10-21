@@ -9,7 +9,10 @@ export type Word = {
   cut?: boolean;
 };
 
-export type CaptionStyle = "clean" | "pill" | "pop" | "accent";
+// How key words stand out: a colored bubble behind the word, colored text, or colored text in the display font.
+export type KeyWordStyle = "pill" | "color" | "serif";
+export type CaptionMode = "phrase" | "single";
+export type TextEffect = "shadow" | "outline";
 export type CaptionPosition = "top" | "middle" | "bottom";
 
 export type BrandKit = {
@@ -18,13 +21,16 @@ export type BrandKit = {
   // Used for the hook title and for "accent" highlighted words.
   displayFont: string;
   hookColor: string;
+  hookPosition: CaptionPosition;
   // How long the hook stays on screen. 0 = the whole video.
   hookDurationMs: number;
   textColor: string;
   outlineColor: string;
   highlightColor: string;
   highlightTextColor: string;
-  style: CaptionStyle;
+  style: KeyWordStyle;
+  captionMode: CaptionMode;
+  textEffect: TextEffect;
   position: CaptionPosition;
   wordsPerLine: number;
   uppercase: boolean;
