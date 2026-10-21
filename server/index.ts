@@ -6,7 +6,8 @@ import multer from "multer";
 import { z } from "zod";
 import { normalizeBrand, normalizeStyle } from "../src/shared/brand.ts";
 import { applyEdits, ReelEdits } from "../src/shared/edits.ts";
-import type { BrandKit, MusicBed, Overlay, Project, SoundCue, Word } from "../src/shared/types.ts";
+import { draftSlides } from "../src/shared/repurpose.ts";
+import type { BrandKit, MusicBed, Overlay, Project, Slide, SlideFormat, SoundCue, Word } from "../src/shared/types.ts";
 import { isFiller } from "../src/shared/words.ts";
 import { accessToken, checkPassword, requireAuth } from "./auth.ts";
 import { writeCaption } from "./caption.ts";
@@ -22,6 +23,7 @@ import {
 } from "./storage.ts";
 import { addAsset, deleteAsset, libraryDir, listAssets } from "./library.ts";
 import { transcribeWords } from "./transcribe.ts";
+import { frameAt, renderSlides } from "./repurpose.ts";
 import { createTrialReels } from "./trials.ts";
 
 await ensureDirs();
@@ -105,6 +107,8 @@ async function createProject(originalName: string, autopilot: boolean, placeOrig
     sounds: [],
     music: null,
     soundsEnabled: true,
+    carousel: [],
+    stories: [],
     style: (await readBrand()).defaultStyle,
     render: { status: "idle", progress: 0 },
   };
@@ -166,6 +170,8 @@ app.patch("/api/projects/:id", async (req, res) => {
   if (Array.isArray(req.body?.sounds)) patch.sounds = req.body.sounds as SoundCue[];
   if (req.body && "music" in req.body) patch.music = req.body.music as MusicBed | null;
   if (typeof req.body?.soundsEnabled === "boolean") patch.soundsEnabled = req.body.soundsEnabled;
+  if (Array.isArray(req.body?.carousel)) patch.carousel = req.body.carousel as Slide[];
+  if (Array.isArray(req.body?.stories)) patch.stories = req.body.stories as Slide[];
   res.json(await updateProject(project.id, patch));
 });
 
@@ -182,6 +188,29 @@ app.post("/api/projects/:id/apply", async (req, res) => {
 });
 
 app.get("/api/events", subscribe);
+
+// Carousel slides and story frames: draft them from the reel, then render to images.
+const FORMATS: SlideFormat[] = ["carousel", "stories"];
+app.post("/api/projects/:id/:format/draft", async (req, res) => {
+  const format = req.params.format as SlideFormat;
+  const project = await readProject(req.params.id);
+  if (!project || !FORMATS.includes(format)) return res.status(404).json({ error: "Not found" });
+  const slides = Array.isArray(req.body?.slides) ? (req.body.slides as Slide[]) : draftSlides(project, await readBrand(), format);
+  res.json(await updateProject(project.id, { [format]: slides }));
+});
+
+app.post("/api/projects/:id/:format/render", async (req, res) => {
+  const format = req.params.format as SlideFormat;
+  const project = await readProject(req.params.id);
+  if (!project || !FORMATS.includes(format)) return res.status(404).json({ error: "Not found" });
+  if (!project[format].length) return res.status(400).json({ error: "Make the slides first." });
+  try {
+    res.json({ images: await renderSlides(project, format) });
+  } catch (err) {
+    console.error(`Rendering ${format} failed`, err);
+    res.status(500).json({ error: `Couldn't make the images: ${(err as Error).message}` });
+  }
+});
 
 app.post("/api/projects/:id/auto-highlight", async (req, res) => {
   const project = await readProject(req.params.id);
@@ -267,7 +296,9 @@ app.get("/media/library/:file", async (req, res) => {
 // Serves the prepared video and the finished export.
 app.get("/media/:id/:file", async (req, res) => {
   const { id, file } = req.params;
-  if (!(await readProject(id)) || !["video.mp4", "export.mp4"].includes(file)) return res.status(404).end();
+  const allowed = ["video.mp4", "export.mp4"].includes(file) || /^(carousel|story)-\d{2}\.png$|^frame-\d+\.jpg$/.test(file);
+  if (!(await readProject(id)) || !allowed) return res.status(404).end();
+  if (file.startsWith("frame-")) await frameAt(id, Number(file.slice(6, -4))).catch(() => {});
   if (file === "export.mp4") res.attachment("reel.mp4");
   res.sendFile(projectFile(id, file));
 });

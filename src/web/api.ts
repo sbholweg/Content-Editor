@@ -1,7 +1,8 @@
-import type { Asset, BrandKit, Project } from "../shared/types";
+import type { Asset, BrandKit, Project, SlideFormat } from "../shared/types";
 
 type EditableField =
-  | "words" | "hookText" | "hookSubText" | "postCaption" | "removePauses" | "style" | "overlays" | "sounds" | "music" | "soundsEnabled";
+  | "words" | "hookText" | "hookSubText" | "postCaption" | "removePauses" | "style" | "overlays" | "sounds" | "music" | "soundsEnabled"
+  | "carousel" | "stories";
 
 const TOKEN_KEY = "content-editor-token";
 
@@ -58,6 +59,15 @@ export const libraryUrl = (file: string) => {
   return `/media/library/${file}${token ? `?t=${token}` : ""}`;
 };
 
+// Any file in a reel's folder, e.g. a carousel image or a background frame.
+export const projectFileUrl = (id: string, name: string, bust = "") => {
+  const params = new URLSearchParams();
+  const token = getToken();
+  if (token) params.set("t", token);
+  if (bust) params.set("v", bust);
+  return `/media/${id}/${name}?${params.toString()}`;
+};
+
 export const mediaUrl = (id: string, file: "video.mp4" | "export.mp4", bust = "") => {
   const params = new URLSearchParams();
   const token = getToken();
@@ -78,6 +88,8 @@ export const api = {
   writeCaption: (id: string, cta: string) => request<Project>(`/api/projects/${id}/caption`, { method: "POST", body: JSON.stringify({ cta }) }),
   makeTrialReels: (id: string) => request<Project[]>(`/api/projects/${id}/trial-reels`, { method: "POST" }),
   listTrialReels: (id: string) => request<Project[]>(`/api/projects/${id}/trial-reels`),
+  draftSlides: (id: string, format: SlideFormat) => request<Project>(`/api/projects/${id}/${format}/draft`, { method: "POST", body: "{}" }),
+  renderSlides: (id: string, format: SlideFormat) => request<{ images: string[] }>(`/api/projects/${id}/${format}/render`, { method: "POST", body: "{}" }),
   deleteProject: (id: string) => request<{ ok: true }>(`/api/projects/${id}`, { method: "DELETE" }),
   render: (id: string) => request<Project>(`/api/projects/${id}/render`, { method: "POST" }),
   getBrand: () => request<BrandKit>("/api/brand"),

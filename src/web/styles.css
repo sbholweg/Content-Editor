@@ -290,3 +290,14 @@ a.chip.accent { color: #fff; }
   .two { grid-template-columns: 1fr; }
   .panel-card { padding: 16px; }
 }
+
+/* Carousel + stories */
+.slide-strip { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 8px; }
+.slide-thumb { position: relative; flex-shrink: 0; width: 132px; border-radius: 12px; overflow: hidden; border: 2px solid transparent; background: var(--chip); }
+.slide-thumb.carousel { aspect-ratio: 4 / 5; }
+.slide-thumb.stories { aspect-ratio: 9 / 16; width: 110px; }
+.slide-thumb.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.slide-thumb.add { display: grid; place-items: center; border: 2px dashed var(--line); color: var(--accent); font-weight: 600; }
+.slide-num { position: absolute; top: 6px; left: 6px; font-size: 11px; font-weight: 700; color: #fff; background: rgba(0, 0, 0, 0.5); padding: 1px 7px; border-radius: 999px; }
+.slide-editor { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--chip); }
+.slide-editor select { border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 10px 12px; min-height: 44px; }

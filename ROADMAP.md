@@ -28,13 +28,15 @@ Done
 - 42 bundled fonts grouped Clean / Serif / Script (incl. upright serifs), any font for captions or hook,
   plus upload-your-own fonts, sounds and music
 - Starter looks (Editorial, Bold, Soft) and zoom jumps between lines
+- Repurpose: carousel (4:5) and stories (9:16) from every reel, in the reel's style, editable,
+  saved as images; Claude can write them (repurpose-reel skill)
 - Claude Code layer: CLAUDE.md + skills (set me up, edit my reels, plain-words changes, update me),
   engine commands, inbox/outputs folders, editor updates live while Claude works
 
 Next (in rough order)
 1. Test on a real Windows PC with Claude Code (Sarabeth is the first "buyer")
 2. Make every "✨" button in the editor work through the buyer's Claude instead of an API key
-3. Reel to carousel (slides saved as images) and "Your snaps" (save a frame as the cover)
+3. "Your snaps": save any frame as the cover image
 4. Client wins: testimonial to quote card, and client case study carousel
 5. Weekly batch: upload several videos, get back a numbered posting queue with captions
 6. "Tell Claude what you want" for a line (three options to pick from)

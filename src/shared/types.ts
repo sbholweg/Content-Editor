@@ -115,6 +115,28 @@ export type MusicBed = { soundId: string; volume: number; duck: boolean; enabled
 // An overlay ready to draw: the asset's details are included so the video doesn't need the library.
 export type ResolvedOverlay = Overlay & { src: string; kind: AssetKind; width: number; height: number };
 
+// One carousel slide or story frame made from a reel.
+export type Slide = {
+  id: string;
+  kind: "cover" | "point" | "cta";
+  eyebrow: string;
+  title: string;
+  body: string;
+  pills: string[];
+  // Which moment of the original video to use as the background (milliseconds).
+  frameMs: number;
+};
+
+export type SlideFormat = "carousel" | "stories";
+
+export type SlideProps = {
+  slide: Slide;
+  format: SlideFormat;
+  style: ReelStyle;
+  background: string;
+  customFonts: { name: string; url: string }[];
+};
+
 export type ProjectStatus = "uploaded" | "processing" | "ready" | "error";
 
 export type RenderState = {
@@ -146,6 +168,8 @@ export type Project = {
   music: MusicBed | null;
   // Sound effects on/off for the whole reel.
   soundsEnabled: boolean;
+  carousel: Slide[];
+  stories: Slide[];
   style: ReelStyle;
   render: RenderState;
   // Set on trial reel versions: the reel they were made from and which angle they use.

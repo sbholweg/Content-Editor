@@ -11,7 +11,7 @@ import { projectFile, readProject, updateProject } from "./storage.ts";
 
 let bundlePromise: Promise<string> | null = null;
 
-function getBundle() {
+export function getBundle() {
   bundlePromise ??= bundle({ entryPoint: path.join(config.root, "src/remotion/index.tsx") });
   return bundlePromise;
 }

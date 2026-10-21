@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 
-function run(cmd: string, args: string[]): Promise<string> {
+export function run(cmd: string, args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
     const child = spawn(cmd, args);
     let out = "";

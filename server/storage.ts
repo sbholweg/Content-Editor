@@ -34,6 +34,8 @@ export async function readProject(id: string): Promise<Project | null> {
       sounds: [],
       music: null,
       soundsEnabled: true,
+      carousel: [],
+      stories: [],
       ...project,
       style,
     };

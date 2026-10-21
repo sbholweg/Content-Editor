@@ -18,7 +18,7 @@ explain things in plain words, never ask them to type commands, and keep replies
 - `import [--do-it-all]`: import everything in the inbox and transcribe it
 - `list` / `show [id|latest]`: see reels; `show` prints every word with a number like `[12]`
 - `apply [id|latest] edits.json`: change a reel (see the change-reel skill for the format)
-- `caption`, `export`, `trials`, `looks`, `brand`, `library`: see `npm run engine` for help
+- `caption`, `export`, `trials`, `carousel`, `stories`, `looks`, `brand`, `library`: see `npm run engine` for help
 
 To change a reel: write the JSON to `edits.json` in this folder with your file-writing tool,
 then run `npm run engine -- apply latest edits.json`. Don't pass JSON on the command line
@@ -28,6 +28,7 @@ then run `npm run engine -- apply latest edits.json`. Don't pass JSON on the com
 - **setup-engine**: "set me up", first-time install, or anything not working
 - **edit-reels**: "edit my new reels", "make this post-ready", working through the inbox
 - **change-reel**: any plain-words change ("make it softer", "cut the first sentence", "hook lower")
+- **repurpose-reel**: "make a carousel", "turn this into stories", "repurpose this"
 - **update-engine**: "update me"
 
 ## Rules

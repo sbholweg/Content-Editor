@@ -132,6 +132,19 @@ async function readEdits(arg: string | undefined) {
   }
 }
 
+async function repurpose(format: "carousel" | "stories", args: string[]) {
+  const id = await resolveId(args[0]);
+  const body = args[1] ? { slides: await readEdits(args[1]) } : {};
+  const p = await call<Project>("POST", `/api/projects/${id}/${format}/draft`, body);
+  console.log(`${format === "carousel" ? "Carousel" : "Stories"} for ${p.id.slice(0, 8)}:`);
+  for (const [i, s] of p[format].entries()) {
+    console.log(`  ${i + 1}. [${s.kind}] ${s.eyebrow ? `${s.eyebrow} / ` : ""}${s.title}${s.body ? ` / ${s.body}` : ""}${s.pills.length ? ` / tags: ${s.pills.join(", ")}` : ""}`);
+  }
+  console.log("Making the images…");
+  const { images } = await call<{ images: string[] }>("POST", `/api/projects/${id}/${format}/render`);
+  console.log(`✓ ${images.length} images saved in ${config.outputsDir} (the newest "${format}" folder).`);
+}
+
 const VIDEO = /\.(mov|mp4|m4v|webm)$/i;
 
 const commands: Record<string, (args: string[]) => Promise<void>> = {
@@ -224,6 +237,15 @@ const commands: Record<string, (args: string[]) => Promise<void>> = {
     console.log(p.postCaption);
   },
 
+  // carousel/stories [id] [slides.json]: without a file, drafts slides from the reel's words.
+  async carousel(args) {
+    await repurpose("carousel", args);
+  },
+
+  async stories(args) {
+    await repurpose("stories", args);
+  },
+
   async looks() {
     const brand = await call<BrandKit>("GET", "/api/brand");
     console.log(`Default look: ${JSON.stringify(brand.defaultStyle)}`);
@@ -262,6 +284,8 @@ const HELP = `Engine commands (npm run engine -- <command>):
   caption [id] [call to action]  write the post caption
   export [id|latest]         export to the outputs folder
   trials [id|latest]         make 3 trial reels and export them
+  carousel [id] [slides.json]  make carousel images (drafts the slides if no file is given)
+  stories [id] [slides.json]   make story frames (same)
   looks                      show the default look, saved looks, business profile
   brand <json>               save business profile / default look / calls to action
   library                    list GIFs, images, b-roll, sounds and fonts`;

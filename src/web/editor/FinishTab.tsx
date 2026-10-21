@@ -3,6 +3,7 @@ import { BusinessCard, PostCaptionCard } from "../sections";
 import { TrialReelsCard } from "../TrialReels";
 import { api } from "../api";
 import { formatTime, useEditor } from "./context";
+import { RepurposeCard } from "./Repurpose";
 
 export function FinishTab({ exportControls }: { exportControls: React.ReactNode }) {
   const { project, reel, update, timeline, brand, updateBrand, onAuthError } = useEditor();
@@ -39,10 +40,7 @@ export function FinishTab({ exportControls }: { exportControls: React.ReactNode 
         }}
       />
 
-      <section className="panel-card coming">
-        <h3>Carousel + stories</h3>
-        <p className="muted small">Turn this reel into a carousel and stories in your style. Coming next.</p>
-      </section>
+      {!project.parentId ? <RepurposeCard /> : null}
 
       <BusinessCard brand={brand} onBrand={updateBrand} />
     </>
