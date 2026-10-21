@@ -1,7 +1,7 @@
 import { Thumbnail } from "@remotion/player";
 import React, { useRef, useState } from "react";
 import { outputFrames, Reel, REEL_FPS, REEL_HEIGHT, REEL_WIDTH } from "../../remotion/Reel";
-import { DISPLAY_FONTS, SUBTITLE_FONTS } from "../../shared/fonts";
+import { FONT_GROUPS } from "../../shared/fonts";
 import { HOOK_LIBRARY } from "../../shared/library";
 import type { HookLayout, ReelProps, ReelStyle } from "../../shared/types";
 import { LibraryBrowser, useUpload } from "../Media";
@@ -43,7 +43,7 @@ export function CaptionsPanel() {
         value={look.position}
         onChange={(v) => set("position", v)}
         options={[
-          { value: "top", label: "Top", note: "under the hook" },
+          { value: "top", label: "Top", note: "takes the hook's spot after it" },
           { value: "middle", label: "Middle", note: "centre of the frame" },
           { value: "bottom", label: "Lower", note: "just above the Reels bar" },
         ]}
@@ -174,6 +174,24 @@ export function HookPanel({ previewProps }: { previewProps: ReelProps }) {
   );
 }
 
+// Font picker with a row of groups (Clean, Serif, Script & fun, Yours) so the list stays short.
+function FontPicker({ value, yours, onChange }: { value: string; yours: { name: string; note: string }[]; onChange: (v: string) => void }) {
+  const groups = [...(yours.length ? [{ label: "Your fonts", fonts: yours }] : []), ...FONT_GROUPS];
+  const [group, setGroup] = useState(() => groups.find((g) => g.fonts.some((f) => f.name === value))?.label ?? groups[0].label);
+  return (
+    <>
+      <div className="font-groups">
+        {groups.map((g) => (
+          <button key={g.label} className={`chip ${group === g.label ? "accent" : ""}`} onClick={() => setGroup(g.label)}>
+            {g.label}
+          </button>
+        ))}
+      </div>
+      <FontOptions value={value} fonts={groups.find((g) => g.label === group)?.fonts ?? []} onChange={onChange} />
+    </>
+  );
+}
+
 export function FontsPanel() {
   const { assets, setAssets, onAuthError } = useEditor();
   const { look, set } = useLook();
@@ -201,13 +219,13 @@ export function FontsPanel() {
           {progress === null ? "＋ Upload a font" : `Uploading ${Math.round(progress * 100)}%`}
         </button>
       </div>
-      <p className="muted small">Have brand fonts? Upload the font file (.ttf, .otf, .woff or .woff2) and it shows up in both lists below.</p>
+      <p className="muted small">Have brand fonts? Upload the font file (.ttf, .otf, .woff or .woff2) and it shows up under “Your fonts” below.</p>
       {error ? <p className="error small">{error}</p> : null}
 
       <Label>Caption font</Label>
-      <FontOptions value={look.font} fonts={[...yours, ...SUBTITLE_FONTS]} onChange={(v) => set("font", v)} />
+      <FontPicker value={look.font} yours={yours} onChange={(v) => set("font", v)} />
       <Label>Hook & accent font</Label>
-      <FontOptions value={look.displayFont} fonts={[...yours, ...DISPLAY_FONTS]} onChange={(v) => set("displayFont", v)} />
+      <FontPicker value={look.displayFont} yours={yours} onChange={(v) => set("displayFont", v)} />
 
       <div className="divider" />
       <div className="colors-grid">

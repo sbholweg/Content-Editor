@@ -25,7 +25,9 @@ Done
   Sound (music that ducks under the voice + sound effects per line, 10 starter sounds),
   Finish (export, trial reels, caption); play bar with a "Next" button on every tab
 - Hook styles: headline, eyebrow + headline, headline + subhead (with previews)
-- 35 bundled fonts, plus upload-your-own fonts, sounds and music
+- 42 bundled fonts grouped Clean / Serif / Script (incl. upright serifs), any font for captions or hook,
+  plus upload-your-own fonts, sounds and music
+- Starter looks (Editorial, Bold, Soft) and zoom jumps between lines
 - Claude Code layer: CLAUDE.md + skills (set me up, edit my reels, plain-words changes, update me),
   engine commands, inbox/outputs folders, editor updates live while Claude works
 
@@ -36,6 +38,7 @@ Next (in rough order)
 4. Client wins: testimonial to quote card, and client case study carousel
 5. Weekly batch: upload several videos, get back a numbered posting queue with captions
 6. "Tell Claude what you want" for a line (three options to pick from)
+7. Graphic cards Claude can fill in: count-up number, stat card, checklist, quote
 
 ## Later: Version B, VAs editing reels for their clients (upgrade)
 - A separate brand kit and business profile per client

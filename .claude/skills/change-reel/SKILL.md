@@ -31,7 +31,7 @@ description: Make plain-words changes to a reel, e.g. "make it softer", "cut the
     "textColor": "#FFFFFF", "outlineColor": "#000000",
     "highlightColor": "#8656F6", "highlightTextColor": "#FFFFFF",
     "style": "pill|color|serif", "captionMode": "phrase|single", "textEffect": "shadow|outline",
-    "position": "top|middle|bottom", "wordsPerLine": 4, "uppercase": false, "fontSize": 64
+    "position": "top|middle|bottom", "wordsPerLine": 4, "uppercase": false, "fontSize": 64, "zoomJumps": true
   },
   "addMedia": [{"asset": "library item name", "fromWord": 10, "toWord": 14, "placement": "middle|top|bottom|full"}],
   "removeMedia": ["ov-..."],
@@ -47,15 +47,24 @@ Starter sounds: Whoosh, Swoosh in, Pop, Click, Blip, Ding, Sparkle, Riser, Boom,
 Music must be a track they uploaded (they need the rights to it); `"music": null` removes it. `style: "pill"` = colored bubble behind
 key words; `"color"` = key words change color; `"serif"` = key words in the hook font.
 
-Fonts: captions use DM Sans, Inter, Montserrat, Poppins, Courier Prime, Anton, Bebas Neue,
-Archivo Black. Hooks/serif words use Instrument Serif, Bodoni Moda, DM Serif Display, Fraunces,
-Playfair Display, Caveat, Pacifico.
+Fonts (any font works for captions or the hook; exact names matter): see `src/shared/fonts.ts`.
+Clean: DM Sans, Inter, Montserrat, Poppins, Outfit, Lexend, Raleway, Anton, Bebas Neue...
+Serif: "Instrument Serif (upright)", "Instrument Serif" (italic), "Playfair Display (upright)",
+"Bodoni Moda (upright)", Fraunces, Abril Fatface... Script: Caveat, Dancing Script, Great Vibes...
+Fonts they uploaded are listed by `library`.
+
+Starter looks (in `src/shared/looks.ts`): Editorial (serif captions at the top, soft yellow
+colored key words, zoom jumps), Bold (one word at a time, purple bubbles), Soft (calm, lavender).
+To apply one, copy its style fields into "style".
 
 ## Translating common requests
 - "softer / calmer": textEffect shadow, style serif or color, smaller fontSize (56-62), a softer
   displayFont (Instrument Serif, Fraunces).
 - "bolder / louder": textEffect outline, style pill, captionMode single, fontSize 80+, Anton or Montserrat.
 - "karaoke / one word at a time": captionMode single.
+- "zoom in and out / punch-ins / make it more dynamic": zoomJumps true.
+- "editorial / classy / screenshots on screen": Editorial starter look; put their
+  screenshots on the lines they talk about with addMedia (placement middle, size ~0.6) and a Pop on each.
 - "my brand colors": use `looks` to read their default look and saved looks; prefer those colors.
 - "cut the first sentence": cut the word numbers up to and including its last word.
 - "add <clip> when I talk about X": find the words in `show`, find the item with `library`, use addMedia.

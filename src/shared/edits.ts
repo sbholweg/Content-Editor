@@ -44,6 +44,7 @@ export const ReelEdits = z
         wordsPerLine: z.number().int().min(1).max(7),
         uppercase: z.boolean(),
         fontSize: z.number().min(30).max(140),
+        zoomJumps: z.boolean(),
       })
       .partial()
       .strict(),

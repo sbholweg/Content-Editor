@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
-import { AbsoluteFill, OffthreadVideo, Sequence } from "remotion";
+import { AbsoluteFill, OffthreadVideo, Sequence, useCurrentFrame } from "remotion";
+import { buildLines } from "../shared/lines";
 import { overlayTimes } from "../shared/overlays";
 import { buildTimeline } from "../shared/timeline";
 import type { ReelProps } from "../shared/types";
@@ -22,6 +23,11 @@ export const Reel: React.FC<ReelProps> = (props) => {
   const { videoSrc, hookText, hookSubText, words, brand, durationMs, removePauses, overlays, sounds, music, customFonts } = props;
   registerCustomFonts(customFonts ?? []);
   const timeline = useMemo(() => buildTimeline(words, durationMs, removePauses), [words, durationMs, removePauses]);
+  const frame = useCurrentFrame();
+  const lineStarts = useMemo(() => buildLines(timeline.words).map((l) => l.words[0].startMs), [timeline]);
+  // Zoom jumps: every other line is punched in a little, switching right as the line starts.
+  const lineIndex = lineStarts.filter((ms) => ms <= (frame / REEL_FPS) * 1000).length - 1;
+  const zoom = brand.zoomJumps && lineIndex % 2 === 1 ? 1.14 : 1;
   const placed = useMemo(() => overlayTimes(overlays ?? [], words, timeline.words), [overlays, words, timeline]);
 
   // Each kept piece of the original video plays back-to-back.
@@ -36,18 +42,20 @@ export const Reel: React.FC<ReelProps> = (props) => {
 
   return (
     <AbsoluteFill style={{ backgroundColor: "black" }}>
-      {videoSrc
-        ? pieces.map((p) => (
-            <Sequence key={`${p.start}-${p.length}`} from={p.from} durationInFrames={p.length} premountFor={REEL_FPS}>
-              <OffthreadVideo
-                src={videoSrc}
-                trimBefore={p.start}
-                durationInFrames={p.length}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            </Sequence>
-          ))
-        : null}
+      <AbsoluteFill style={{ transform: `scale(${zoom})`, transformOrigin: "50% 38%" }}>
+        {videoSrc
+          ? pieces.map((p) => (
+              <Sequence key={`${p.start}-${p.length}`} from={p.from} durationInFrames={p.length} premountFor={REEL_FPS}>
+                <OffthreadVideo
+                  src={videoSrc}
+                  trimBefore={p.start}
+                  durationInFrames={p.length}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              </Sequence>
+            ))
+          : null}
+      </AbsoluteFill>
       <Overlays items={placed} />
       <Sounds sounds={sounds ?? []} music={music ?? null} words={timeline.words} />
       <Hook text={hookText} subText={hookSubText ?? ""} brand={brand} />

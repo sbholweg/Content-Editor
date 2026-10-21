@@ -7,7 +7,7 @@ import { HOOK_TOP } from "./Hook";
 
 // Vertical center of the captions, as a percentage of the frame height.
 const POSITION_TOP: Record<ReelStyle["position"], number> = {
-  top: 26,
+  top: 16,
   middle: 55,
   // Instagram covers the bottom ~20% with the caption and buttons, so "bottom" sits above that.
   bottom: 72,
@@ -18,6 +18,8 @@ const MIN_GAP_FROM_HOOK = 13;
 function captionTop(brand: ReelStyle, hookVisible: boolean) {
   const top = POSITION_TOP[brand.position];
   if (!hookVisible) return top;
+  // Captions that live at the top wait in the middle while the hook is up, then take its place.
+  if (brand.position === "top" && brand.hookPosition === "top") return POSITION_TOP.middle;
   const hook = HOOK_TOP[brand.hookPosition];
   if (Math.abs(top - hook) >= MIN_GAP_FROM_HOOK) return top;
   return hook + MIN_GAP_FROM_HOOK <= 76 ? hook + MIN_GAP_FROM_HOOK : hook - MIN_GAP_FROM_HOOK;
@@ -163,9 +165,10 @@ const CaptionWord: React.FC<{
     );
   }
 
-  // "color": same font, the word turns the key word color with a little bounce.
+  // "color": same font, the word turns the key word color and lifts into place (no scaling, so
+  // neighbouring key words keep their spacing).
   return (
-    <span style={{ ...plain, color: spoken ? brand.highlightColor : brand.textColor, transform: `scale(${1 + 0.12 * wordIn})` }}>
+    <span style={{ ...plain, opacity: 1, color: spoken ? brand.highlightColor : brand.textColor, transform: `translateY(${(1 - wordIn) * 10}px)` }}>
       {text}
     </span>
   );

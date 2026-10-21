@@ -19,6 +19,7 @@ export const DEFAULT_STYLE: ReelStyle = {
   wordsPerLine: 4,
   uppercase: false,
   fontSize: 64,
+  zoomJumps: false,
 };
 
 export const DEFAULT_BRAND: BrandKit = {

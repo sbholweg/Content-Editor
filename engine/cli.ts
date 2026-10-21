@@ -78,7 +78,7 @@ function describe(p: Project, assets: Asset[]) {
     `  Open in the editor: ${editorUrl(p.id)}`,
     `  From: ${p.originalName} · status ${p.status} · ${fmt(timeline.durationMs)} after cuts (${fmt(p.durationMs)} raw) · pauses ${p.removePauses ? "removed" : "kept"} · export ${p.render.status}`,
     `  Hook: ${p.hookText ? `"${p.hookText}"` : "(none)"}${p.hookSubText ? ` + "${p.hookSubText}"` : ""} · ${s.hookLayout} · ${s.displayFont} ${s.hookColor} at ${s.hookPosition}, ${s.hookDurationMs ? `${s.hookDurationMs / 1000}s` : "whole video"}`,
-    `  Captions: ${s.captionMode === "single" ? "one word at a time" : `phrase, ${s.wordsPerLine} words`} · ${s.font} ${s.fontSize}px ${s.textColor} · ${s.textEffect} · at ${s.position}${s.uppercase ? " · ALL CAPS" : ""}`,
+    `  Captions: ${s.captionMode === "single" ? "one word at a time" : `phrase, ${s.wordsPerLine} words`} · ${s.font} ${s.fontSize}px ${s.textColor} · ${s.textEffect} · at ${s.position}${s.uppercase ? " · ALL CAPS" : ""}${s.zoomJumps ? " · zoom jumps" : ""}`,
     `  Key words: ${s.style === "pill" ? `bubble ${s.highlightColor} with ${s.highlightTextColor} text` : s.style === "color" ? `coloured text ${s.highlightColor}` : `serif word ${s.highlightColor}`}`,
     "",
     "  Words ([n] = word number, *word* = key word, ~word~ = cut):",

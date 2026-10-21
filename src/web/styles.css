@@ -251,6 +251,7 @@ a.chip.accent { color: #fff; }
 .lookbook-label { font-size: 13px; font-weight: 600; padding: 0 4px 2px; }
 .on-badge { position: absolute; left: 14px; bottom: 34px; font-size: 11px; font-weight: 700; color: #fff; background: #2f8f5b; padding: 3px 8px; border-radius: 999px; }
 .colors-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.font-groups { display: flex; flex-wrap: wrap; gap: 6px; }
 .library-browser { display: flex; flex-direction: column; gap: 10px; }
 
 /* Sound */

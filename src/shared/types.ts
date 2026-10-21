@@ -46,6 +46,8 @@ export type ReelStyle = {
   wordsPerLine: number;
   uppercase: boolean;
   fontSize: number;
+  // Punch in and out between lines (hides cuts, keeps it moving).
+  zoomJumps: boolean;
 };
 
 export type SavedLook = { id: string; name: string; style: ReelStyle };

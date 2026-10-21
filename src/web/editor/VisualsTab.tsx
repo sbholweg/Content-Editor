@@ -44,6 +44,13 @@ export function VisualsTab({ previewProps }: { previewProps: ReelProps }) {
             </button>
           ))}
           <button
+            className={`tool ${reel.style.zoomJumps ? "on" : ""}`}
+            onClick={() => update({ style: { ...reel.style, zoomJumps: !reel.style.zoomJumps } })}
+            title="Punch in and out between lines"
+          >
+            {reel.style.zoomJumps ? "✓ Zoom jumps" : "Zoom jumps"}
+          </button>
+          <button
             className="tool"
             disabled={busy}
             onClick={async () => {

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { STARTER_LOOKS } from "../shared/looks";
 import type { BrandKit, BusinessProfile, ReelStyle } from "../shared/types";
 import { Card, Label } from "./ui";
 
@@ -20,6 +21,16 @@ export function LooksCard({ look, onLook, brand, onBrand, bare }: LookProps & Br
   return (
     <Wrap title="Your looks" bare={bare}>
       <p className="muted small">Tap a look to use it on this reel. Changes below only affect this reel until you save them.</p>
+      <div className="label">Starter looks</div>
+      <div className="options">
+        {STARTER_LOOKS.map((l) => (
+          <button key={l.id} className={`option ${same(look, l.style) ? "on" : ""}`} onClick={() => onLook(l.style)}>
+            <span className="option-label">{l.name}</span>
+            <span className="option-note">{l.note}</span>
+          </button>
+        ))}
+      </div>
+      <div className="label">Yours</div>
       <div className="options">
         <button className={`option ${isDefault ? "on" : ""}`} onClick={() => onLook(brand.defaultStyle)}>
           <span className="option-label">My default</span>

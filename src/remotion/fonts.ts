@@ -34,6 +34,13 @@ import shrikhandUrl from "@fontsource/shrikhand/files/shrikhand-latin-400-normal
 import dancingScriptUrl from "@fontsource/dancing-script/files/dancing-script-latin-700-normal.woff2";
 import greatVibesUrl from "@fontsource/great-vibes/files/great-vibes-latin-400-normal.woff2";
 import permanentMarkerUrl from "@fontsource/permanent-marker/files/permanent-marker-latin-400-normal.woff2";
+import instrumentSerifUpright400Url from "@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff2";
+import playfairDisplayUpright500Url from "@fontsource/playfair-display/files/playfair-display-latin-500-normal.woff2";
+import bodoniModaUpright500Url from "@fontsource/bodoni-moda/files/bodoni-moda-latin-500-normal.woff2";
+import dmSerifDisplayUpright400Url from "@fontsource/dm-serif-display/files/dm-serif-display-latin-400-normal.woff2";
+import libreBaskervilleUpright400Url from "@fontsource/libre-baskerville/files/libre-baskerville-latin-400-normal.woff2";
+import loraUpright500Url from "@fontsource/lora/files/lora-latin-500-normal.woff2";
+import cormorantGaramondUpright600Url from "@fontsource/cormorant-garamond/files/cormorant-garamond-latin-600-normal.woff2";
 import type { FontName } from "../shared/fonts";
 
 type FontFile = { url: string; weight: number; style: "normal" | "italic" };
@@ -41,6 +48,13 @@ type FontFile = { url: string; weight: number; style: "normal" | "italic" };
 // Font files ship with the app (no Google Fonts call at export time). Only the
 // weight/style we draw with is included for each family.
 const FILES: Record<FontName, FontFile> = {
+  "Instrument Serif (upright)": { url: instrumentSerifUpright400Url, weight: 400, style: "normal" },
+  "Playfair Display (upright)": { url: playfairDisplayUpright500Url, weight: 500, style: "normal" },
+  "Bodoni Moda (upright)": { url: bodoniModaUpright500Url, weight: 500, style: "normal" },
+  "DM Serif Display (upright)": { url: dmSerifDisplayUpright400Url, weight: 400, style: "normal" },
+  "Libre Baskerville (upright)": { url: libreBaskervilleUpright400Url, weight: 400, style: "normal" },
+  "Lora (upright)": { url: loraUpright500Url, weight: 500, style: "normal" },
+  "Cormorant Garamond (upright)": { url: cormorantGaramondUpright600Url, weight: 600, style: "normal" },
   "DM Sans": { url: dmSansUrl, weight: 600, style: "normal" },
   Inter: { url: interUrl, weight: 700, style: "normal" },
   Montserrat: { url: montserratUrl, weight: 800, style: "normal" },
