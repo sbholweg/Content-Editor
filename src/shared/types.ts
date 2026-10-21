@@ -22,9 +22,8 @@ export type BusinessProfile = {
   cta: string;
 };
 
-export type BrandKit = {
-  name: string;
-  business: BusinessProfile;
+// Everything about how a reel looks. Each reel has its own copy, starting from the default look.
+export type ReelStyle = {
   font: string;
   // Used for the hook title and for "accent" highlighted words.
   displayFont: string;
@@ -45,11 +44,22 @@ export type BrandKit = {
   fontSize: number;
 };
 
+export type SavedLook = { id: string; name: string; style: ReelStyle };
+
+export type BrandKit = {
+  name: string;
+  business: BusinessProfile;
+  defaultStyle: ReelStyle;
+  looks: SavedLook[];
+  // Calls to action the creator reuses, e.g. 'Comment "VA" for my checklist'.
+  ctaKeywords: string[];
+};
+
 export type ReelProps = {
   videoSrc: string;
   hookText: string;
   words: Word[];
-  brand: BrandKit;
+  brand: ReelStyle;
   // Length of the original, uncut video.
   durationMs: number;
   removePauses: boolean;
@@ -77,5 +87,9 @@ export type Project = {
   postCaption: string;
   words: Word[];
   removePauses: boolean;
+  style: ReelStyle;
   render: RenderState;
+  // Set on trial reel versions: the reel they were made from and which angle they use.
+  parentId?: string;
+  variantLabel?: string;
 };

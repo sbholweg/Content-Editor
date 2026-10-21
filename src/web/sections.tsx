@@ -1,16 +1,105 @@
 import React, { useState } from "react";
 import { DISPLAY_FONTS, SUBTITLE_FONTS } from "../shared/fonts";
-import type { BrandKit, BusinessProfile, Word } from "../shared/types";
+import { HOOK_LIBRARY } from "../shared/library";
+import { isFiller } from "../shared/words";
+import type { BrandKit, BusinessProfile, ReelStyle, Word } from "../shared/types";
 import { Card, FontOptions, Label, Options, Slider, Swatches } from "./ui";
 
 type BrandProps = { brand: BrandKit; onBrand: (b: BrandKit) => void };
-const setter = ({ brand, onBrand }: BrandProps) => <K extends keyof BrandKit>(key: K, value: BrandKit[K]) => onBrand({ ...brand, [key]: value });
+// The current reel's look.
+type LookProps = { look: ReelStyle; onLook: (s: ReelStyle) => void };
+const setter = ({ look, onLook }: LookProps) => <K extends keyof ReelStyle>(key: K, value: ReelStyle[K]) => onLook({ ...look, [key]: value });
 
-export function HookCard({ hookText, onHookText, ...props }: BrandProps & { hookText: string; onHookText: (t: string) => void }) {
+// Saved combinations of fonts and colors, applied to this reel in one tap.
+export function LooksCard({ look, onLook, brand, onBrand }: LookProps & BrandProps) {
+  const [naming, setNaming] = useState(false);
+  const [name, setName] = useState("");
+  const same = (a: ReelStyle, b: ReelStyle) => JSON.stringify(a) === JSON.stringify(b);
+  const isDefault = same(look, brand.defaultStyle);
+  return (
+    <Card title="Your looks">
+      <p className="muted small">Tap a look to use it on this reel. Changes below only affect this reel until you save them.</p>
+      <div className="options">
+        <button className={`option ${isDefault ? "on" : ""}`} onClick={() => onLook(brand.defaultStyle)}>
+          <span className="option-label">My default</span>
+          <span className="option-note">used for every new reel</span>
+        </button>
+        {brand.looks.map((l) => (
+          <span key={l.id} className={`option look ${same(look, l.style) ? "on" : ""}`}>
+            <button className="look-apply" onClick={() => onLook(l.style)}>
+              <span className="option-label">{l.name}</span>
+              <span className="option-note">saved look</span>
+            </button>
+            <button
+              className="look-remove"
+              aria-label={`Delete ${l.name}`}
+              onClick={() => {
+                if (confirm(`Delete the look "${l.name}"?`)) onBrand({ ...brand, looks: brand.looks.filter((x) => x.id !== l.id) });
+              }}
+            >
+              ×
+            </button>
+          </span>
+        ))}
+      </div>
+      {naming ? (
+        <form
+          className="row"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!name.trim()) return;
+            onBrand({ ...brand, looks: [...brand.looks, { id: `look-${Date.now()}`, name: name.trim(), style: look }] });
+            setName("");
+            setNaming(false);
+          }}
+        >
+          <input className="grow" autoFocus value={name} placeholder="Name this look, e.g. Soft & classy" onChange={(e) => setName(e.target.value)} />
+          <button className="chip accent" type="submit">Save</button>
+          <button className="link" type="button" onClick={() => setNaming(false)}>Cancel</button>
+        </form>
+      ) : (
+        <div className="row">
+          <button className="chip" onClick={() => setNaming(true)}>＋ Save this as a look</button>
+          <button className="chip" disabled={isDefault} onClick={() => onBrand({ ...brand, defaultStyle: look })}>
+            {isDefault ? "✓ This is your default" : "Make this my default"}
+          </button>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+export function HookCard({ hookText, onHookText, ...props }: LookProps & { hookText: string; onHookText: (t: string) => void }) {
   const set = setter(props);
+  const [browsing, setBrowsing] = useState(false);
+  const [role, setRole] = useState<string>(HOOK_LIBRARY[0].role);
   return (
     <Card title="Hook">
-      <Label>Title at the top of the reel</Label>
+      <div className="row">
+        <Label>Title on the reel</Label>
+        <span className="grow" />
+        <button className="chip" onClick={() => setBrowsing(!browsing)}>{browsing ? "Close hook library" : "📚 Hook library"}</button>
+      </div>
+      {browsing ? (
+        <div className="library">
+          <Options value={role} onChange={setRole} options={HOOK_LIBRARY.map((g) => ({ value: g.role, label: g.role }))} />
+          <p className="muted small">Tap one to use it, then swap the [brackets] for your own words.</p>
+          <div className="library-list">
+            {HOOK_LIBRARY.find((g) => g.role === role)?.hooks.map((h) => (
+              <button
+                key={h}
+                className="library-item serif"
+                onClick={() => {
+                  onHookText(h);
+                  setBrowsing(false);
+                }}
+              >
+                {h}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
       <textarea
         className="hook-input serif"
         rows={2}
@@ -19,12 +108,12 @@ export function HookCard({ hookText, onHookText, ...props }: BrandProps & { hook
         onChange={(e) => onHookText(e.target.value)}
       />
       <Label>Hook font</Label>
-      <FontOptions value={props.brand.displayFont} fonts={DISPLAY_FONTS} onChange={(v) => set("displayFont", v)} />
+      <FontOptions value={props.look.displayFont} fonts={DISPLAY_FONTS} onChange={(v) => set("displayFont", v)} />
       <Label>Hook colour</Label>
-      <Swatches value={props.brand.hookColor} onChange={(v) => set("hookColor", v)} />
+      <Swatches value={props.look.hookColor} onChange={(v) => set("hookColor", v)} />
       <Label>Hook position</Label>
       <Options
-        value={props.brand.hookPosition}
+        value={props.look.hookPosition}
         onChange={(v) => set("hookPosition", v)}
         options={[
           { value: "top", label: "Top", note: "top of the reel" },
@@ -34,7 +123,7 @@ export function HookCard({ hookText, onHookText, ...props }: BrandProps & { hook
       />
       <Label>Stays on screen</Label>
       <Options
-        value={props.brand.hookDurationMs}
+        value={props.look.hookDurationMs}
         onChange={(v) => set("hookDurationMs", v)}
         options={[
           { value: 3000, label: "3 seconds" },
@@ -46,15 +135,15 @@ export function HookCard({ hookText, onHookText, ...props }: BrandProps & { hook
   );
 }
 
-export function CaptionsCard(props: BrandProps) {
-  const { brand } = props;
+export function CaptionsCard(props: LookProps) {
+  const { look } = props;
   const set = setter(props);
-  const bubble = brand.style === "pill";
+  const bubble = look.style === "pill";
   return (
     <Card title="Captions">
       <Label>Caption style</Label>
       <Options
-        value={brand.captionMode}
+        value={look.captionMode}
         onChange={(v) => set("captionMode", v)}
         options={[
           { value: "phrase", label: "Phrase", note: "a few words at a time" },
@@ -63,24 +152,24 @@ export function CaptionsCard(props: BrandProps) {
       />
 
       <Label>Caption font</Label>
-      <FontOptions value={brand.font} fonts={SUBTITLE_FONTS} onChange={(v) => set("font", v)} />
+      <FontOptions value={look.font} fonts={SUBTITLE_FONTS} onChange={(v) => set("font", v)} />
 
       <Label>Caption colour</Label>
-      <Swatches value={brand.textColor} onChange={(v) => set("textColor", v)} />
+      <Swatches value={look.textColor} onChange={(v) => set("textColor", v)} />
 
       <Label>Text edge</Label>
       <Options
-        value={brand.textEffect}
+        value={look.textEffect}
         onChange={(v) => set("textEffect", v)}
         options={[
           { value: "shadow", label: "Soft shadow", note: "clean & subtle" },
           { value: "outline", label: "Outline", note: "bold, easy to read" },
         ]}
       />
-      {brand.textEffect === "outline" ? (
+      {look.textEffect === "outline" ? (
         <>
           <Label>Outline colour</Label>
-          <Swatches value={brand.outlineColor} onChange={(v) => set("outlineColor", v)} />
+          <Swatches value={look.outlineColor} onChange={(v) => set("outlineColor", v)} />
         </>
       ) : null}
 
@@ -88,7 +177,7 @@ export function CaptionsCard(props: BrandProps) {
 
       <Label>Key words</Label>
       <Options
-        value={brand.style}
+        value={look.style}
         onChange={(v) => set("style", v)}
         options={[
           { value: "pill", label: "Bubble", note: "colour block behind the word" },
@@ -97,11 +186,11 @@ export function CaptionsCard(props: BrandProps) {
         ]}
       />
       <Label>{bubble ? "Bubble colour" : "Key word colour"}</Label>
-      <Swatches value={brand.highlightColor} onChange={(v) => set("highlightColor", v)} />
+      <Swatches value={look.highlightColor} onChange={(v) => set("highlightColor", v)} />
       {bubble ? (
         <>
           <Label>Text inside the bubble</Label>
-          <Swatches value={brand.highlightTextColor} onChange={(v) => set("highlightTextColor", v)} />
+          <Swatches value={look.highlightTextColor} onChange={(v) => set("highlightTextColor", v)} />
         </>
       ) : null}
 
@@ -109,7 +198,7 @@ export function CaptionsCard(props: BrandProps) {
 
       <Label>Caption position</Label>
       <Options
-        value={brand.position}
+        value={look.position}
         onChange={(v) => set("position", v)}
         options={[
           { value: "top", label: "Top", note: "under the hook" },
@@ -118,13 +207,13 @@ export function CaptionsCard(props: BrandProps) {
         ]}
       />
       <div className="two">
-        <Slider label="Caption size" value={brand.fontSize} min={44} max={110} onChange={(v) => set("fontSize", v)} />
-        {brand.captionMode === "phrase" ? (
-          <Slider label={`Words at once · ${brand.wordsPerLine}`} value={brand.wordsPerLine} min={2} max={7} onChange={(v) => set("wordsPerLine", v)} />
+        <Slider label="Caption size" value={look.fontSize} min={44} max={110} onChange={(v) => set("fontSize", v)} />
+        {look.captionMode === "phrase" ? (
+          <Slider label={`Words at once · ${look.wordsPerLine}`} value={look.wordsPerLine} min={2} max={7} onChange={(v) => set("wordsPerLine", v)} />
         ) : null}
       </div>
       <label className="check">
-        <input type="checkbox" checked={brand.uppercase} onChange={(e) => set("uppercase", e.target.checked)} />
+        <input type="checkbox" checked={look.uppercase} onChange={(e) => set("uppercase", e.target.checked)} />
         ALL CAPS
       </label>
     </Card>
@@ -132,7 +221,6 @@ export function CaptionsCard(props: BrandProps) {
 }
 
 const EMOJIS = ["🔥", "💰", "✨", "💡", "🚀", "💜", "😂", "👀", "✅", "❌", "⏰", "📈", "🙌", "💸", "🎯"];
-const FILLER = /^(u+m+|u+h+|uhm+|erm+|hmm+|mm+|ah+)[,.!?]*$/i;
 
 export const formatLength = (ms: number) => {
   const total = Math.round(ms / 1000);
@@ -159,7 +247,7 @@ export function WordsCard({
   const [autoBusy, setAutoBusy] = useState(false);
   const word = words.find((w) => w.id === selected);
   const update = (patch: Partial<Word>) => onChange(words.map((w) => (w.id === selected ? { ...w, ...patch } : w)));
-  const fillerCount = words.filter((w) => FILLER.test(w.text.trim()) && !w.cut).length;
+  const fillerCount = words.filter((w) => isFiller(w.text) && !w.cut).length;
   const cutCount = words.filter((w) => w.cut).length;
 
   return (
@@ -178,7 +266,7 @@ export function WordsCard({
           <button
             className="chip"
             disabled={fillerCount === 0}
-            onClick={() => onChange(words.map((w) => (FILLER.test(w.text.trim()) ? { ...w, cut: true } : w)))}
+            onClick={() => onChange(words.map((w) => (isFiller(w.text) ? { ...w, cut: true } : w)))}
           >
             {fillerCount > 0 ? `Cut ${fillerCount} um${fillerCount === 1 ? "" : "s"} & uhs` : "No ums found"}
           </button>
@@ -268,20 +356,39 @@ export function SoundCard() {
 }
 
 export function PostCaptionCard({
-  caption, defaultCta, onChange, onWrite,
-}: {
+  caption, brand, onBrand, onChange, onWrite,
+}: BrandProps & {
   caption: string;
-  defaultCta: string;
   onChange: (text: string) => void;
   onWrite: (cta: string) => Promise<void>;
 }) {
-  const [cta, setCta] = useState(defaultCta);
+  const [cta, setCta] = useState(brand.ctaKeywords[0] ?? brand.business.cta);
+  const saved = brand.ctaKeywords.includes(cta.trim());
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   return (
     <Card title="Post caption">
       <Label>Call to action for this post</Label>
-      <input value={cta} placeholder='e.g. Comment "VA" and I&apos;ll send you my checklist' onChange={(e) => setCta(e.target.value)} />
+      {brand.ctaKeywords.length ? (
+        <div className="saved-ctas">
+          {brand.ctaKeywords.map((k) => (
+            <span key={k} className={`chip cta ${k === cta.trim() ? "accent" : ""}`}>
+              <button onClick={() => setCta(k)}>{k}</button>
+              <button aria-label="Remove" onClick={() => onBrand({ ...brand, ctaKeywords: brand.ctaKeywords.filter((x) => x !== k) })}>×</button>
+            </span>
+          ))}
+        </div>
+      ) : null}
+      <div className="row">
+        <input className="grow" value={cta} placeholder='e.g. Comment "VA" and I&apos;ll send you my checklist' onChange={(e) => setCta(e.target.value)} />
+        <button
+          className="chip"
+          disabled={!cta.trim() || saved}
+          onClick={() => onBrand({ ...brand, ctaKeywords: [...brand.ctaKeywords, cta.trim()] })}
+        >
+          {saved ? "Saved ✓" : "Save for later"}
+        </button>
+      </div>
       <div className="row">
         <button
           className="chip accent"

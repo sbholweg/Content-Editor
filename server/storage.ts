@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { DEFAULT_BRAND, normalizeBrand } from "../src/shared/brand.ts";
+import { DEFAULT_BRAND, normalizeBrand, normalizeStyle } from "../src/shared/brand.ts";
 import type { BrandKit, Project } from "../src/shared/types.ts";
 import { config } from "./config.ts";
 
@@ -22,7 +22,9 @@ export async function readProject(id: string): Promise<Project | null> {
   if (!isValidId(id)) return null;
   try {
     const project = JSON.parse(await fs.readFile(projectFile(id, "project.json"), "utf8"));
-    return { hookText: "", postCaption: "", removePauses: false, ...project };
+    // Reels made before each reel had its own look use the current default look.
+    const style = project.style ? normalizeStyle(project.style) : (await readBrand()).defaultStyle;
+    return { hookText: "", postCaption: "", removePauses: false, ...project, style };
   } catch {
     return null;
   }

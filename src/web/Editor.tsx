@@ -2,9 +2,10 @@ import { Player, type PlayerRef } from "@remotion/player";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { outputFrames, Reel, REEL_FPS, REEL_HEIGHT, REEL_WIDTH } from "../remotion/Reel";
 import { buildTimeline } from "../shared/timeline";
-import type { BrandKit, Project, ReelProps, Word } from "../shared/types";
+import type { BrandKit, Project, ReelProps, ReelStyle, Word } from "../shared/types";
 import { api, mediaUrl } from "./api";
-import { BusinessCard, CaptionsCard, HookCard, PostCaptionCard, SoundCard, WordsCard, formatLength } from "./sections";
+import { TrialReelsCard } from "./TrialReels";
+import { BusinessCard, CaptionsCard, HookCard, LooksCard, PostCaptionCard, SoundCard, WordsCard, formatLength } from "./sections";
 
 const TABS = [
   { id: "cut", label: "Cut" },
@@ -32,6 +33,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   const [hookText, setHookText] = useState("");
   const [removePauses, setRemovePauses] = useState(false);
   const [postCaption, setPostCaption] = useState("");
+  const [look, setLook] = useState<ReelStyle | null>(null);
   const [tab, setTab] = useState<Tab>("cut");
   const [error, setError] = useState("");
   const [timeMs, setTimeMs] = useState(0);
@@ -58,6 +60,9 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
       setHookText(p.hookText);
       setRemovePauses(p.removePauses);
       setPostCaption(p.postCaption);
+      setLook(p.style);
+      // Reels made with "Do it for me" open straight on the finished result.
+      if (p.render.status !== "idle") setTab("finish");
     });
     api.getBrand().then(setBrand, onAuthError);
   }, [load, onAuthError]);
@@ -120,6 +125,15 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
     setChangedSinceExport(true);
     saveHook(text);
   };
+  const saveLook = useDebounced<ReelStyle>(
+    useCallback((st) => void api.saveProject(id, { style: st }).catch(onAuthError), [id, onAuthError]),
+    600,
+  );
+  const updateLook = (next: ReelStyle) => {
+    setLook(next);
+    setChangedSinceExport(true);
+    saveLook(next);
+  };
   const updateBrand = (next: BrandKit) => {
     setBrand(next);
     setChangedSinceExport(true);
@@ -136,10 +150,10 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
 
   const inputProps: ReelProps | null = useMemo(
     () =>
-      project && brand
-        ? { videoSrc: mediaUrl(id, "video.mp4"), hookText, words, brand, durationMs: project.durationMs, removePauses }
+      project && look
+        ? { videoSrc: mediaUrl(id, "video.mp4"), hookText, words, brand: look, durationMs: project.durationMs, removePauses }
         : null,
-    [project?.durationMs, brand, words, hookText, removePauses, id],
+    [project?.durationMs, look, words, hookText, removePauses, id],
   );
 
   const timeline = useMemo(
@@ -220,7 +234,9 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
     <main className="editor">
       <header className="editor-head">
         <button className="link" onClick={onBack}>‹ My reels</button>
-        <h1 className="serif title">{hookText || project.originalName}</h1>
+        <h1 className="serif title">
+          {project.variantLabel ? <span className="tag">{project.variantLabel}</span> : null} {hookText || project.originalName}
+        </h1>
         <div className="head-export">{exportControls}</div>
       </header>
 
@@ -283,8 +299,13 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
 
           {tab === "visuals" ? (
             <>
-              <HookCard hookText={hookText} onHookText={updateHook} brand={brand} onBrand={updateBrand} />
-              <CaptionsCard brand={brand} onBrand={updateBrand} />
+              {look ? (
+                <>
+                  <LooksCard look={look} onLook={updateLook} brand={brand} onBrand={updateBrand} />
+                  <HookCard hookText={hookText} onHookText={updateHook} look={look} onLook={updateLook} />
+                  <CaptionsCard look={look} onLook={updateLook} />
+                </>
+              ) : null}
             </>
           ) : null}
 
@@ -298,9 +319,13 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
                 <div className="row">{exportControls}</div>
                 {project.render.status === "error" ? <p className="error small">Export failed: {project.render.error}</p> : null}
               </section>
+              {project.render.status === "done" && !project.parentId ? (
+                <TrialReelsCard projectId={id} onOpen={(trialId) => (window.location.hash = `#/p/${trialId}`)} onAuthError={onAuthError} />
+              ) : null}
               <PostCaptionCard
                 caption={postCaption}
-                defaultCta={brand.business.cta}
+                brand={brand}
+                onBrand={updateBrand}
                 onChange={updatePostCaption}
                 onWrite={async (cta) => {
                   try {

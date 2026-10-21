@@ -1,12 +1,12 @@
 import React, { useMemo } from "react";
 import { spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { buildPages } from "../shared/pages";
-import type { BrandKit, Word } from "../shared/types";
+import type { ReelStyle, Word } from "../shared/types";
 import { getFont, type LoadedFont } from "./fonts";
 import { HOOK_TOP } from "./Hook";
 
 // Vertical center of the captions, as a percentage of the frame height.
-const POSITION_TOP: Record<BrandKit["position"], number> = {
+const POSITION_TOP: Record<ReelStyle["position"], number> = {
   top: 26,
   middle: 55,
   // Instagram covers the bottom ~20% with the caption and buttons, so "bottom" sits above that.
@@ -15,7 +15,7 @@ const POSITION_TOP: Record<BrandKit["position"], number> = {
 const MIN_GAP_FROM_HOOK = 13;
 
 // While the hook is on screen, nudge the captions so the two never overlap.
-function captionTop(brand: BrandKit, hookVisible: boolean) {
+function captionTop(brand: ReelStyle, hookVisible: boolean) {
   const top = POSITION_TOP[brand.position];
   if (!hookVisible) return top;
   const hook = HOOK_TOP[brand.hookPosition];
@@ -36,7 +36,7 @@ function outline(color: string, size: number) {
 
 const SOFT_SHADOW = "0 2px 6px rgba(0,0,0,0.45), 0 4px 24px rgba(0,0,0,0.35)";
 
-export const Captions: React.FC<{ words: Word[]; brand: BrandKit; hookText: string }> = ({ words, brand, hookText }) => {
+export const Captions: React.FC<{ words: Word[]; brand: ReelStyle; hookText: string }> = ({ words, brand, hookText }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const timeMs = (frame / fps) * 1000;
@@ -95,7 +95,7 @@ export const Captions: React.FC<{ words: Word[]; brand: BrandKit; hookText: stri
 
 const CaptionWord: React.FC<{
   word: Word;
-  brand: BrandKit;
+  brand: ReelStyle;
   fontSize: number;
   base: LoadedFont;
   display: LoadedFont;

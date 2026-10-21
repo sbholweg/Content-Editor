@@ -4,7 +4,7 @@ import { renderMedia, selectComposition } from "@remotion/renderer";
 import type { ReelProps } from "../src/shared/types.ts";
 import { accessToken } from "./auth.ts";
 import { config } from "./config.ts";
-import { projectFile, readBrand, readProject, updateProject } from "./storage.ts";
+import { projectFile, readProject, updateProject } from "./storage.ts";
 
 let bundlePromise: Promise<string> | null = null;
 
@@ -30,7 +30,7 @@ async function renderProject(id: string) {
       videoSrc: `http://127.0.0.1:${config.port}/media/${id}/video.mp4${tokenParam}`,
       hookText: project.hookText,
       words: project.words,
-      brand: await readBrand(),
+      brand: project.style,
       durationMs: project.durationMs,
       removePauses: project.removePauses,
     };

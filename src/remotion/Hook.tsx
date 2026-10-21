@@ -1,17 +1,17 @@
 import React from "react";
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
-import type { BrandKit } from "../shared/types";
+import type { ReelStyle } from "../shared/types";
 import { getFont } from "./fonts";
 
 // Where the hook's center sits. "bottom" stays above the area Instagram covers with its caption and buttons.
-export const HOOK_TOP: Record<BrandKit["hookPosition"], number> = {
+export const HOOK_TOP: Record<ReelStyle["hookPosition"], number> = {
   top: 13,
   middle: 42,
   bottom: 62,
 };
 
 // The title at the top of the reel ("nobody's saying it, so I will").
-export const Hook: React.FC<{ text: string; brand: BrandKit }> = ({ text, brand }) => {
+export const Hook: React.FC<{ text: string; brand: ReelStyle }> = ({ text, brand }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
   const font = getFont(brand.displayFont);

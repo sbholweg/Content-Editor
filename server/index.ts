@@ -3,7 +3,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import express from "express";
 import multer from "multer";
-import { normalizeBrand } from "../src/shared/brand.ts";
+import { normalizeBrand, normalizeStyle } from "../src/shared/brand.ts";
+import { isFiller } from "../src/shared/words.ts";
 import type { BrandKit, Project, Word } from "../src/shared/types.ts";
 import { accessToken, checkPassword, requireAuth } from "./auth.ts";
 import { config } from "./config.ts";
@@ -17,6 +18,7 @@ import {
   readBrand, readProject, updateProject, writeBrand, writeProject,
 } from "./storage.ts";
 import { transcribeWords } from "./transcribe.ts";
+import { createTrialReels } from "./trials.ts";
 
 await ensureDirs();
 
@@ -68,14 +70,17 @@ app.post("/api/projects", upload.single("video"), async (req, res) => {
     width: 0,
     height: 0,
     words: [],
+    style: (await readBrand()).defaultStyle,
     render: { status: "idle", progress: 0 },
   };
   await writeProject(project);
   res.json(project);
-  void processProject(id, original);
+  void processProject(id, original, req.body?.autopilot === "1");
 });
 
-async function processProject(id: string, original: string) {
+// With autopilot ("Do it for me"), the reel is also cleaned up, captioned and exported
+// without the creator having to touch anything.
+async function processProject(id: string, original: string, autopilot: boolean) {
   try {
     const video = projectFile(id, "video.mp4");
     const audio = projectFile(id, "audio.wav");
@@ -85,8 +90,17 @@ async function processProject(id: string, original: string) {
     await extractAudio(video, audio);
     const words = await transcribeWords(audio);
     await updateProject(id, { words, step: "Picking words to highlight" });
-    const plan = await planEdit(words, (await readBrand()).business);
-    await updateProject(id, { words: plan.words, hookText: plan.hook, status: "ready", step: undefined });
+    const brand = await readBrand();
+    const plan = await planEdit(words, brand.business);
+    if (!autopilot) {
+      await updateProject(id, { words: plan.words, hookText: plan.hook, status: "ready", step: undefined });
+    } else {
+      const cleaned = plan.words.map((w) => (isFiller(w.text) ? { ...w, cut: true } : w));
+      await updateProject(id, { words: cleaned, hookText: plan.hook, removePauses: true, step: "Writing your caption" });
+      const postCaption = await writeCaption({ words: cleaned, hook: plan.hook, business: brand.business, cta: "" }).catch(() => "");
+      await updateProject(id, { postCaption, status: "ready", step: undefined, render: { status: "rendering", progress: 0 } });
+      queueRender(id);
+    }
     await fs.rm(original, { force: true });
     await fs.rm(audio, { force: true });
   } catch (err) {
@@ -111,6 +125,7 @@ app.patch("/api/projects/:id", async (req, res) => {
   if (typeof req.body?.hookText === "string") patch.hookText = req.body.hookText.slice(0, 200);
   if (typeof req.body?.removePauses === "boolean") patch.removePauses = req.body.removePauses;
   if (typeof req.body?.postCaption === "string") patch.postCaption = req.body.postCaption.slice(0, 2200);
+  if (req.body?.style && typeof req.body.style === "object") patch.style = normalizeStyle(req.body.style);
   res.json(await updateProject(project.id, patch));
 });
 
@@ -136,6 +151,16 @@ app.post("/api/projects/:id/caption", async (req, res) => {
     console.error("Caption writing failed", err);
     res.status(502).json({ error: "Couldn't write a caption right now. Please try again." });
   }
+});
+
+app.post("/api/projects/:id/trial-reels", async (req, res) => {
+  const project = await readProject(req.params.id);
+  if (!project || project.status !== "ready") return res.status(404).json({ error: "Not found" });
+  res.json(await createTrialReels(project));
+});
+
+app.get("/api/projects/:id/trial-reels", async (req, res) => {
+  res.json((await listProjects()).filter((p) => p.parentId === req.params.id));
 });
 
 app.delete("/api/projects/:id", async (req, res) => {

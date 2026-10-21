@@ -1,4 +1,4 @@
-import type { BrandKit, Project, Word } from "../shared/types";
+import type { BrandKit, Project, ReelStyle, Word } from "../shared/types";
 
 const TOKEN_KEY = "content-editor-token";
 
@@ -48,17 +48,19 @@ export const api = {
   login: (password: string) => request<{ token: string }>("/api/login", { method: "POST", body: JSON.stringify({ password }) }),
   listProjects: () => request<Project[]>("/api/projects"),
   getProject: (id: string) => request<Project>(`/api/projects/${id}`),
-  saveProject: (id: string, patch: { words?: Word[]; hookText?: string; removePauses?: boolean; postCaption?: string }) =>
+  saveProject: (id: string, patch: { words?: Word[]; hookText?: string; removePauses?: boolean; postCaption?: string; style?: ReelStyle }) =>
     request<Project>(`/api/projects/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
   autoHighlight: (id: string) => request<Project>(`/api/projects/${id}/auto-highlight`, { method: "POST" }),
   writeCaption: (id: string, cta: string) => request<Project>(`/api/projects/${id}/caption`, { method: "POST", body: JSON.stringify({ cta }) }),
+  makeTrialReels: (id: string) => request<Project[]>(`/api/projects/${id}/trial-reels`, { method: "POST" }),
+  listTrialReels: (id: string) => request<Project[]>(`/api/projects/${id}/trial-reels`),
   deleteProject: (id: string) => request<{ ok: true }>(`/api/projects/${id}`, { method: "DELETE" }),
   render: (id: string) => request<Project>(`/api/projects/${id}/render`, { method: "POST" }),
   getBrand: () => request<BrandKit>("/api/brand"),
   saveBrand: (brand: BrandKit) => request<BrandKit>("/api/brand", { method: "PUT", body: JSON.stringify(brand) }),
 
   // XHR instead of fetch so we can show upload progress for big phone videos.
-  upload(file: File, onProgress: (fraction: number) => void): Promise<Project> {
+  upload(file: File, autopilot: boolean, onProgress: (fraction: number) => void): Promise<Project> {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open("POST", "/api/projects");
@@ -76,6 +78,8 @@ export const api = {
       };
       xhr.onerror = () => reject(new Error("Upload failed. Check your connection and try again."));
       const form = new FormData();
+      // Fields before the file so the server sees them as soon as the upload starts.
+      form.append("autopilot", autopilot ? "1" : "0");
       form.append("video", file);
       xhr.send(form);
     });

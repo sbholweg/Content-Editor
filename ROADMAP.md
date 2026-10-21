@@ -14,17 +14,19 @@ Done
 - Hook (position, font, colour, duration) and captions (phrase/one word, bubble/coloured/serif key words)
 - Post caption writer + "About your business" profile
 - Light theme with brand purple
+- Each reel has its own look; saved looks; "Make this my default"
+- Trial reels: 3 versions (question, bold statement, POV) with different hook styles, auto-exported
+- "Do it for me" upload: cut, captioned, styled, exported, post caption written
+- Hook library by role, saved call-to-action keywords, "Not sure what to film?" idea starters
 
 Next (in rough order)
 1. Put it online (Railway) and test on real reels
-2. Trial reels: after exporting, create 3 versions of the same reel to post as Instagram trial reels
-3. Hook library by role (VA, OBM, social media manager, …)
-4. Saved call-to-action keywords ("Comment VA", "DM me AUDIT")
-5. Content idea starters ("Not sure what to film?")
-6. Reel to carousel (slides in your brand)
-7. Client wins: testimonial to quote card, and client case study carousel
-8. Sound: background music that ducks under the voice, sound effects
-9. Weekly batch: upload several videos, get back a styled posting queue with captions
+2. Media library: GIFs, images and b-roll added to a line, with Swap/Move/Remove
+3. Reel to carousel (slides saved as images) and "Your snaps" (save a frame as the cover)
+4. Client wins: testimonial to quote card, and client case study carousel
+5. Sound: background music that ducks under the voice, sound effects
+6. Weekly batch: upload several videos, get back a numbered posting queue with captions
+7. "Tell Claude what you want" for a line (three options to pick from)
 
 ## Later: Version B, VAs editing reels for their clients (upgrade)
 - A separate brand kit and business profile per client

@@ -34,7 +34,7 @@ export function App() {
   if (!authed) return <Login onDone={() => setAuthed(true)} />;
 
   return projectId ? (
-    <Editor id={projectId} onBack={() => (window.location.hash = "")} onAuthError={onAuthError} />
+    <Editor key={projectId} id={projectId} onBack={() => (window.location.hash = "")} onAuthError={onAuthError} />
   ) : (
     <Home onOpen={(id) => (window.location.hash = `#/p/${id}`)} onAuthError={onAuthError} />
   );
