@@ -7,6 +7,7 @@ import { normalizeBrand } from "../src/shared/brand.ts";
 import type { BrandKit, Project, Word } from "../src/shared/types.ts";
 import { accessToken, checkPassword, requireAuth } from "./auth.ts";
 import { config } from "./config.ts";
+import { writeCaption } from "./caption.ts";
 import { planEdit } from "./highlights.ts";
 import { extractAudio, normalizeVideo, probe } from "./media.ts";
 import { queueRender } from "./render.ts";
@@ -62,6 +63,7 @@ app.post("/api/projects", upload.single("video"), async (req, res) => {
     step: "Preparing video",
     durationMs: 0,
     hookText: "",
+    postCaption: "",
     removePauses: true,
     width: 0,
     height: 0,
@@ -83,7 +85,7 @@ async function processProject(id: string, original: string) {
     await extractAudio(video, audio);
     const words = await transcribeWords(audio);
     await updateProject(id, { words, step: "Picking words to highlight" });
-    const plan = await planEdit(words);
+    const plan = await planEdit(words, (await readBrand()).business);
     await updateProject(id, { words: plan.words, hookText: plan.hook, status: "ready", step: undefined });
     await fs.rm(original, { force: true });
     await fs.rm(audio, { force: true });
@@ -108,14 +110,32 @@ app.patch("/api/projects/:id", async (req, res) => {
   if (Array.isArray(req.body?.words)) patch.words = req.body.words as Word[];
   if (typeof req.body?.hookText === "string") patch.hookText = req.body.hookText.slice(0, 200);
   if (typeof req.body?.removePauses === "boolean") patch.removePauses = req.body.removePauses;
+  if (typeof req.body?.postCaption === "string") patch.postCaption = req.body.postCaption.slice(0, 2200);
   res.json(await updateProject(project.id, patch));
 });
 
 app.post("/api/projects/:id/auto-highlight", async (req, res) => {
   const project = await readProject(req.params.id);
   if (!project) return res.status(404).json({ error: "Not found" });
-  const plan = await planEdit(project.words);
+  const plan = await planEdit(project.words, (await readBrand()).business);
   res.json(await updateProject(project.id, { words: plan.words, hookText: project.hookText || plan.hook }));
+});
+
+app.post("/api/projects/:id/caption", async (req, res) => {
+  const project = await readProject(req.params.id);
+  if (!project) return res.status(404).json({ error: "Not found" });
+  try {
+    const caption = await writeCaption({
+      words: project.words,
+      hook: project.hookText,
+      business: (await readBrand()).business,
+      cta: String(req.body?.cta ?? ""),
+    });
+    res.json(await updateProject(project.id, { postCaption: caption.slice(0, 2200) }));
+  } catch (err) {
+    console.error("Caption writing failed", err);
+    res.status(502).json({ error: "Couldn't write a caption right now. Please try again." });
+  }
 });
 
 app.delete("/api/projects/:id", async (req, res) => {

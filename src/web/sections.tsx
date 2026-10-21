@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { DISPLAY_FONTS, SUBTITLE_FONTS } from "../shared/fonts";
-import type { BrandKit, Word } from "../shared/types";
+import type { BrandKit, BusinessProfile, Word } from "../shared/types";
 import { Card, FontOptions, Label, Options, Slider, Swatches } from "./ui";
 
 type BrandProps = { brand: BrandKit; onBrand: (b: BrandKit) => void };
@@ -134,14 +134,16 @@ export function CaptionsCard(props: BrandProps) {
 const EMOJIS = ["🔥", "💰", "✨", "💡", "🚀", "💜", "😂", "👀", "✅", "❌", "⏰", "📈", "🙌", "💸", "🎯"];
 const FILLER = /^(u+m+|u+h+|uhm+|erm+|hmm+|mm+|ah+)[,.!?]*$/i;
 
-const formatLength = (ms: number) => {
+export const formatLength = (ms: number) => {
   const total = Math.round(ms / 1000);
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 };
 
 export function WordsCard({
-  words, outputTimes, timeMs, lengthMs, removePauses, onChange, onRemovePauses, onSeek, onAuto,
+  mode, words, outputTimes, timeMs, lengthMs, removePauses, onChange, onRemovePauses, onSeek, onAuto,
 }: {
+  // "cut": tap words to remove them. "style": tap words to highlight, edit or add an emoji.
+  mode: "style" | "cut";
   words: Word[];
   // Where each kept word lands in the cut video (cut words aren't included).
   outputTimes: Map<string, { startMs: number; endMs: number }>;
@@ -153,7 +155,6 @@ export function WordsCard({
   onSeek: (ms: number) => void;
   onAuto: () => Promise<void>;
 }) {
-  const [mode, setMode] = useState<"style" | "cut">("style");
   const [selected, setSelected] = useState<string | null>(null);
   const [autoBusy, setAutoBusy] = useState(false);
   const word = words.find((w) => w.id === selected);
@@ -162,53 +163,46 @@ export function WordsCard({
   const cutCount = words.filter((w) => w.cut).length;
 
   return (
-    <Card title="Your words">
+    <Card title={mode === "cut" ? "Your cut" : "Key words"}>
       <div className="row">
-        <Label>Tap a word to</Label>
+        <Label>{mode === "cut" ? "Tap a word to cut it · tap again to bring it back" : "Bold = key word · tap a word to change it"}</Label>
         <span className="grow" />
-        <span className="length">{formatLength(lengthMs)} long</span>
+        {mode === "cut" ? <span className="length">{formatLength(lengthMs)} long</span> : null}
       </div>
-      <Options
-        value={mode}
-        onChange={(m) => {
-          setMode(m);
-          setSelected(null);
-        }}
-        options={[
-          { value: "style", label: "Highlight & edit", note: "bold = key word" },
-          { value: "cut", label: "Cut", note: "struck out = removed" },
-        ]}
-      />
 
-      <div className="row">
-        <button className={`chip ${removePauses ? "accent" : ""}`} onClick={() => onRemovePauses(!removePauses)}>
-          {removePauses ? "✓ Pauses removed" : "Remove pauses"}
-        </button>
-        <button
-          className="chip"
-          disabled={fillerCount === 0}
-          onClick={() => onChange(words.map((w) => (FILLER.test(w.text.trim()) ? { ...w, cut: true } : w)))}
-        >
-          {fillerCount > 0 ? `Cut ${fillerCount} um${fillerCount === 1 ? "" : "s"} & uhs` : "No ums found"}
-        </button>
-        {cutCount > 0 ? (
-          <button className="chip" onClick={() => onChange(words.map((w) => ({ ...w, cut: false })))}>
-            Undo all cuts
+      {mode === "cut" ? (
+        <div className="row">
+          <button className={`chip ${removePauses ? "accent" : ""}`} onClick={() => onRemovePauses(!removePauses)}>
+            {removePauses ? "✓ Pauses removed" : "Remove pauses"}
           </button>
-        ) : null}
-        <span className="grow" />
-        <button
-          className="chip"
-          disabled={autoBusy || words.length === 0}
-          onClick={async () => {
-            setAutoBusy(true);
-            await onAuto();
-            setAutoBusy(false);
-          }}
-        >
-          {autoBusy ? "Thinking…" : "✨ Let AI pick key words"}
-        </button>
-      </div>
+          <button
+            className="chip"
+            disabled={fillerCount === 0}
+            onClick={() => onChange(words.map((w) => (FILLER.test(w.text.trim()) ? { ...w, cut: true } : w)))}
+          >
+            {fillerCount > 0 ? `Cut ${fillerCount} um${fillerCount === 1 ? "" : "s"} & uhs` : "No ums found"}
+          </button>
+          {cutCount > 0 ? (
+            <button className="chip" onClick={() => onChange(words.map((w) => ({ ...w, cut: false })))}>
+              Undo all cuts
+            </button>
+          ) : null}
+        </div>
+      ) : (
+        <div className="row">
+          <button
+            className="chip"
+            disabled={autoBusy || words.length === 0}
+            onClick={async () => {
+              setAutoBusy(true);
+              await onAuto();
+              setAutoBusy(false);
+            }}
+          >
+            {autoBusy ? "Thinking…" : "✨ Let AI pick key words"}
+          </button>
+        </div>
+      )}
 
       {words.length === 0 ? <p className="muted">No speech was found in this video.</p> : null}
 
@@ -257,18 +251,84 @@ export function WordsCard({
           <div className="row">
             <button className="link" onClick={() => setSelected(null)}>Done</button>
             <span className="grow" />
-            <button
-              className="link danger"
-              onClick={() => {
-                update({ cut: true });
-                setSelected(null);
-              }}
-            >
-              Cut this word
-            </button>
+            <span className="muted small">Cut words in the Cut tab</span>
           </div>
         </div>
       ) : null}
+    </Card>
+  );
+}
+
+export function SoundCard() {
+  return (
+    <Card title="Sound">
+      <p className="muted">Background music that gets quieter while you talk, and sound effects when things pop on screen, are coming next.</p>
+    </Card>
+  );
+}
+
+export function PostCaptionCard({
+  caption, defaultCta, onChange, onWrite,
+}: {
+  caption: string;
+  defaultCta: string;
+  onChange: (text: string) => void;
+  onWrite: (cta: string) => Promise<void>;
+}) {
+  const [cta, setCta] = useState(defaultCta);
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  return (
+    <Card title="Post caption">
+      <Label>Call to action for this post</Label>
+      <input value={cta} placeholder='e.g. Comment "VA" and I&apos;ll send you my checklist' onChange={(e) => setCta(e.target.value)} />
+      <div className="row">
+        <button
+          className="chip accent"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            await onWrite(cta);
+            setBusy(false);
+          }}
+        >
+          {busy ? "Writing…" : caption ? "✨ Write a new one" : "✨ Write my caption"}
+        </button>
+        <span className="grow" />
+        {caption ? (
+          <button
+            className="chip"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(caption);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1500);
+              } catch {
+                // Clipboard can be blocked inside some embeds; the text can still be selected by hand.
+              }
+            }}
+          >
+            {copied ? "Copied ✓" : "Copy caption"}
+          </button>
+        ) : null}
+      </div>
+      <textarea className="caption-input" rows={9} value={caption} placeholder="Your caption will show up here. You can edit it before copying." onChange={(e) => onChange(e.target.value)} />
+    </Card>
+  );
+}
+
+export function BusinessCard(props: BrandProps) {
+  const { business } = props.brand;
+  const set = (key: keyof BusinessProfile, value: string) => props.onBrand({ ...props.brand, business: { ...business, [key]: value } });
+  return (
+    <Card title="About your business">
+      <p className="muted small">Fill this in once. It helps Claude write hooks and captions that speak to your ideal client.</p>
+      <Label>What you do</Label>
+      <input value={business.what} placeholder="e.g. I'm a VA who manages inboxes and calendars" onChange={(e) => set("what", e.target.value)} />
+      <Label>Who you help</Label>
+      <input value={business.audience} placeholder="e.g. busy coaches and course creators" onChange={(e) => set("audience", e.target.value)} />
+      <Label>Your usual call to action</Label>
+      <input value={business.cta} placeholder='e.g. DM me "HELP" to book a discovery call' onChange={(e) => set("cta", e.target.value)} />
     </Card>
   );
 }

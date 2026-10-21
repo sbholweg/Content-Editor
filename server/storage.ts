@@ -22,7 +22,7 @@ export async function readProject(id: string): Promise<Project | null> {
   if (!isValidId(id)) return null;
   try {
     const project = JSON.parse(await fs.readFile(projectFile(id, "project.json"), "utf8"));
-    return { hookText: "", removePauses: false, ...project };
+    return { hookText: "", postCaption: "", removePauses: false, ...project };
   } catch {
     return null;
   }

@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
-import type { Word } from "../src/shared/types.ts";
+import type { BusinessProfile, Word } from "../src/shared/types.ts";
 import { config } from "./config.ts";
 
 const EditPlan = z.object({
@@ -24,7 +24,17 @@ Also write the hook: a short title shown at the top of the reel for the first fe
 
 export type EditSuggestions = { words: Word[]; hook: string };
 
-export async function planEdit(words: Word[]): Promise<EditSuggestions> {
+// Describes the creator's business so suggestions speak to their ideal client.
+export function businessContext(business: BusinessProfile) {
+  const lines = [
+    business.what && `What they do: ${business.what}`,
+    business.audience && `Who they help: ${business.audience}`,
+    business.cta && `Their usual call to action: ${business.cta}`,
+  ].filter(Boolean);
+  return lines.length ? `About the creator's business:\n${lines.join("\n")}\n\n` : "";
+}
+
+export async function planEdit(words: Word[], business: BusinessProfile): Promise<EditSuggestions> {
   if (words.length === 0) return { words, hook: "" };
   if (!process.env.ANTHROPIC_API_KEY) return heuristicEdit(words);
 
@@ -35,7 +45,12 @@ export async function planEdit(words: Word[]): Promise<EditSuggestions> {
       model: config.anthropicModel,
       max_tokens: 16000,
       system: SYSTEM,
-      messages: [{ role: "user", content: `Transcript (${(words.at(-1)!.endMs / 1000).toFixed(0)}s):\n${transcript}` }],
+      messages: [
+        {
+          role: "user",
+          content: `${businessContext(business)}Transcript (${(words.at(-1)!.endMs / 1000).toFixed(0)}s):\n${transcript}`,
+        },
+      ],
       output_config: { effort: "low", format: betaZodOutputFormat(EditPlan) },
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",

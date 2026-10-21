@@ -9,12 +9,13 @@ const LEGACY_STYLES: Record<string, Pick<BrandKit, "style" | "textEffect">> = {
 
 export function normalizeBrand(saved: Partial<BrandKit> & { style?: string }): BrandKit {
   const legacy = saved.style ? LEGACY_STYLES[saved.style] : undefined;
-  return { ...DEFAULT_BRAND, ...saved, ...legacy } as BrandKit;
+  return { ...DEFAULT_BRAND, ...saved, ...legacy, business: { ...DEFAULT_BRAND.business, ...saved.business } } as BrandKit;
 }
 
 // Placeholder brand until the real colors and fonts are added in the editor.
 export const DEFAULT_BRAND: BrandKit = {
   name: "My Brand",
+  business: { what: "", audience: "", cta: "" },
   font: "DM Sans",
   displayFont: "Instrument Serif",
   hookColor: "#FFFFFF",

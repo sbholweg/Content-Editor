@@ -4,7 +4,15 @@ import { outputFrames, Reel, REEL_FPS, REEL_HEIGHT, REEL_WIDTH } from "../remoti
 import { buildTimeline } from "../shared/timeline";
 import type { BrandKit, Project, ReelProps, Word } from "../shared/types";
 import { api, mediaUrl } from "./api";
-import { CaptionsCard, HookCard, WordsCard } from "./sections";
+import { BusinessCard, CaptionsCard, HookCard, PostCaptionCard, SoundCard, WordsCard, formatLength } from "./sections";
+
+const TABS = [
+  { id: "cut", label: "Cut" },
+  { id: "visuals", label: "Visuals" },
+  { id: "sound", label: "Sound" },
+  { id: "finish", label: "Finish" },
+] as const;
+type Tab = (typeof TABS)[number]["id"];
 
 function useDebounced<T>(fn: (value: T) => void, ms: number) {
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -23,6 +31,8 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   const [words, setWords] = useState<Word[]>([]);
   const [hookText, setHookText] = useState("");
   const [removePauses, setRemovePauses] = useState(false);
+  const [postCaption, setPostCaption] = useState("");
+  const [tab, setTab] = useState<Tab>("cut");
   const [error, setError] = useState("");
   const [timeMs, setTimeMs] = useState(0);
   const [exportFile, setExportFile] = useState<File | null>(null);
@@ -47,6 +57,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
       setWords(p.words);
       setHookText(p.hookText);
       setRemovePauses(p.removePauses);
+      setPostCaption(p.postCaption);
     });
     api.getBrand().then(setBrand, onAuthError);
   }, [load, onAuthError]);
@@ -95,6 +106,14 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
     setWords(next);
     setChangedSinceExport(true);
     saveWords(next);
+  };
+  const savePostCaption = useDebounced<string>(
+    useCallback((t) => void api.saveProject(id, { postCaption: t }).catch(onAuthError), [id, onAuthError]),
+    600,
+  );
+  const updatePostCaption = (text: string) => {
+    setPostCaption(text);
+    savePostCaption(text);
   };
   const updateHook = (text: string) => {
     setHookText(text);
@@ -223,40 +242,83 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
               />
             ) : null}
           </div>
-          {project.render.status === "error" ? <p className="error small">Export failed: {project.render.error}</p> : null}
         </aside>
 
         <div className="settings-col">
-          <HookCard hookText={hookText} onHookText={updateHook} brand={brand} onBrand={updateBrand} />
-          <WordsCard
-            words={words}
-            outputTimes={outputTimes}
-            timeMs={timeMs}
-            lengthMs={timeline.durationMs}
-            removePauses={removePauses}
-            onChange={updateWords}
-            onRemovePauses={(on) => {
-              setRemovePauses(on);
-              setChangedSinceExport(true);
-              void api.saveProject(id, { removePauses: on }).catch(onAuthError);
-            }}
-            onSeek={(ms) => player.current?.seekTo(Math.round((ms / 1000) * REEL_FPS))}
-            onAuto={async () => {
-              try {
-                const p = await api.autoHighlight(id);
-                setWords(p.words);
-                setHookText(p.hookText);
+          <nav className="tabs" role="tablist">
+            {TABS.map((t) => (
+              <button key={t.id} role="tab" aria-selected={tab === t.id} className={tab === t.id ? "on" : ""} onClick={() => setTab(t.id)}>
+                {t.label}
+              </button>
+            ))}
+          </nav>
+
+          {tab === "cut" || tab === "visuals" ? (
+            <WordsCard
+              mode={tab === "cut" ? "cut" : "style"}
+              words={words}
+              outputTimes={outputTimes}
+              timeMs={timeMs}
+              lengthMs={timeline.durationMs}
+              removePauses={removePauses}
+              onChange={updateWords}
+              onRemovePauses={(on) => {
+                setRemovePauses(on);
                 setChangedSinceExport(true);
-              } catch (err) {
-                onAuthError(err);
-              }
-            }}
-          />
-          <CaptionsCard brand={brand} onBrand={updateBrand} />
+                void api.saveProject(id, { removePauses: on }).catch(onAuthError);
+              }}
+              onSeek={(ms) => player.current?.seekTo(Math.round((ms / 1000) * REEL_FPS))}
+              onAuto={async () => {
+                try {
+                  const p = await api.autoHighlight(id);
+                  setWords(p.words);
+                  setHookText(p.hookText);
+                  setChangedSinceExport(true);
+                } catch (err) {
+                  onAuthError(err);
+                }
+              }}
+            />
+          ) : null}
+
+          {tab === "visuals" ? (
+            <>
+              <HookCard hookText={hookText} onHookText={updateHook} brand={brand} onBrand={updateBrand} />
+              <CaptionsCard brand={brand} onBrand={updateBrand} />
+            </>
+          ) : null}
+
+          {tab === "sound" ? <SoundCard /> : null}
+
+          {tab === "finish" ? (
+            <>
+              <section className="card">
+                <h2 className="serif">Your reel</h2>
+                <p className="muted small">{formatLength(timeline.durationMs)} long · 1080 × 1920 MP4, ready for Instagram</p>
+                <div className="row">{exportControls}</div>
+                {project.render.status === "error" ? <p className="error small">Export failed: {project.render.error}</p> : null}
+              </section>
+              <PostCaptionCard
+                caption={postCaption}
+                defaultCta={brand.business.cta}
+                onChange={updatePostCaption}
+                onWrite={async (cta) => {
+                  try {
+                    const p = await api.writeCaption(id, cta);
+                    setPostCaption(p.postCaption);
+                  } catch (err) {
+                    onAuthError(err);
+                    setError((err as Error).message);
+                  }
+                }}
+              />
+              <BusinessCard brand={brand} onBrand={updateBrand} />
+            </>
+          ) : null}
         </div>
       </div>
 
-      <div className="exportbar">{exportControls}</div>
+      {tab !== "finish" ? <div className="exportbar">{exportControls}</div> : null}
     </main>
   );
 }

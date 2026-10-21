@@ -35,7 +35,7 @@ button { cursor: pointer; border: 0; background: none; padding: 0; }
 button:disabled { opacity: 0.45; cursor: default; }
 
 .btn {
-  min-height: 46px; padding: 10px 18px; border-radius: 999px;
+  min-height: 46px; padding: 10px 18px; border-radius: 999px; white-space: nowrap;
   background: var(--card); border: 1px solid var(--line); font-weight: 600;
 }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 6px 18px rgba(134, 86, 246, 0.28); }
@@ -124,6 +124,12 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .check { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; letter-spacing: 0.05em; }
 .check input { width: 18px; height: 18px; accent-color: var(--accent); }
 
+/* Cut / Visuals / Sound / Finish */
+.tabs { display: flex; gap: 4px; padding: 4px; background: var(--chip); border: 1px solid var(--line); border-radius: 14px; position: sticky; top: 12px; z-index: 4; }
+.tabs button { flex: 1; min-height: 40px; border-radius: 10px; font-weight: 600; color: var(--muted); }
+.tabs button.on { background: #fff; color: var(--accent); box-shadow: 0 1px 4px rgba(30, 21, 51, 0.08); }
+.caption-input { font-size: 15px; line-height: 1.5; resize: vertical; }
+
 .hook-input { font-size: 28px; line-height: 1.15; resize: none; }
 
 .transcript { font-size: 16px; line-height: 2; }
@@ -152,6 +158,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     margin: 0 -16px; padding: 8px 16px 12px; background: rgba(248, 246, 254, 0.94); backdrop-filter: blur(12px);
   }
   .preview { width: auto; height: 38vh; border-radius: 16px; }
+  /* Tabs stick just under the pinned preview. */
+  .tabs { position: static; }
   .exportbar {
     display: flex; gap: 10px; position: fixed; left: 0; right: 0; bottom: 0;
     padding: 12px 16px calc(12px + env(safe-area-inset-bottom));

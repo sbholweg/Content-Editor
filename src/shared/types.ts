@@ -15,8 +15,16 @@ export type CaptionMode = "phrase" | "single";
 export type TextEffect = "shadow" | "outline";
 export type CaptionPosition = "top" | "middle" | "bottom";
 
+// Used by Claude to tailor hooks and post captions to the creator's business.
+export type BusinessProfile = {
+  what: string;
+  audience: string;
+  cta: string;
+};
+
 export type BrandKit = {
   name: string;
+  business: BusinessProfile;
   font: string;
   // Used for the hook title and for "accent" highlighted words.
   displayFont: string;
@@ -66,6 +74,7 @@ export type Project = {
   width: number;
   height: number;
   hookText: string;
+  postCaption: string;
   words: Word[];
   removePauses: boolean;
   render: RenderState;
