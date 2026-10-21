@@ -21,6 +21,11 @@ Done
 - "Do it for me" upload: cut, captioned, styled, exported, post caption written
 - Hook library by role, saved call-to-action keywords, "Not sure what to film?" idea starters
 - Media library: GIFs, images and b-roll on any line, with Swap, placement, size, timing and Remove
+- Editor rebuilt: Cut (numbered lines), Visuals (toolbar + line-by-line looks with Swap),
+  Sound (music that ducks under the voice + sound effects per line, 10 starter sounds),
+  Finish (export, trial reels, caption); play bar with a "Next" button on every tab
+- Hook styles: headline, eyebrow + headline, headline + subhead (with previews)
+- 35 bundled fonts, plus upload-your-own fonts, sounds and music
 - Claude Code layer: CLAUDE.md + skills (set me up, edit my reels, plain-words changes, update me),
   engine commands, inbox/outputs folders, editor updates live while Claude works
 
@@ -29,9 +34,8 @@ Next (in rough order)
 2. Make every "✨" button in the editor work through the buyer's Claude instead of an API key
 3. Reel to carousel (slides saved as images) and "Your snaps" (save a frame as the cover)
 4. Client wins: testimonial to quote card, and client case study carousel
-5. Sound: background music that ducks under the voice, sound effects
-6. Weekly batch: upload several videos, get back a numbered posting queue with captions
-7. "Tell Claude what you want" for a line (three options to pick from)
+5. Weekly batch: upload several videos, get back a numbered posting queue with captions
+6. "Tell Claude what you want" for a line (three options to pick from)
 
 ## Later: Version B, VAs editing reels for their clients (upgrade)
 - A separate brand kit and business profile per client

@@ -5,7 +5,9 @@ import { buildTimeline } from "../shared/timeline";
 import type { ReelProps } from "../shared/types";
 import { Captions } from "./Captions";
 import { Hook } from "./Hook";
+import { registerCustomFonts } from "./fonts";
 import { Overlays } from "./Overlays";
+import { Sounds } from "./Sounds";
 
 export const REEL_FPS = 30;
 export const REEL_WIDTH = 1080;
@@ -16,7 +18,9 @@ const toFrames = (ms: number) => Math.round((ms / 1000) * REEL_FPS);
 export const outputFrames = (props: Pick<ReelProps, "words" | "durationMs" | "removePauses">) =>
   Math.max(1, toFrames(buildTimeline(props.words, props.durationMs, props.removePauses).durationMs));
 
-export const Reel: React.FC<ReelProps> = ({ videoSrc, hookText, words, brand, durationMs, removePauses, overlays }) => {
+export const Reel: React.FC<ReelProps> = (props) => {
+  const { videoSrc, hookText, hookSubText, words, brand, durationMs, removePauses, overlays, sounds, music, customFonts } = props;
+  registerCustomFonts(customFonts ?? []);
   const timeline = useMemo(() => buildTimeline(words, durationMs, removePauses), [words, durationMs, removePauses]);
   const placed = useMemo(() => overlayTimes(overlays ?? [], words, timeline.words), [overlays, words, timeline]);
 
@@ -45,7 +49,8 @@ export const Reel: React.FC<ReelProps> = ({ videoSrc, hookText, words, brand, du
           ))
         : null}
       <Overlays items={placed} />
-      <Hook text={hookText} brand={brand} />
+      <Sounds sounds={sounds ?? []} music={music ?? null} words={timeline.words} />
+      <Hook text={hookText} subText={hookSubText ?? ""} brand={brand} />
       <Captions words={timeline.words} brand={brand} hookText={hookText} />
     </AbsoluteFill>
   );

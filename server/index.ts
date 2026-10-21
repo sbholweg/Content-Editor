@@ -6,7 +6,7 @@ import multer from "multer";
 import { z } from "zod";
 import { normalizeBrand, normalizeStyle } from "../src/shared/brand.ts";
 import { applyEdits, ReelEdits } from "../src/shared/edits.ts";
-import type { BrandKit, Overlay, Project, Word } from "../src/shared/types.ts";
+import type { BrandKit, MusicBed, Overlay, Project, SoundCue, Word } from "../src/shared/types.ts";
 import { isFiller } from "../src/shared/words.ts";
 import { accessToken, checkPassword, requireAuth } from "./auth.ts";
 import { writeCaption } from "./caption.ts";
@@ -35,6 +35,12 @@ app.use((_req, res, next) => {
   res.setHeader("Content-Security-Policy", `frame-ancestors ${ancestors}`);
   next();
 });
+
+// Built-in sound effects (not private, so no password needed).
+app.use("/sfx", (_req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  next();
+}, express.static(path.join(config.root, "public", "sfx")));
 
 app.post("/api/login", (req, res) => {
   if (!checkPassword(String(req.body?.password ?? ""))) return res.status(401).json({ error: "Wrong password" });
@@ -95,6 +101,10 @@ async function createProject(originalName: string, autopilot: boolean, placeOrig
     height: 0,
     words: [],
     overlays: [],
+    hookSubText: "",
+    sounds: [],
+    music: null,
+    soundsEnabled: true,
     style: (await readBrand()).defaultStyle,
     render: { status: "idle", progress: 0 },
   };
@@ -152,6 +162,10 @@ app.patch("/api/projects/:id", async (req, res) => {
   if (typeof req.body?.postCaption === "string") patch.postCaption = req.body.postCaption.slice(0, 2200);
   if (req.body?.style && typeof req.body.style === "object") patch.style = normalizeStyle(req.body.style);
   if (Array.isArray(req.body?.overlays)) patch.overlays = req.body.overlays as Overlay[];
+  if (typeof req.body?.hookSubText === "string") patch.hookSubText = req.body.hookSubText.slice(0, 200);
+  if (Array.isArray(req.body?.sounds)) patch.sounds = req.body.sounds as SoundCue[];
+  if (req.body && "music" in req.body) patch.music = req.body.music as MusicBed | null;
+  if (typeof req.body?.soundsEnabled === "boolean") patch.soundsEnabled = req.body.soundsEnabled;
   res.json(await updateProject(project.id, patch));
 });
 

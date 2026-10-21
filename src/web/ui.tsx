@@ -4,8 +4,8 @@ import { SWATCHES } from "../shared/brand";
 
 export function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="card">
-      <h2 className="serif">{title}</h2>
+    <section className="panel-card">
+      <h3>{title}</h3>
       {children}
     </section>
   );

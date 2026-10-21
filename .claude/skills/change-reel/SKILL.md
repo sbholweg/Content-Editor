@@ -15,6 +15,7 @@ description: Make plain-words changes to a reel, e.g. "make it softer", "cut the
 ```json
 {
   "hookText": "nobody's saying it, so i will",
+  "hookSubText": "a smaller second line",
   "postCaption": "...",
   "removePauses": true,
   "keyWords": [3, 9, 14],
@@ -26,17 +27,24 @@ description: Make plain-words changes to a reel, e.g. "make it softer", "cut the
   "look": "default",
   "style": {
     "font": "DM Sans", "displayFont": "Instrument Serif",
-    "hookColor": "#FFFFFF", "hookPosition": "top|middle|bottom", "hookDurationMs": 5000,
+    "hookColor": "#FFFFFF", "hookPosition": "top|middle|bottom", "hookLayout": "headline|eyebrow|subhead", "hookDurationMs": 5000,
     "textColor": "#FFFFFF", "outlineColor": "#000000",
     "highlightColor": "#8656F6", "highlightTextColor": "#FFFFFF",
     "style": "pill|color|serif", "captionMode": "phrase|single", "textEffect": "shadow|outline",
     "position": "top|middle|bottom", "wordsPerLine": 4, "uppercase": false, "fontSize": 64
   },
   "addMedia": [{"asset": "library item name", "fromWord": 10, "toWord": 14, "placement": "middle|top|bottom|full"}],
-  "removeMedia": ["ov-..."]
+  "removeMedia": ["ov-..."],
+  "addSounds": [{"sound": "Whoosh", "atWord": 0}, {"sound": "Pop", "atWord": 12}],
+  "removeSounds": ["snd-..."],
+  "soundsEnabled": true,
+  "music": {"sound": "library sound name", "volume": 0.35, "duck": true}
 }
 ```
-`hookDurationMs: 0` keeps the hook on for the whole video. `style: "pill"` = colored bubble behind
+`hookDurationMs: 0` keeps the hook on for the whole video. Hook layouts: `headline` (one big line),
+`eyebrow` (small hookSubText above), `subhead` (small hookSubText below).
+Starter sounds: Whoosh, Swoosh in, Pop, Click, Blip, Ding, Sparkle, Riser, Boom, Camera shutter.
+Music must be a track they uploaded (they need the rights to it); `"music": null` removes it. `style: "pill"` = colored bubble behind
 key words; `"color"` = key words change color; `"serif"` = key words in the hook font.
 
 Fonts: captions use DM Sans, Inter, Montserrat, Poppins, Courier Prime, Anton, Bebas Neue,
@@ -51,6 +59,8 @@ Playfair Display, Caveat, Pacifico.
 - "my brand colors": use `looks` to read their default look and saved looks; prefer those colors.
 - "cut the first sentence": cut the word numbers up to and including its last word.
 - "add <clip> when I talk about X": find the words in `show`, find the item with `library`, use addMedia.
+- "add sound effects": a Whoosh on the first word (hook), a Pop where media appears, maybe a Ding on a
+  big number or result. Keep them at least ~0.5s apart and don't overdo it.
 - "save this as my default / as a look": use the `brand` command with
   `{"defaultStyle": {...}}`, or ask them to tap "Save this as a look" in the Visuals tab.
 

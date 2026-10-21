@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { config } from "../server/config.ts";
+import { BUILTIN_SOUNDS } from "../src/shared/sounds.ts";
 import { buildTimeline } from "../src/shared/timeline.ts";
 import type { Asset, BrandKit, Project } from "../src/shared/types.ts";
 
@@ -76,7 +77,7 @@ function describe(p: Project, assets: Asset[]) {
     `Reel ${p.id}${p.variantLabel ? ` (trial reel: ${p.variantLabel})` : ""}`,
     `  Open in the editor: ${editorUrl(p.id)}`,
     `  From: ${p.originalName} · status ${p.status} · ${fmt(timeline.durationMs)} after cuts (${fmt(p.durationMs)} raw) · pauses ${p.removePauses ? "removed" : "kept"} · export ${p.render.status}`,
-    `  Hook: ${p.hookText ? `"${p.hookText}"` : "(none)"} · ${s.displayFont} ${s.hookColor} at ${s.hookPosition}, ${s.hookDurationMs ? `${s.hookDurationMs / 1000}s` : "whole video"}`,
+    `  Hook: ${p.hookText ? `"${p.hookText}"` : "(none)"}${p.hookSubText ? ` + "${p.hookSubText}"` : ""} · ${s.hookLayout} · ${s.displayFont} ${s.hookColor} at ${s.hookPosition}, ${s.hookDurationMs ? `${s.hookDurationMs / 1000}s` : "whole video"}`,
     `  Captions: ${s.captionMode === "single" ? "one word at a time" : `phrase, ${s.wordsPerLine} words`} · ${s.font} ${s.fontSize}px ${s.textColor} · ${s.textEffect} · at ${s.position}${s.uppercase ? " · ALL CAPS" : ""}`,
     `  Key words: ${s.style === "pill" ? `bubble ${s.highlightColor} with ${s.highlightTextColor} text` : s.style === "color" ? `coloured text ${s.highlightColor}` : `serif word ${s.highlightColor}`}`,
     "",
@@ -102,6 +103,12 @@ function describe(p: Project, assets: Asset[]) {
       const a = assets.find((x) => x.id === o.assetId);
       lines.push(`  - ${o.id}: ${a ? `${a.name} (${a.kind})` : "missing"} · ${o.placement} · words [${index.get(o.startWordId)}]-[${index.get(o.endWordId)}]`);
     }
+  }
+  if (p.music || p.sounds.length) {
+    const soundName = (id: string) => BUILTIN_SOUNDS.find((b) => b.id === id)?.name ?? assets.find((a) => a.id === id)?.name ?? "missing";
+    lines.push("", `  Sound${p.soundsEnabled ? "" : " (effects switched off)"}:`);
+    if (p.music) lines.push(`  - music: ${soundName(p.music.soundId)} · volume ${p.music.volume}${p.music.duck ? " · quieter while talking" : ""}${p.music.enabled ? "" : " · off"}`);
+    for (const c of p.sounds) lines.push(`  - ${c.id}: ${soundName(c.soundId)} on word [${index.get(c.wordId)}]`);
   }
   lines.push("", `  Post caption: ${p.postCaption ? `\n    ${p.postCaption.replace(/\n/g, "\n    ")}` : "(none yet)"}`);
   return lines.join("\n");
@@ -240,8 +247,9 @@ const commands: Record<string, (args: string[]) => Promise<void>> = {
 
   async library() {
     const assets = await call<Asset[]>("GET", "/api/library");
-    if (!assets.length) return console.log("The library is empty. Add GIFs, images or b-roll from the editor (Visuals tab).");
+    if (!assets.length) console.log("The library is empty. Add GIFs, images, b-roll, sounds or fonts from the editor.");
     for (const a of assets) console.log(`${a.id.slice(0, 8)}  ${a.kind.padEnd(5)}  ${a.name}`);
+    console.log(`\nStarter sounds: ${BUILTIN_SOUNDS.map((b) => b.name).join(", ")}`);
   },
 };
 
@@ -256,7 +264,7 @@ const HELP = `Engine commands (npm run engine -- <command>):
   trials [id|latest]         make 3 trial reels and export them
   looks                      show the default look, saved looks, business profile
   brand <json>               save business profile / default look / calls to action
-  library                    list GIFs, images and b-roll`;
+  library                    list GIFs, images, b-roll, sounds and fonts`;
 
 const [command, ...args] = process.argv.slice(2);
 if (!command || !commands[command]) {

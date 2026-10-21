@@ -2,10 +2,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition } from "@remotion/renderer";
+import { reelProps } from "../src/shared/props.ts";
 import type { ReelProps } from "../src/shared/types.ts";
 import { accessToken } from "./auth.ts";
 import { config } from "./config.ts";
-import { resolveOverlays } from "./library.ts";
+import { listAssets } from "./library.ts";
 import { projectFile, readProject, updateProject } from "./storage.ts";
 
 let bundlePromise: Promise<string> | null = null;
@@ -40,15 +41,12 @@ async function renderProject(id: string) {
   try {
     const serveUrl = await getBundle();
     const tokenParam = accessToken ? `?t=${accessToken}` : "";
-    const inputProps: ReelProps = {
-      videoSrc: `http://127.0.0.1:${config.port}/media/${id}/video.mp4${tokenParam}`,
-      hookText: project.hookText,
-      words: project.words,
-      brand: project.style,
-      durationMs: project.durationMs,
-      removePauses: project.removePauses,
-      overlays: await resolveOverlays(project.overlays, (file) => `http://127.0.0.1:${config.port}/media/library/${file}${tokenParam}`),
-    };
+    const local = (route: string) => `http://127.0.0.1:${config.port}${route}${tokenParam}`;
+    const inputProps: ReelProps = reelProps(project, await listAssets(), {
+      video: local(`/media/${id}/video.mp4`),
+      library: (file) => local(`/media/library/${file}`),
+      sfx: (file) => local(`/sfx/${file}`),
+    });
     const browserExecutable = process.env.REMOTION_BROWSER || null;
     const composition = await selectComposition({ serveUrl, id: "Reel", inputProps, browserExecutable });
 

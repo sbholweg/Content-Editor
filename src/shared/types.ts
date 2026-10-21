@@ -23,12 +23,16 @@ export type BusinessProfile = {
 };
 
 // Everything about how a reel looks. Each reel has its own copy, starting from the default look.
+export type HookLayout = "headline" | "eyebrow" | "subhead";
+
 export type ReelStyle = {
   font: string;
   // Used for the hook title and for "accent" highlighted words.
   displayFont: string;
   hookColor: string;
   hookPosition: CaptionPosition;
+  // "headline": one big line. "eyebrow": small line above a big one. "subhead": big line, small line below.
+  hookLayout: HookLayout;
   // How long the hook stays on screen. 0 = the whole video.
   hookDurationMs: number;
   textColor: string;
@@ -64,9 +68,14 @@ export type ReelProps = {
   durationMs: number;
   removePauses: boolean;
   overlays: ResolvedOverlay[];
+  hookSubText: string;
+  sounds: (SoundCue & { src: string })[];
+  music: (MusicBed & { src: string }) | null;
+  // Fonts uploaded by the creator: family name and file URL.
+  customFonts: { name: string; url: string }[];
 };
 
-export type AssetKind = "gif" | "image" | "video";
+export type AssetKind = "gif" | "image" | "video" | "audio" | "font";
 
 // A GIF, image or b-roll clip in the creator's library, reusable across reels.
 export type Asset = {
@@ -95,6 +104,12 @@ export type Overlay = {
   size: number;
 };
 
+// A sound effect that plays when a word is spoken. soundId is a built-in sound or a library item.
+export type SoundCue = { id: string; soundId: string; wordId: string; volume: number };
+
+// Background music for the whole reel.
+export type MusicBed = { soundId: string; volume: number; duck: boolean; enabled: boolean };
+
 // An overlay ready to draw: the asset's details are included so the video doesn't need the library.
 export type ResolvedOverlay = Overlay & { src: string; kind: AssetKind; width: number; height: number };
 
@@ -119,10 +134,16 @@ export type Project = {
   width: number;
   height: number;
   hookText: string;
+  // Second, smaller line of the hook (used by the eyebrow and subhead layouts).
+  hookSubText: string;
   postCaption: string;
   words: Word[];
   removePauses: boolean;
   overlays: Overlay[];
+  sounds: SoundCue[];
+  music: MusicBed | null;
+  // Sound effects on/off for the whole reel.
+  soundsEnabled: boolean;
   style: ReelStyle;
   render: RenderState;
   // Set on trial reel versions: the reel they were made from and which angle they use.

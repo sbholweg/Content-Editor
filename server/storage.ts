@@ -25,7 +25,18 @@ export async function readProject(id: string): Promise<Project | null> {
     const project = JSON.parse(await fs.readFile(projectFile(id, "project.json"), "utf8"));
     // Reels made before each reel had its own look use the current default look.
     const style = project.style ? normalizeStyle(project.style) : (await readBrand()).defaultStyle;
-    return { hookText: "", postCaption: "", removePauses: false, overlays: [], ...project, style };
+    return {
+      hookText: "",
+      hookSubText: "",
+      postCaption: "",
+      removePauses: false,
+      overlays: [],
+      sounds: [],
+      music: null,
+      soundsEnabled: true,
+      ...project,
+      style,
+    };
   } catch {
     return null;
   }

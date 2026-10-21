@@ -1,4 +1,7 @@
-import type { Asset, BrandKit, Overlay, Project, ReelStyle, Word } from "../shared/types";
+import type { Asset, BrandKit, Project } from "../shared/types";
+
+type EditableField =
+  | "words" | "hookText" | "hookSubText" | "postCaption" | "removePauses" | "style" | "overlays" | "sounds" | "music" | "soundsEnabled";
 
 const TOKEN_KEY = "content-editor-token";
 
@@ -69,10 +72,7 @@ export const api = {
   login: (password: string) => request<{ token: string }>("/api/login", { method: "POST", body: JSON.stringify({ password }) }),
   listProjects: () => request<Project[]>("/api/projects"),
   getProject: (id: string) => request<Project>(`/api/projects/${id}`),
-  saveProject: (
-    id: string,
-    patch: { words?: Word[]; hookText?: string; removePauses?: boolean; postCaption?: string; style?: ReelStyle; overlays?: Overlay[] },
-  ) =>
+  saveProject: (id: string, patch: Partial<Pick<Project, EditableField>>) =>
     request<Project>(`/api/projects/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
   autoHighlight: (id: string) => request<Project>(`/api/projects/${id}/auto-highlight`, { method: "POST" }),
   writeCaption: (id: string, cta: string) => request<Project>(`/api/projects/${id}/caption`, { method: "POST", body: JSON.stringify({ cta }) }),

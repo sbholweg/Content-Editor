@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { normalizeStyle } from "./brand";
+import { BUILTIN_SOUNDS } from "./sounds";
 import type { BrandKit, Project } from "./types";
 import { isFiller } from "./words";
 
@@ -12,6 +13,7 @@ const position = z.enum(["top", "middle", "bottom"]);
 export const ReelEdits = z
   .object({
     hookText: z.string().max(200),
+    hookSubText: z.string().max(200).describe("second, smaller hook line"),
     postCaption: z.string().max(2200),
     removePauses: z.boolean(),
     keyWords: indexes.describe("replace all key words with exactly these"),
@@ -29,6 +31,7 @@ export const ReelEdits = z
         displayFont: z.string(),
         hookColor: color,
         hookPosition: position,
+        hookLayout: z.enum(["headline", "eyebrow", "subhead"]),
         hookDurationMs: z.number().int().min(0),
         textColor: color,
         outlineColor: color,
@@ -54,6 +57,23 @@ export const ReelEdits = z
       }),
     ),
     removeMedia: z.array(z.string()).describe("overlay ids"),
+    addSounds: z.array(
+      z.object({
+        sound: z.string().describe("starter sound name (Whoosh, Pop, Click, Ding...) or library sound name"),
+        atWord: z.number().int().nonnegative(),
+        volume: z.number().min(0).max(1).optional(),
+      }),
+    ),
+    removeSounds: z.array(z.string()).describe('sound cue ids, or "all"'),
+    soundsEnabled: z.boolean(),
+    music: z
+      .object({
+        sound: z.string().describe("library sound name"),
+        volume: z.number().min(0).max(1).optional(),
+        duck: z.boolean().optional(),
+      })
+      .nullable()
+      .describe("null removes the music"),
   })
   .partial()
   .strict();
@@ -117,6 +137,39 @@ export function applyEdits(project: Project, edits: ReelEdits, brand: BrandKit, 
     ];
   }
   if (overlays !== project.overlays) changes.overlays = overlays;
+
+  if (edits.hookSubText !== undefined) changes.hookSubText = edits.hookSubText;
+  if (edits.soundsEnabled !== undefined) changes.soundsEnabled = edits.soundsEnabled;
+
+  const findSound = (name: string) => {
+    const key = name.trim().toLowerCase();
+    const builtin = BUILTIN_SOUNDS.find((b) => b.id === key || b.name.toLowerCase() === key);
+    if (builtin) return builtin.id;
+    const mine = library.find((a) => a.kind === "audio" && (a.id === name || a.name.toLowerCase() === key));
+    if (mine) return mine.id;
+    throw new Error(
+      `No sound called "${name}". Starter sounds: ${BUILTIN_SOUNDS.map((b) => b.name).join(", ")}. Your sounds: ${
+        library.filter((a) => a.kind === "audio").map((a) => a.name).join(", ") || "(none)"
+      }.`,
+    );
+  };
+
+  let sounds = project.sounds;
+  if (edits.removeSounds?.length) sounds = edits.removeSounds.includes("all") ? [] : sounds.filter((c) => !edits.removeSounds!.includes(c.id));
+  for (const s of edits.addSounds ?? []) {
+    sounds = [...sounds, { id: `snd-${Date.now()}-${sounds.length}`, soundId: findSound(s.sound), wordId: at(s.atWord).id, volume: s.volume ?? 0.8 }];
+  }
+  if (sounds !== project.sounds) changes.sounds = sounds;
+
+  if (edits.music === null) changes.music = null;
+  else if (edits.music) {
+    changes.music = {
+      soundId: findSound(edits.music.sound),
+      volume: edits.music.volume ?? project.music?.volume ?? 0.35,
+      duck: edits.music.duck ?? project.music?.duck ?? true,
+      enabled: true,
+    };
+  }
 
   return changes;
 }
