@@ -1,4 +1,4 @@
-import type { BrandKit, Project, ReelStyle, Word } from "../shared/types";
+import type { Asset, BrandKit, Overlay, Project, ReelStyle, Word } from "../shared/types";
 
 const TOKEN_KEY = "content-editor-token";
 
@@ -34,6 +34,11 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return data as T;
 }
 
+export const libraryUrl = (file: string) => {
+  const token = getToken();
+  return `/media/library/${file}${token ? `?t=${token}` : ""}`;
+};
+
 export const mediaUrl = (id: string, file: "video.mp4" | "export.mp4", bust = "") => {
   const params = new URLSearchParams();
   const token = getToken();
@@ -48,7 +53,10 @@ export const api = {
   login: (password: string) => request<{ token: string }>("/api/login", { method: "POST", body: JSON.stringify({ password }) }),
   listProjects: () => request<Project[]>("/api/projects"),
   getProject: (id: string) => request<Project>(`/api/projects/${id}`),
-  saveProject: (id: string, patch: { words?: Word[]; hookText?: string; removePauses?: boolean; postCaption?: string; style?: ReelStyle }) =>
+  saveProject: (
+    id: string,
+    patch: { words?: Word[]; hookText?: string; removePauses?: boolean; postCaption?: string; style?: ReelStyle; overlays?: Overlay[] },
+  ) =>
     request<Project>(`/api/projects/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
   autoHighlight: (id: string) => request<Project>(`/api/projects/${id}/auto-highlight`, { method: "POST" }),
   writeCaption: (id: string, cta: string) => request<Project>(`/api/projects/${id}/caption`, { method: "POST", body: JSON.stringify({ cta }) }),
@@ -59,29 +67,35 @@ export const api = {
   getBrand: () => request<BrandKit>("/api/brand"),
   saveBrand: (brand: BrandKit) => request<BrandKit>("/api/brand", { method: "PUT", body: JSON.stringify(brand) }),
 
-  // XHR instead of fetch so we can show upload progress for big phone videos.
-  upload(file: File, autopilot: boolean, onProgress: (fraction: number) => void): Promise<Project> {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", "/api/projects");
-      const token = getToken();
-      if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-      xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(e.loaded / e.total);
-      xhr.onload = () => {
-        if (xhr.status === 401) return reject(new AuthError("Please log in"));
-        try {
-          const data = JSON.parse(xhr.responseText);
-          xhr.status < 300 ? resolve(data) : reject(new Error(data.error ?? "Upload failed"));
-        } catch {
-          reject(new Error("Upload failed"));
-        }
-      };
-      xhr.onerror = () => reject(new Error("Upload failed. Check your connection and try again."));
-      const form = new FormData();
-      // Fields before the file so the server sees them as soon as the upload starts.
-      form.append("autopilot", autopilot ? "1" : "0");
-      form.append("video", file);
-      xhr.send(form);
-    });
-  },
+  listAssets: () => request<Asset[]>("/api/library"),
+  deleteAsset: (id: string) => request<{ ok: true }>(`/api/library/${id}`, { method: "DELETE" }),
+  uploadAsset: (file: File, onProgress: (fraction: number) => void) => sendFile<Asset>("/api/library", { file }, onProgress),
+
+  upload: (file: File, autopilot: boolean, onProgress: (fraction: number) => void) =>
+    sendFile<Project>("/api/projects", { autopilot: autopilot ? "1" : "0", video: file }, onProgress),
 };
+
+// XHR instead of fetch so we can show upload progress for big phone videos.
+function sendFile<T>(url: string, fields: Record<string, string | File>, onProgress: (fraction: number) => void): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    const token = getToken();
+    if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(e.loaded / e.total);
+    xhr.onload = () => {
+      if (xhr.status === 401) return reject(new AuthError("Please log in"));
+      try {
+        const data = JSON.parse(xhr.responseText);
+        xhr.status < 300 ? resolve(data) : reject(new Error(data.error ?? "Upload failed"));
+      } catch {
+        reject(new Error("Upload failed"));
+      }
+    };
+    xhr.onerror = () => reject(new Error("Upload failed. Check your connection and try again."));
+    // Text fields go first so the server sees them as soon as the upload starts.
+    const form = new FormData();
+    for (const [key, value] of Object.entries(fields)) form.append(key, value);
+    xhr.send(form);
+  });
+}

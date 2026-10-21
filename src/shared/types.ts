@@ -63,7 +63,40 @@ export type ReelProps = {
   // Length of the original, uncut video.
   durationMs: number;
   removePauses: boolean;
+  overlays: ResolvedOverlay[];
 };
+
+export type AssetKind = "gif" | "image" | "video";
+
+// A GIF, image or b-roll clip in the creator's library, reusable across reels.
+export type Asset = {
+  id: string;
+  name: string;
+  kind: AssetKind;
+  file: string;
+  // Still image shown in the library for b-roll clips.
+  thumb?: string;
+  width: number;
+  height: number;
+  durationMs: number;
+  createdAt: string;
+};
+
+export type OverlayPlacement = "top" | "middle" | "bottom" | "full";
+
+// Media shown over the reel while a range of words is spoken.
+export type Overlay = {
+  id: string;
+  assetId: string;
+  startWordId: string;
+  endWordId: string;
+  placement: OverlayPlacement;
+  // Width as a fraction of the frame (ignored for "full").
+  size: number;
+};
+
+// An overlay ready to draw: the asset's details are included so the video doesn't need the library.
+export type ResolvedOverlay = Overlay & { src: string; kind: AssetKind; width: number; height: number };
 
 export type ProjectStatus = "uploaded" | "processing" | "ready" | "error";
 
@@ -87,6 +120,7 @@ export type Project = {
   postCaption: string;
   words: Word[];
   removePauses: boolean;
+  overlays: Overlay[];
   style: ReelStyle;
   render: RenderState;
   // Set on trial reel versions: the reel they were made from and which angle they use.

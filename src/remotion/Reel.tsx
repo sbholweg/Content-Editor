@@ -1,9 +1,11 @@
 import React, { useMemo } from "react";
 import { AbsoluteFill, OffthreadVideo, Sequence } from "remotion";
+import { overlayTimes } from "../shared/overlays";
 import { buildTimeline } from "../shared/timeline";
 import type { ReelProps } from "../shared/types";
 import { Captions } from "./Captions";
 import { Hook } from "./Hook";
+import { Overlays } from "./Overlays";
 
 export const REEL_FPS = 30;
 export const REEL_WIDTH = 1080;
@@ -14,8 +16,9 @@ const toFrames = (ms: number) => Math.round((ms / 1000) * REEL_FPS);
 export const outputFrames = (props: Pick<ReelProps, "words" | "durationMs" | "removePauses">) =>
   Math.max(1, toFrames(buildTimeline(props.words, props.durationMs, props.removePauses).durationMs));
 
-export const Reel: React.FC<ReelProps> = ({ videoSrc, hookText, words, brand, durationMs, removePauses }) => {
+export const Reel: React.FC<ReelProps> = ({ videoSrc, hookText, words, brand, durationMs, removePauses, overlays }) => {
   const timeline = useMemo(() => buildTimeline(words, durationMs, removePauses), [words, durationMs, removePauses]);
+  const placed = useMemo(() => overlayTimes(overlays ?? [], words, timeline.words), [overlays, words, timeline]);
 
   // Each kept piece of the original video plays back-to-back.
   let from = 0;
@@ -41,6 +44,7 @@ export const Reel: React.FC<ReelProps> = ({ videoSrc, hookText, words, brand, du
             </Sequence>
           ))
         : null}
+      <Overlays items={placed} />
       <Hook text={hookText} brand={brand} />
       <Captions words={timeline.words} brand={brand} hookText={hookText} />
     </AbsoluteFill>

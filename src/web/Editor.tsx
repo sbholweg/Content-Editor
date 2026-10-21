@@ -2,8 +2,9 @@ import { Player, type PlayerRef } from "@remotion/player";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { outputFrames, Reel, REEL_FPS, REEL_HEIGHT, REEL_WIDTH } from "../remotion/Reel";
 import { buildTimeline } from "../shared/timeline";
-import type { BrandKit, Project, ReelProps, ReelStyle, Word } from "../shared/types";
-import { api, mediaUrl } from "./api";
+import type { Asset, BrandKit, Overlay, Project, ReelProps, ReelStyle, Word } from "../shared/types";
+import { api, libraryUrl, mediaUrl } from "./api";
+import { LibraryPicker, MediaCard } from "./Media";
 import { TrialReelsCard } from "./TrialReels";
 import { BusinessCard, CaptionsCard, HookCard, LooksCard, PostCaptionCard, SoundCard, WordsCard, formatLength } from "./sections";
 
@@ -34,6 +35,10 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   const [removePauses, setRemovePauses] = useState(false);
   const [postCaption, setPostCaption] = useState("");
   const [look, setLook] = useState<ReelStyle | null>(null);
+  const [overlays, setOverlays] = useState<Overlay[]>([]);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  // What the library picker is open for: adding to a word, or swapping an existing overlay.
+  const [picker, setPicker] = useState<{ wordId: string } | { overlayId: string } | null>(null);
   const [tab, setTab] = useState<Tab>("cut");
   const [error, setError] = useState("");
   const [timeMs, setTimeMs] = useState(0);
@@ -61,10 +66,12 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
       setRemovePauses(p.removePauses);
       setPostCaption(p.postCaption);
       setLook(p.style);
+      setOverlays(p.overlays);
       // Reels made with "Do it for me" open straight on the finished result.
       if (p.render.status !== "idle") setTab("finish");
     });
     api.getBrand().then(setBrand, onAuthError);
+    api.listAssets().then(setAssets, onAuthError);
   }, [load, onAuthError]);
 
   // Poll while the server is working on this reel.
@@ -134,6 +141,36 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
     setChangedSinceExport(true);
     saveLook(next);
   };
+  const saveOverlays = useDebounced<Overlay[]>(
+    useCallback((o) => void api.saveProject(id, { overlays: o }).catch(onAuthError), [id, onAuthError]),
+    400,
+  );
+  const updateOverlays = (next: Overlay[]) => {
+    setOverlays(next);
+    setChangedSinceExport(true);
+    saveOverlays(next);
+  };
+  const pickAsset = (asset: Asset) => {
+    if (!picker) return;
+    if ("overlayId" in picker) {
+      updateOverlays(overlays.map((o) => (o.id === picker.overlayId ? { ...o, assetId: asset.id } : o)));
+    } else {
+      const start = words.findIndex((w) => w.id === picker.wordId);
+      const end = words[Math.min(words.length - 1, start + 2)];
+      updateOverlays([
+        ...overlays,
+        {
+          id: `ov-${Date.now()}`,
+          assetId: asset.id,
+          startWordId: picker.wordId,
+          endWordId: end.id,
+          placement: asset.kind === "video" ? "full" : "middle",
+          size: 0.6,
+        },
+      ]);
+    }
+    setPicker(null);
+  };
   const updateBrand = (next: BrandKit) => {
     setBrand(next);
     setChangedSinceExport(true);
@@ -151,9 +188,20 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   const inputProps: ReelProps | null = useMemo(
     () =>
       project && look
-        ? { videoSrc: mediaUrl(id, "video.mp4"), hookText, words, brand: look, durationMs: project.durationMs, removePauses }
+        ? {
+            videoSrc: mediaUrl(id, "video.mp4"),
+            hookText,
+            words,
+            brand: look,
+            durationMs: project.durationMs,
+            removePauses,
+            overlays: overlays.flatMap((o) => {
+              const a = assets.find((x) => x.id === o.assetId);
+              return a ? [{ ...o, src: libraryUrl(a.file), kind: a.kind, width: a.width, height: a.height }] : [];
+            }),
+          }
         : null,
-    [project?.durationMs, look, words, hookText, removePauses, id],
+    [project?.durationMs, look, words, hookText, removePauses, overlays, assets, id],
   );
 
   const timeline = useMemo(
@@ -284,6 +332,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
                 void api.saveProject(id, { removePauses: on }).catch(onAuthError);
               }}
               onSeek={(ms) => player.current?.seekTo(Math.round((ms / 1000) * REEL_FPS))}
+              onAddMedia={tab === "visuals" ? (wordId) => setPicker({ wordId }) : undefined}
               onAuto={async () => {
                 try {
                   const p = await api.autoHighlight(id);
@@ -301,6 +350,17 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
             <>
               {look ? (
                 <>
+                  <MediaCard
+                    overlays={overlays}
+                    assets={assets}
+                    words={words}
+                    onChange={updateOverlays}
+                    onSwap={(overlayId) => setPicker({ overlayId })}
+                    onSeek={(wordId) => {
+                      const out = outputTimes.get(wordId);
+                      if (out) player.current?.seekTo(Math.round((out.startMs / 1000) * REEL_FPS));
+                    }}
+                  />
                   <LooksCard look={look} onLook={updateLook} brand={brand} onBrand={updateBrand} />
                   <HookCard hookText={hookText} onHookText={updateHook} look={look} onLook={updateLook} />
                   <CaptionsCard look={look} onLook={updateLook} />
@@ -344,6 +404,21 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
       </div>
 
       {tab !== "finish" ? <div className="exportbar">{exportControls}</div> : null}
+
+      {picker ? (
+        <LibraryPicker
+          assets={assets}
+          onAssets={setAssets}
+          lineText={(() => {
+            const wordId = "wordId" in picker ? picker.wordId : overlays.find((o) => o.id === picker.overlayId)?.startWordId;
+            const i = words.findIndex((w) => w.id === wordId);
+            return words.slice(Math.max(0, i), i + 6).map((w) => w.text).join(" ");
+          })()}
+          onPick={pickAsset}
+          onClose={() => setPicker(null)}
+          onAuthError={onAuthError}
+        />
+      ) : null}
     </main>
   );
 }

@@ -228,7 +228,7 @@ export const formatLength = (ms: number) => {
 };
 
 export function WordsCard({
-  mode, words, outputTimes, timeMs, lengthMs, removePauses, onChange, onRemovePauses, onSeek, onAuto,
+  mode, words, outputTimes, timeMs, lengthMs, removePauses, onChange, onRemovePauses, onSeek, onAuto, onAddMedia,
 }: {
   // "cut": tap words to remove them. "style": tap words to highlight, edit or add an emoji.
   mode: "style" | "cut";
@@ -242,6 +242,7 @@ export function WordsCard({
   onRemovePauses: (on: boolean) => void;
   onSeek: (ms: number) => void;
   onAuto: () => Promise<void>;
+  onAddMedia?: (wordId: string) => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [autoBusy, setAutoBusy] = useState(false);
@@ -336,6 +337,9 @@ export function WordsCard({
               </button>
             ))}
           </div>
+          {onAddMedia ? (
+            <button className="chip" onClick={() => onAddMedia(word.id)}>🖼️ Add image, GIF or b-roll here</button>
+          ) : null}
           <div className="row">
             <button className="link" onClick={() => setSelected(null)}>Done</button>
             <span className="grow" />

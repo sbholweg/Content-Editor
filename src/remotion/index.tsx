@@ -4,7 +4,7 @@ import { DEFAULT_STYLE } from "../shared/brand";
 import type { ReelProps } from "../shared/types";
 import { outputFrames, Reel, REEL_FPS, REEL_HEIGHT, REEL_WIDTH } from "./Reel";
 
-const defaultProps: ReelProps = { videoSrc: "", hookText: "", words: [], brand: DEFAULT_STYLE, durationMs: 3000, removePauses: false };
+const defaultProps: ReelProps = { videoSrc: "", hookText: "", words: [], brand: DEFAULT_STYLE, durationMs: 3000, removePauses: false, overlays: [] };
 
 const Root: React.FC = () => (
   <Composition

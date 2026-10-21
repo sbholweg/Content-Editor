@@ -23,10 +23,12 @@ export async function probe(file: string) {
     file,
   ]);
   const json = JSON.parse(out);
+  // Still images report no duration ("N/A").
+  const seconds = Number(json.format?.duration);
   return {
     width: Number(json.streams?.[0]?.width ?? 0),
     height: Number(json.streams?.[0]?.height ?? 0),
-    durationMs: Math.round(Number(json.format?.duration ?? 0) * 1000),
+    durationMs: Number.isFinite(seconds) ? Math.round(seconds * 1000) : 0,
   };
 }
 
@@ -41,6 +43,21 @@ export async function normalizeVideo(input: string, output: string) {
     "-movflags", "+faststart",
     output,
   ]);
+}
+
+// B-roll for the library: same conversion as reels, but without sound.
+export async function normalizeBroll(input: string, output: string) {
+  await run("ffmpeg", [
+    "-y", "-i", input,
+    "-vf", "scale='min(1080,iw)':-2,fps=30",
+    "-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-pix_fmt", "yuv420p",
+    "-an", "-movflags", "+faststart",
+    output,
+  ]);
+}
+
+export async function saveStill(input: string, output: string) {
+  await run("ffmpeg", ["-y", "-ss", "0.5", "-i", input, "-frames:v", "1", "-vf", "scale=360:-2", output]);
 }
 
 // whisper.cpp needs 16kHz mono WAV.

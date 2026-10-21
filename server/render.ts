@@ -4,6 +4,7 @@ import { renderMedia, selectComposition } from "@remotion/renderer";
 import type { ReelProps } from "../src/shared/types.ts";
 import { accessToken } from "./auth.ts";
 import { config } from "./config.ts";
+import { resolveOverlays } from "./library.ts";
 import { projectFile, readProject, updateProject } from "./storage.ts";
 
 let bundlePromise: Promise<string> | null = null;
@@ -33,6 +34,7 @@ async function renderProject(id: string) {
       brand: project.style,
       durationMs: project.durationMs,
       removePauses: project.removePauses,
+      overlays: await resolveOverlays(project.overlays, (file) => `http://127.0.0.1:${config.port}/media/library/${file}${tokenParam}`),
     };
     const browserExecutable = process.env.REMOTION_BROWSER || null;
     const composition = await selectComposition({ serveUrl, id: "Reel", inputProps, browserExecutable });

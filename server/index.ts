@@ -5,7 +5,7 @@ import express from "express";
 import multer from "multer";
 import { normalizeBrand, normalizeStyle } from "../src/shared/brand.ts";
 import { isFiller } from "../src/shared/words.ts";
-import type { BrandKit, Project, Word } from "../src/shared/types.ts";
+import type { BrandKit, Overlay, Project, Word } from "../src/shared/types.ts";
 import { accessToken, checkPassword, requireAuth } from "./auth.ts";
 import { config } from "./config.ts";
 import { writeCaption } from "./caption.ts";
@@ -19,6 +19,7 @@ import {
 } from "./storage.ts";
 import { transcribeWords } from "./transcribe.ts";
 import { createTrialReels } from "./trials.ts";
+import { addAsset, deleteAsset, libraryDir, listAssets } from "./library.ts";
 
 await ensureDirs();
 
@@ -39,6 +40,13 @@ app.post("/api/login", (req, res) => {
 app.get("/api/auth-required", (_req, res) => res.json({ required: Boolean(accessToken) }));
 
 app.use(["/api", "/media"], requireAuth);
+
+// The exporter loads GIFs with fetch() from its own local address, which counts as another
+// origin. Media still needs the access token, so allowing any origin here is safe.
+app.use("/media", (_req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  next();
+});
 
 const upload = multer({
   storage: multer.diskStorage({
@@ -70,6 +78,7 @@ app.post("/api/projects", upload.single("video"), async (req, res) => {
     width: 0,
     height: 0,
     words: [],
+    overlays: [],
     style: (await readBrand()).defaultStyle,
     render: { status: "idle", progress: 0 },
   };
@@ -126,6 +135,7 @@ app.patch("/api/projects/:id", async (req, res) => {
   if (typeof req.body?.removePauses === "boolean") patch.removePauses = req.body.removePauses;
   if (typeof req.body?.postCaption === "string") patch.postCaption = req.body.postCaption.slice(0, 2200);
   if (req.body?.style && typeof req.body.style === "object") patch.style = normalizeStyle(req.body.style);
+  if (Array.isArray(req.body?.overlays)) patch.overlays = req.body.overlays as Overlay[];
   res.json(await updateProject(project.id, patch));
 });
 
@@ -182,6 +192,32 @@ app.put("/api/brand", async (req, res) => {
   const brand = normalizeBrand({ ...(await readBrand()), ...(req.body as Partial<BrandKit>) });
   await writeBrand(brand);
   res.json(brand);
+});
+
+app.get("/api/library", async (_req, res) => res.json(await listAssets()));
+
+const libraryUpload = multer({
+  dest: path.join(config.dataDir, "uploads"),
+  limits: { fileSize: 1024 * 1024 * 1024 },
+});
+app.post("/api/library", libraryUpload.single("file"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "Please choose a file" });
+  try {
+    res.json(await addAsset(req.file));
+  } catch (err) {
+    res.status(400).json({ error: (err as Error).message });
+  }
+});
+
+app.delete("/api/library/:id", async (req, res) => {
+  await deleteAsset(req.params.id);
+  res.json({ ok: true });
+});
+
+app.get("/media/library/:file", async (req, res) => {
+  const asset = (await listAssets()).find((a) => a.file === req.params.file || a.thumb === req.params.file);
+  if (!asset) return res.status(404).end();
+  res.sendFile(path.join(libraryDir, req.params.file));
 });
 
 // Serves the prepared video and the finished export.
