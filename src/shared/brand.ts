@@ -24,6 +24,12 @@ export const DEFAULT_STYLE: ReelStyle = {
 
 export const DEFAULT_BRAND: BrandKit = {
   name: "My Brand",
+  tagline: "",
+  setUp: false,
+  palette: [],
+  fonts: { headline: DEFAULT_STYLE.displayFont, body: DEFAULT_STYLE.font, accent: "Caveat" },
+  logoAssetId: "",
+  voice: { tone: [], phrases: [], avoid: [] },
   business: { what: "", audience: "", cta: "" },
   defaultStyle: DEFAULT_STYLE,
   looks: [],
@@ -50,6 +56,12 @@ export function normalizeStyle(saved: Partial<ReelStyle> & { style?: string } = 
 export function normalizeBrand(saved: Partial<BrandKit> & Partial<ReelStyle> = {}): BrandKit {
   return {
     name: saved.name ?? DEFAULT_BRAND.name,
+    tagline: saved.tagline ?? "",
+    setUp: saved.setUp ?? false,
+    palette: saved.palette ?? [],
+    fonts: { ...DEFAULT_BRAND.fonts, ...saved.fonts },
+    logoAssetId: saved.logoAssetId ?? "",
+    voice: { ...DEFAULT_BRAND.voice, ...saved.voice },
     business: { ...DEFAULT_BRAND.business, ...saved.business },
     // Before saved looks existed, the style fields lived directly on the brand.
     defaultStyle: normalizeStyle(saved.defaultStyle ?? (saved as Partial<ReelStyle>)),
@@ -58,5 +70,18 @@ export function normalizeBrand(saved: Partial<BrandKit> & Partial<ReelStyle> = {
   };
 }
 
-// Swatches offered in the color pickers (Sarabeth Holweg brand palette, read from a screenshot).
+// Swatches offered in the color pickers until a brand palette is set.
 export const SWATCHES = ["#FFFFFF", "#F2EFFC", "#FBF4F0", "#8656F6", "#E85BDB", "#CEFC7E", "#1E1533", "#111015"];
+
+// The brand's colors first, then white and black, which captions almost always need.
+export function swatchesFor(brand: Pick<BrandKit, "palette"> | null | undefined) {
+  if (!brand?.palette.length) return SWATCHES;
+  const hexes = brand.palette.map((c) => c.hex.toUpperCase());
+  return [...new Set([...hexes, "#FFFFFF", "#000000"])];
+}
+
+// Points new reels at the brand: its fonts and main color become the default look.
+export function styleFromBrand(brand: BrandKit, base: ReelStyle): ReelStyle {
+  const primary = brand.palette.find((c) => c.role === "primary")?.hex ?? base.highlightColor;
+  return { ...base, font: brand.fonts.body, displayFont: brand.fonts.headline, highlightColor: primary };
+}

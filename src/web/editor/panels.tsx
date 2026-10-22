@@ -1,6 +1,7 @@
 import { Thumbnail } from "@remotion/player";
 import React, { useRef, useState } from "react";
 import { outputFrames, Reel, REEL_FPS, REEL_HEIGHT, REEL_WIDTH } from "../../remotion/Reel";
+import { swatchesFor } from "../../shared/brand";
 import { FONT_GROUPS } from "../../shared/fonts";
 import { HOOK_LIBRARY } from "../../shared/library";
 import type { HookLayout, ReelProps, ReelStyle } from "../../shared/types";
@@ -175,7 +176,7 @@ export function HookPanel({ previewProps }: { previewProps: ReelProps }) {
 }
 
 // Font picker with a row of groups (Clean, Serif, Script & fun, Yours) so the list stays short.
-function FontPicker({ value, yours, onChange }: { value: string; yours: { name: string; note: string }[]; onChange: (v: string) => void }) {
+export function FontPicker({ value, yours, onChange }: { value: string; yours: { name: string; note: string }[]; onChange: (v: string) => void }) {
   const groups = [...(yours.length ? [{ label: "Your fonts", fonts: yours }] : []), ...FONT_GROUPS];
   const [group, setGroup] = useState(() => groups.find((g) => g.fonts.some((f) => f.name === value))?.label ?? groups[0].label);
   return (
@@ -193,7 +194,8 @@ function FontPicker({ value, yours, onChange }: { value: string; yours: { name: 
 }
 
 export function FontsPanel() {
-  const { assets, setAssets, onAuthError } = useEditor();
+  const { assets, setAssets, onAuthError, brand } = useEditor();
+  const swatches = swatchesFor(brand);
   const { look, set } = useLook();
   const input = useRef<HTMLInputElement>(null);
   const { progress, error, upload } = useUpload((a) => setAssets([a, ...assets]), onAuthError);
@@ -231,26 +233,26 @@ export function FontsPanel() {
       <div className="colors-grid">
         <div>
           <Label>Caption colour</Label>
-          <Swatches value={look.textColor} onChange={(v) => set("textColor", v)} />
+          <Swatches colors={swatches} value={look.textColor} onChange={(v) => set("textColor", v)} />
         </div>
         <div>
           <Label>{bubble ? "Bubble colour" : "Key word colour"}</Label>
-          <Swatches value={look.highlightColor} onChange={(v) => set("highlightColor", v)} />
+          <Swatches colors={swatches} value={look.highlightColor} onChange={(v) => set("highlightColor", v)} />
         </div>
         {bubble ? (
           <div>
             <Label>Text in the bubble</Label>
-            <Swatches value={look.highlightTextColor} onChange={(v) => set("highlightTextColor", v)} />
+            <Swatches colors={swatches} value={look.highlightTextColor} onChange={(v) => set("highlightTextColor", v)} />
           </div>
         ) : null}
         <div>
           <Label>Hook colour</Label>
-          <Swatches value={look.hookColor} onChange={(v) => set("hookColor", v)} />
+          <Swatches colors={swatches} value={look.hookColor} onChange={(v) => set("hookColor", v)} />
         </div>
         {look.textEffect === "outline" ? (
           <div>
             <Label>Outline colour</Label>
-            <Swatches value={look.outlineColor} onChange={(v) => set("outlineColor", v)} />
+            <Swatches colors={swatches} value={look.outlineColor} onChange={(v) => set("outlineColor", v)} />
           </div>
         ) : null}
       </div>

@@ -130,13 +130,13 @@ async function processProject(id: string, original: string, autopilot: boolean) 
     const words = await transcribeWords(audio);
     await updateProject(id, { words, step: "Picking words to highlight" });
     const brand = await readBrand();
-    const plan = await planEdit(words, brand.business);
+    const plan = await planEdit(words, { ...brand.business, voice: brand.voice });
     if (!autopilot) {
       await updateProject(id, { words: plan.words, hookText: plan.hook, status: "ready", step: undefined });
     } else {
       const cleaned = plan.words.map((w) => (isFiller(w.text) ? { ...w, cut: true } : w));
       await updateProject(id, { words: cleaned, hookText: plan.hook, removePauses: true, step: "Writing your caption" });
-      const postCaption = await writeCaption({ words: cleaned, hook: plan.hook, business: brand.business, cta: "" }).catch(() => "");
+      const postCaption = await writeCaption({ words: cleaned, hook: plan.hook, business: { ...brand.business, voice: brand.voice }, cta: "" }).catch(() => "");
       await updateProject(id, { postCaption, status: "ready", step: undefined, render: { status: "rendering", progress: 0 } });
       queueRender(id);
     }
@@ -215,7 +215,8 @@ app.post("/api/projects/:id/:format/render", async (req, res) => {
 app.post("/api/projects/:id/auto-highlight", async (req, res) => {
   const project = await readProject(req.params.id);
   if (!project) return res.status(404).json({ error: "Not found" });
-  const plan = await planEdit(project.words, (await readBrand()).business);
+  const brand = await readBrand();
+  const plan = await planEdit(project.words, { ...brand.business, voice: brand.voice });
   res.json(await updateProject(project.id, { words: plan.words, hookText: project.hookText || plan.hook }));
 });
 
@@ -226,7 +227,7 @@ app.post("/api/projects/:id/caption", async (req, res) => {
     const caption = await writeCaption({
       words: project.words,
       hook: project.hookText,
-      business: (await readBrand()).business,
+      business: await readBrand().then((b) => ({ ...b.business, voice: b.voice })),
       cta: String(req.body?.cta ?? ""),
     });
     res.json(await updateProject(project.id, { postCaption: caption.slice(0, 2200) }));

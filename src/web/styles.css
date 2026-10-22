@@ -301,3 +301,47 @@ a.chip.accent { color: #fff; }
 .slide-num { position: absolute; top: 6px; left: 6px; font-size: 11px; font-weight: 700; color: #fff; background: rgba(0, 0, 0, 0.5); padding: 1px 7px; border-radius: 999px; }
 .slide-editor { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--chip); }
 .slide-editor select { border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 10px 12px; min-height: 44px; }
+
+/* Brand kit */
+.brand-nudge { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: var(--radius); background: var(--accent-soft); border: 1px solid var(--accent); color: var(--ink); text-decoration: none; }
+.brand-nudge span { font-size: 13px; color: var(--muted); }
+a.chip { color: var(--ink); }
+.kit { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; max-width: 1100px; margin: 0 auto; padding: 24px; }
+.kit-nav { position: sticky; top: 24px; align-self: start; display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+.kit-name { display: flex; flex-direction: column; }
+.kit-nav nav { display: flex; flex-direction: column; gap: 2px; }
+.kit-nav nav a { padding: 8px 10px; border-radius: 10px; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 14px; }
+.kit-nav nav a:hover { background: var(--chip); }
+.kit-body { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.kit-cover { border-radius: 22px; padding: 36px; display: flex; flex-direction: column; gap: 12px; border: 1px solid var(--line); }
+.kit-cover.small-cover { padding: 24px; gap: 8px; }
+.kit-cover .kit-title { font-size: 64px; line-height: 1; background: transparent; border: 0; border-radius: 0; padding: 0; min-height: 0; }
+.kit-cover .kit-tagline { font-size: 20px; background: transparent; border: 0; border-radius: 0; padding: 0; min-height: 0; }
+.kit-title:focus, .kit-tagline:focus { outline: none; box-shadow: 0 2px 0 currentColor; }
+.kit-logo { max-height: 70px; max-width: 220px; object-fit: contain; align-self: flex-start; }
+.kit-cover-swatches { display: flex; gap: 8px; }
+.kit-cover-swatches span { width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.08); }
+.kit-colors { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+.kit-color { display: flex; flex-direction: column; gap: 6px; padding: 10px; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
+.kit-color.add { align-items: center; justify-content: center; min-height: 200px; border-style: dashed; color: var(--accent); font-weight: 600; background: var(--chip); }
+.kit-chip { position: relative; display: block; height: 90px; border-radius: 12px; border: 1px solid rgba(0, 0, 0, 0.08); cursor: pointer; }
+.kit-chip.big { width: 64px; height: 64px; border-radius: 50%; }
+.kit-chip input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+.kit-color input:not([type]), .kit-color select { min-height: 34px; padding: 6px 8px; font-size: 13px; border-radius: 8px; }
+.kit-color-name { font-weight: 600; }
+.kit-color select { border: 1px solid var(--line); background: #fff; }
+.kit-font { display: flex; gap: 18px; padding: 16px 0; border-top: 1px solid var(--line); }
+.kit-font:first-of-type { border-top: 0; }
+.kit-font-aa { font-size: 64px; line-height: 1; width: 90px; flex-shrink: 0; }
+.kit-font details { margin-top: 4px; }
+.kit-font details[open] { display: flex; flex-direction: column; gap: 8px; }
+.kit-logo-box { width: 160px; height: 100px; border-radius: 14px; border: 1px dashed var(--line); display: grid; place-items: center; background: repeating-conic-gradient(#f4f1fd 0 25%, #fff 0 50%) 0 0 / 16px 16px; }
+.kit-logo-box img { max-width: 90%; max-height: 90%; object-fit: contain; }
+@media (max-width: 860px) {
+  .kit { grid-template-columns: 1fr; padding: 14px; }
+  .kit-nav { position: static; }
+  .kit-nav nav { flex-direction: row; flex-wrap: wrap; }
+  .kit-cover .kit-title { font-size: 42px; }
+  .kit-cover { padding: 22px; }
+}
+.page > .link { align-self: flex-start; }

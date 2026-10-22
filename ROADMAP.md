@@ -28,6 +28,8 @@ Done
 - 42 bundled fonts grouped Clean / Serif / Script (incl. upright serifs), any font for captions or hook,
   plus upload-your-own fonts, sounds and music
 - Starter looks (Editorial, Bold, Soft) and zoom jumps between lines
+- Brand kit page: build a brand from a few questions or enter your own (palette, font trio,
+  logo, voice, business); drives default look, color swatches and Claude's writing (brand-kit skill)
 - Repurpose: carousel (4:5) and stories (9:16) from every reel, in the reel's style, editable,
   saved as images; Claude can write them (repurpose-reel skill)
 - Claude Code layer: CLAUDE.md + skills (set me up, edit my reels, plain-words changes, update me),
@@ -43,6 +45,7 @@ Next (in rough order)
 7. Graphic cards Claude can fill in: count-up number, stat card, checklist, quote
 
 ## Later: Version B, VAs editing reels for their clients (upgrade)
+- Multiple brand kits, one per client (the brand kit is built so this can be added)
 - A separate brand kit and business profile per client
 - Switch between clients
 - A share link the client can open to review and approve a reel

@@ -11,6 +11,11 @@ export function Home({ onOpen, onAuthError }: { onOpen: (id: string) => void; on
   const input = useRef<HTMLInputElement>(null);
   const autopilot = useRef(true);
 
+  const [brandReady, setBrandReady] = useState(true);
+  useEffect(() => {
+    api.getBrand().then((b) => setBrandReady(b.setUp), onAuthError);
+  }, [onAuthError]);
+
   useEffect(() => {
     api.listProjects().then(setProjects, onAuthError);
     // Reels imported by Claude appear here without a refresh.
@@ -47,12 +52,22 @@ export function Home({ onOpen, onAuthError }: { onOpen: (id: string) => void; on
 
   return (
     <main className="page stack">
-      <header>
-        <h1 className="serif">{APP_NAME}</h1>
+      <header className="home-head">
+        <div className="row">
+          <h1 className="serif grow">{APP_NAME}</h1>
+          <a className="chip" href="#/brand">🎨 Brand kit</a>
+        </div>
         <p className="muted">Upload a talking reel. We'll cut it, caption it and style it in your brand. You just tweak.</p>
       </header>
 
       <input ref={input} type="file" accept="video/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
+      {!brandReady ? (
+        <a className="brand-nudge" href="#/brand">
+          <strong>Set up your brand kit first</strong>
+          <span>Your colors, fonts and voice, so every reel comes out looking like you. Takes 2 minutes. ›</span>
+        </a>
+      ) : null}
+
       {uploading === null ? (
         <div className="upload-choices">
           <button

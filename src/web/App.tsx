@@ -1,10 +1,12 @@
 import { APP_NAME } from "../shared/app";
 import React, { useCallback, useEffect, useState } from "react";
 import { api, AuthError, setToken } from "./api";
+import { BrandKitPage } from "./BrandKit";
 import { Editor } from "./Editor";
 import { Home } from "./Home";
 
 function currentRoute() {
+  if (window.location.hash.startsWith("#/brand")) return "brand";
   const match = window.location.hash.match(/^#\/p\/([a-z0-9-]+)/);
   return match ? match[1] : null;
 }
@@ -32,6 +34,8 @@ export function App() {
 
   if (authed === null) return <div className="center muted">Loading…</div>;
   if (!authed) return <Login onDone={() => setAuthed(true)} />;
+
+  if (projectId === "brand") return <BrandKitPage onBack={() => (window.location.hash = "")} onAuthError={onAuthError} />;
 
   return projectId ? (
     <Editor key={projectId} id={projectId} onBack={() => (window.location.hash = "")} onAuthError={onAuthError} />

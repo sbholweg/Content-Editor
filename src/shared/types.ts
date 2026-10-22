@@ -52,8 +52,22 @@ export type ReelStyle = {
 
 export type SavedLook = { id: string; name: string; style: ReelStyle };
 
+export type ColorRole = "primary" | "accent" | "background" | "text" | "extra";
+export type BrandColor = { hex: string; name: string; role: ColorRole };
+
+// How the brand sounds; used when Claude writes hooks, captions and slides.
+export type BrandVoice = { tone: string[]; phrases: string[]; avoid: string[] };
+
 export type BrandKit = {
   name: string;
+  tagline: string;
+  // False until the creator has built or entered their brand.
+  setUp: boolean;
+  palette: BrandColor[];
+  // Headline (hooks, big words), body (captions), accent (handwritten touches).
+  fonts: { headline: string; body: string; accent: string };
+  logoAssetId: string;
+  voice: BrandVoice;
   business: BusinessProfile;
   defaultStyle: ReelStyle;
   looks: SavedLook[];

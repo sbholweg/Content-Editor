@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
-import type { BusinessProfile, Project, ReelStyle } from "../src/shared/types.ts";
+import type { BrandVoice, BusinessProfile, Project, ReelStyle } from "../src/shared/types.ts";
 import { config } from "./config.ts";
 import { businessContext } from "./highlights.ts";
 import { queueRender } from "./render.ts";
@@ -32,7 +32,7 @@ Write three hooks for the same reel, each 3 to 9 words, lowercase, conversationa
 - pov: starts with "pov:" and puts the viewer in a relatable moment
 Base them only on what the speaker actually says. No hashtags, no emojis, no quotation marks.`;
 
-async function writeTrialHooks(project: Project, business: BusinessProfile): Promise<Record<Angle, string>> {
+async function writeTrialHooks(project: Project, business: BusinessProfile & { voice?: BrandVoice }): Promise<Record<Angle, string>> {
   const spoken = project.words.filter((w) => !w.cut).map((w) => w.text).join(" ");
   const base = project.hookText || spoken.split(/[.!?]/)[0].split(" ").slice(0, 7).join(" ").toLowerCase();
   const fallback = { question: `ever wondered why ${base}?`, bold: base, pov: `pov: ${base}` };
@@ -57,7 +57,8 @@ async function writeTrialHooks(project: Project, business: BusinessProfile): Pro
 }
 
 export async function createTrialReels(parent: Project): Promise<Project[]> {
-  const hooks = await writeTrialHooks(parent, (await readBrand()).business);
+  const brand = await readBrand();
+  const hooks = await writeTrialHooks(parent, { ...brand.business, voice: brand.voice });
   const created: Project[] = [];
   for (const { angle, label, restyle } of ANGLES) {
     const id = crypto.randomUUID();

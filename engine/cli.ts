@@ -248,19 +248,26 @@ const commands: Record<string, (args: string[]) => Promise<void>> = {
 
   async looks() {
     const brand = await call<BrandKit>("GET", "/api/brand");
+    console.log(`Brand kit${brand.setUp ? "" : " (not set up yet)"}: ${brand.name}${brand.tagline ? ` · ${brand.tagline}` : ""}`);
+    console.log(`Palette: ${brand.palette.map((c) => `${c.name} ${c.hex} (${c.role})`).join(", ") || "(none)"}`);
+    console.log(`Fonts: headline ${brand.fonts.headline} · body ${brand.fonts.body} · accent ${brand.fonts.accent}`);
+    console.log(`Voice: ${JSON.stringify(brand.voice)}\n`);
     console.log(`Default look: ${JSON.stringify(brand.defaultStyle)}`);
     for (const l of brand.looks) console.log(`"${l.name}": ${JSON.stringify(l.style)}`);
     console.log(`\nBusiness: ${JSON.stringify(brand.business)}\nSaved calls to action: ${JSON.stringify(brand.ctaKeywords)}`);
   },
 
   async brand(args) {
-    // Saves brand-wide settings, e.g. {"business": {...}} or {"defaultStyle": {...}}.
+    // Saves brand-wide settings, e.g. {"business": {...}}, {"palette": [...]}, {"fonts": {...}},
+    // {"voice": {...}} or {"defaultStyle": {...}}. Lists (palette, looks, calls to action) are replaced.
     const current = await call<BrandKit>("GET", "/api/brand");
     const edits = await readEdits(args[0]);
     const next = {
       ...current,
       ...edits,
       business: { ...current.business, ...edits.business },
+      fonts: { ...current.fonts, ...edits.fonts },
+      voice: { ...current.voice, ...edits.voice },
       defaultStyle: { ...current.defaultStyle, ...edits.defaultStyle },
     };
     await call("PUT", "/api/brand", next);

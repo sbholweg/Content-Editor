@@ -28,6 +28,7 @@ then run `npm run engine -- apply latest edits.json`. Don't pass JSON on the com
 - **setup-engine**: "set me up", first-time install, or anything not working
 - **edit-reels**: "edit my new reels", "make this post-ready", working through the inbox
 - **change-reel**: any plain-words change ("make it softer", "cut the first sentence", "hook lower")
+- **brand-kit**: "set up my brand (from this)", "build me a brand", "refine my brand kit"
 - **repurpose-reel**: "make a carousel", "turn this into stories", "repurpose this"
 - **update-engine**: "update me"
 

@@ -57,11 +57,11 @@ export function FontOptions({ value, fonts, onChange }: { value: string; fonts: 
   );
 }
 
-export function Swatches({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const custom = !SWATCHES.some((s) => s.toLowerCase() === value.toLowerCase());
+export function Swatches({ value, onChange, colors = SWATCHES }: { value: string; onChange: (v: string) => void; colors?: readonly string[] }) {
+  const custom = !colors.some((s) => s.toLowerCase() === value.toLowerCase());
   return (
     <div className="swatches">
-      {SWATCHES.map((s) => (
+      {colors.map((s) => (
         <button
           key={s}
           aria-label={s}

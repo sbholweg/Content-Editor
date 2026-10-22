@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
-import type { BusinessProfile, Word } from "../src/shared/types.ts";
+import type { BrandVoice, BusinessProfile, Word } from "../src/shared/types.ts";
 import { config } from "./config.ts";
 
 const EditPlan = z.object({
@@ -25,16 +25,20 @@ Also write the hook: a short title shown at the top of the reel for the first fe
 export type EditSuggestions = { words: Word[]; hook: string };
 
 // Describes the creator's business so suggestions speak to their ideal client.
-export function businessContext(business: BusinessProfile) {
+export function businessContext(business: BusinessProfile & { voice?: BrandVoice }) {
+  const v = business.voice;
   const lines = [
     business.what && `What they do: ${business.what}`,
+    v?.tone.length && `Their brand voice: ${v.tone.join(", ")}`,
+    v?.phrases.length && `Phrases they like to use: ${v.phrases.join("; ")}`,
+    v?.avoid.length && `Never use: ${v.avoid.join("; ")}`,
     business.audience && `Who they help: ${business.audience}`,
     business.cta && `Their usual call to action: ${business.cta}`,
   ].filter(Boolean);
   return lines.length ? `About the creator's business:\n${lines.join("\n")}\n\n` : "";
 }
 
-export async function planEdit(words: Word[], business: BusinessProfile): Promise<EditSuggestions> {
+export async function planEdit(words: Word[], business: BusinessProfile & { voice?: BrandVoice }): Promise<EditSuggestions> {
   if (words.length === 0) return { words, hook: "" };
   if (!process.env.ANTHROPIC_API_KEY) return heuristicEdit(words);
 

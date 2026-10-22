@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { BusinessProfile, Word } from "../src/shared/types.ts";
+import type { BrandVoice, BusinessProfile, Word } from "../src/shared/types.ts";
 import { businessContext } from "./highlights.ts";
 import { config } from "./config.ts";
 
@@ -15,7 +15,7 @@ Structure:
 
 Keep it warm, plain-spoken and easy to skim. Use line breaks, at most 2 emojis. Return only the caption text.`;
 
-export async function writeCaption(opts: { words: Word[]; hook: string; business: BusinessProfile; cta: string }): Promise<string> {
+export async function writeCaption(opts: { words: Word[]; hook: string; business: BusinessProfile & { voice?: BrandVoice }; cta: string }): Promise<string> {
   const spoken = opts.words.filter((w) => !w.cut).map((w) => w.text).join(" ");
   const cta = opts.cta.trim() || opts.business.cta.trim();
   if (!process.env.ANTHROPIC_API_KEY) return templateCaption(opts.hook, spoken, cta);
