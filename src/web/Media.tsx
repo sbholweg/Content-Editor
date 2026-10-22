@@ -46,7 +46,7 @@ export function LibraryBrowser({
 }) {
   const [filter, setFilter] = useState<VisualKind | "all">("all");
   const input = useRef<HTMLInputElement>(null);
-  const visuals = assets.filter((a) => (VISUAL as AssetKind[]).includes(a.kind));
+  const visuals = assets.filter((a) => (VISUAL as AssetKind[]).includes(a.kind) && a.collection !== "inspo");
   const shown = filter === "all" ? visuals : visuals.filter((a) => a.kind === filter);
   const { progress, error, upload } = useUpload((a) => onAssets([a, ...assets]), onAuthError);
 

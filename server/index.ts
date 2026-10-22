@@ -26,6 +26,7 @@ import { addAsset, deleteAsset, libraryDir, listAssets, syncBrollFolder } from "
 import { transcribeWords } from "./transcribe.ts";
 import { frameAt, renderSlides } from "./repurpose.ts";
 import { createTrialReels, NoBrollError } from "./trials.ts";
+import { BrandAnswersSchema, generateBrand } from "./brand-gen.ts";
 
 await ensureDirs();
 
@@ -290,6 +291,16 @@ app.post("/api/projects/:id/render", async (req, res) => {
 });
 
 app.get("/api/brand", async (_req, res) => res.json(await readBrand()));
+
+// Builds a whole brand from the inspiration board and answers (needs Claude: an API key or Claude Code).
+app.post("/api/brand/generate", async (req, res) => {
+  const parsed = BrandAnswersSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: z.prettifyError(parsed.error) });
+  const brand = await generateBrand(await readBrand(), parsed.data);
+  if (!brand) return res.status(503).json({ error: "Claude isn't available right now, so we used your images' colors instead. Ask Claude in chat: “build my brand from my inspiration board”." });
+  await writeBrand(brand);
+  res.json(brand);
+});
 app.put("/api/brand", async (req, res) => {
   const brand = normalizeBrand({ ...(await readBrand()), ...(req.body as Partial<BrandKit>) });
   await writeBrand(brand);
@@ -308,7 +319,7 @@ const libraryUpload = multer({
 app.post("/api/library", libraryUpload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "Please choose a file" });
   try {
-    res.json(await addAsset(req.file));
+    res.json(await addAsset({ ...req.file, collection: req.body?.collection === "inspo" ? "inspo" : undefined }));
   } catch (err) {
     res.status(400).json({ error: (err as Error).message });
   }

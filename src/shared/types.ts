@@ -70,6 +70,9 @@ export type BrandKit = {
   fonts: { headline: string; body: string; accent: string };
   logoAssetId: string;
   voice: BrandVoice;
+  // The inspiration board the brand was built from, and why the brand fits it.
+  inspiration: string[];
+  story: string;
   business: BusinessProfile;
   defaultStyle: ReelStyle;
   looks: SavedLook[];
@@ -104,6 +107,8 @@ export type Asset = {
   file: string;
   // Still image shown in the library for b-roll clips.
   thumb?: string;
+  // "inspo": part of the brand inspiration board (kept out of the reel media library).
+  collection?: "inspo";
   // File name it came from, when it was added from the broll folder (so it isn't added twice).
   source?: string;
   width: number;

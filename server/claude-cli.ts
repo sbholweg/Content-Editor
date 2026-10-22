@@ -4,10 +4,10 @@ import { spawn } from "node:child_process";
 // so the editor's ✨ buttons work without an API key. Returns null if it isn't installed or fails.
 let available: boolean | null = null;
 
-export async function askClaudeCode(prompt: string, timeoutMs = 180_000): Promise<string | null> {
+export async function askClaudeCode(prompt: string, timeoutMs = 180_000, extraArgs: string[] = []): Promise<string | null> {
   if (process.env.CLAUDE_CLI === "off" || available === false) return null;
   return new Promise((resolve) => {
-    const child = spawn(process.env.CLAUDE_CLI || "claude", ["-p", "--output-format", "text"], {
+    const child = spawn(process.env.CLAUDE_CLI || "claude", ["-p", "--output-format", "text", ...extraArgs], {
       shell: process.platform === "win32",
       stdio: ["pipe", "pipe", "pipe"],
     });
@@ -34,8 +34,8 @@ export async function askClaudeCode(prompt: string, timeoutMs = 180_000): Promis
 }
 
 // Asks Claude Code for JSON and parses the first JSON object or array in its reply.
-export async function askClaudeCodeJson<T>(prompt: string): Promise<T | null> {
-  const reply = await askClaudeCode(`${prompt}\n\nReply with only the JSON, no other text.`);
+export async function askClaudeCodeJson<T>(prompt: string, extraArgs: string[] = [], timeoutMs = 180_000): Promise<T | null> {
+  const reply = await askClaudeCode(`${prompt}\n\nReply with only the JSON, no other text.`, timeoutMs, extraArgs);
   if (!reply) return null;
   const match = reply.match(/[[{][\s\S]*[\]}]/);
   try {

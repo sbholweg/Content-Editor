@@ -31,6 +31,8 @@ export const DEFAULT_BRAND: BrandKit = {
   fonts: { headline: DEFAULT_STYLE.displayFont, body: DEFAULT_STYLE.font, accent: "Caveat" },
   logoAssetId: "",
   voice: { tone: [], phrases: [], avoid: [] },
+  inspiration: [],
+  story: "",
   business: { what: "", audience: "", cta: "" },
   defaultStyle: DEFAULT_STYLE,
   looks: [],
@@ -63,6 +65,8 @@ export function normalizeBrand(saved: Partial<BrandKit> & Partial<ReelStyle> = {
     fonts: { ...DEFAULT_BRAND.fonts, ...saved.fonts },
     logoAssetId: saved.logoAssetId ?? "",
     voice: { ...DEFAULT_BRAND.voice, ...saved.voice },
+    inspiration: saved.inspiration ?? [],
+    story: saved.story ?? "",
     business: { ...DEFAULT_BRAND.business, ...saved.business },
     // Before saved looks existed, the style fields lived directly on the brand.
     defaultStyle: normalizeStyle(saved.defaultStyle ?? (saved as Partial<ReelStyle>)),

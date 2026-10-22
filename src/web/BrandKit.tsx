@@ -1,16 +1,19 @@
 import React, { useEffect, useRef, useState } from "react";
 import { getFont, registerCustomFonts } from "../remotion/fonts";
 import { styleFromBrand } from "../shared/brand";
-import { buildBrand, parseHexes, VIBES, type BrandAnswers } from "../shared/brandBuilder";
+import { buildBrand, parseHexes, VIBES } from "../shared/brandBuilder";
+import { TopNav } from "./Brandmark";
+import { paletteFromImages } from "./extractColors";
 import type { Asset, BrandColor, BrandKit as Brand, ColorRole } from "../shared/types";
 import { api, libraryUrl } from "./api";
 import { FontPicker } from "./editor/panels";
 import { useUpload } from "./Media";
 import { BusinessCard } from "./sections";
-import { Label, Options } from "./ui";
+import { Label } from "./ui";
 
 const SECTIONS = [
   { id: "cover", label: "Cover" },
+  { id: "inspo", label: "Inspiration" },
   { id: "colors", label: "Colors" },
   { id: "type", label: "Typography" },
   { id: "logo", label: "Logo" },
@@ -58,14 +61,16 @@ export function BrandKitPage({ onBack, onAuthError }: { onBack: () => void; onAu
 
   if (mode === "start") {
     return (
-      <main className="page stack">
-        <button className="link" onClick={onBack}>‹ My reels</button>
-        <h1 className="serif">Your brand kit</h1>
-        <p className="muted">Every reel, carousel and story in your look. Set it up once.</p>
+      <div className="site">
+      <TopNav active="brand" />
+      <main className="page stack wide">
+        <span className="eyebrow">Brand kit</span>
+        <h1 className="display small">Your brand, in every post.</h1>
+        <p className="lede">Every reel, carousel and story in your look. Set it up once.</p>
         <div className="upload-choices">
           <button className="upload-choice primary" onClick={() => setMode("build")}>
             <strong>✨ Build my brand</strong>
-            <span>Don't have one yet? Answer a few questions and get colors, fonts and a voice that go together.</span>
+            <span>Share a few images you love, like a Pinterest board, and get a whole brand built from them: colors, fonts and voice.</span>
           </button>
           <button className="upload-choice" onClick={() => (save({ ...brand, setUp: true }), setMode("kit"))}>
             <strong>I already have a brand</strong>
@@ -73,6 +78,7 @@ export function BrandKitPage({ onBack, onAuthError }: { onBack: () => void; onAu
           </button>
         </div>
       </main>
+      </div>
     );
   }
 
@@ -81,9 +87,12 @@ export function BrandKitPage({ onBack, onAuthError }: { onBack: () => void; onAu
       <BrandBuilder
         brand={brand}
         onBack={() => setMode(brand.setUp ? "kit" : "start")}
-        onDone={(next) => {
+        onAuthError={onAuthError}
+        onDone={(next, generated) => {
           // A freshly built brand becomes the default look right away.
-          save({ ...next, defaultStyle: styleFromBrand(next, next.defaultStyle) });
+          if (generated) setBrand(next);
+          else save({ ...next, defaultStyle: styleFromBrand(next, next.defaultStyle) });
+          api.listAssets().then(setAssets, onAuthError);
           setMode("kit");
         }}
       />
@@ -97,9 +106,10 @@ export function BrandKitPage({ onBack, onAuthError }: { onBack: () => void; onAu
   const ink = brand.palette.find((c) => c.role === "text")?.hex ?? "#1E1533";
 
   return (
+    <div className="site">
+    <TopNav active="brand" />
     <main className="kit">
       <aside className="kit-nav">
-        <button className="link" onClick={onBack}>‹ My reels</button>
         <div className="kit-name">
           <strong>{brand.name}</strong>
           <span className="muted small">Brand kit</span>
@@ -111,7 +121,7 @@ export function BrandKitPage({ onBack, onAuthError }: { onBack: () => void; onAu
             </a>
           ))}
         </nav>
-        <button className="chip" onClick={() => setMode("build")}>✨ Rebuild from questions</button>
+        <button className="chip" onClick={() => setMode("build")}>✨ Rebuild from inspiration</button>
       </aside>
 
       <div className="kit-body">
@@ -153,6 +163,22 @@ export function BrandKitPage({ onBack, onAuthError }: { onBack: () => void; onAu
           <p className="small" style={{ opacity: 0.7 }}>
             Your fonts and main color become your default look. For a reel you've already made, open Visuals › Looks › My default.
           </p>
+        </section>
+
+        <section id="kit-inspo" className="panel-card">
+          <h2>Inspiration</h2>
+          {brand.story ? <p className="kit-story">{brand.story}</p> : null}
+          {brand.inspiration.length ? (
+            <div className="moodboard">
+              {assets
+                .filter((a) => brand.inspiration.includes(a.id))
+                .map((a) => (
+                  <img key={a.id} src={libraryUrl(a.file)} alt="" />
+                ))}
+            </div>
+          ) : (
+            <p className="muted small">No inspiration board yet. Tap “Rebuild from inspiration” to build your brand from images you love.</p>
+          )}
         </section>
 
         <section id="kit-colors" className="panel-card">
@@ -211,22 +237,7 @@ export function BrandKitPage({ onBack, onAuthError }: { onBack: () => void; onAu
         <section id="kit-voice" className="panel-card">
           <h2>Voice</h2>
           <p className="muted small">How you sound. Claude follows this when it writes your hooks, captions and slides.</p>
-          <Label>Your vibe</Label>
-          <div className="options">
-            {VIBES.map((v) => {
-              const word = v.label.toLowerCase();
-              const on = brand.voice.tone.includes(word);
-              return (
-                <button
-                  key={v.id}
-                  className={`option ${on ? "on" : ""}`}
-                  onClick={() => save({ ...brand, voice: { ...brand.voice, tone: on ? brand.voice.tone.filter((t) => t !== word) : [...brand.voice.tone, word] } })}
-                >
-                  <span className="option-label">{v.label}</span>
-                </button>
-              );
-            })}
-          </div>
+          <ListField label="Your vibe in a few words" placeholder="e.g. grounded, warm, quietly confident" items={brand.voice.tone} onChange={(tone) => save({ ...brand, voice: { ...brand.voice, tone } })} />
           <ListField label="Phrases you say a lot" placeholder="e.g. let's get you some time back" items={brand.voice.phrases} onChange={(phrases) => save({ ...brand, voice: { ...brand.voice, phrases } })} />
           <ListField label="Words to never use" placeholder="e.g. hustle, boss babe" items={brand.voice.avoid} onChange={(avoid) => save({ ...brand, voice: { ...brand.voice, avoid } })} />
         </section>
@@ -236,6 +247,7 @@ export function BrandKitPage({ onBack, onAuthError }: { onBack: () => void; onAu
         </div>
       </div>
     </main>
+    </div>
   );
 }
 
@@ -361,71 +373,138 @@ function LogoUpload({
   );
 }
 
-function BrandBuilder({ brand, onBack, onDone }: { brand: Brand; onBack: () => void; onDone: (b: Brand) => void }) {
-  const [answers, setAnswers] = useState<BrandAnswers>({
+const VIBE_CHIPS = ["calm", "bold", "playful", "minimalist", "luxe", "warm", "earthy", "editorial", "feminine", "edgy", "modern", "cozy"];
+
+// Like working with a brand designer: share an inspiration board, answer a few questions, and get
+// a whole brand built from it.
+function BrandBuilder({ brand, onBack, onDone, onAuthError }: { brand: Brand; onBack: () => void; onDone: (b: Brand, generated: boolean) => void; onAuthError: (err: unknown) => void }) {
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [board, setBoard] = useState<Asset[]>([]);
+  const [answers, setAnswers] = useState({
     name: brand.name === "My Brand" ? "" : brand.name,
     what: brand.business.what,
     audience: brand.business.audience,
-    vibes: [],
-    color: brand.palette.find((c) => c.role === "primary")?.hex ?? "#8656F6",
+    vibe: "",
+    chips: [] as string[],
   });
-  const set = (patch: Partial<BrandAnswers>) => setAnswers({ ...answers, ...patch });
-  const preview = buildBrand({ ...answers, vibes: answers.vibes.length ? answers.vibes : ["calm"] }, brand);
+  const [status, setStatus] = useState("");
+  const input = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState<number | null>(null);
+
+  useEffect(() => {
+    api.listAssets().then((all) => setBoard(all.filter((a) => brand.inspiration.includes(a.id))), onAuthError);
+  }, [brand.inspiration, onAuthError]);
+
+  const addImages = async (files: FileList | null) => {
+    for (const file of Array.from(files ?? []).slice(0, 12 - board.length)) {
+      setUploading(0);
+      try {
+        const a = await api.uploadAsset(file, setUploading, "inspo");
+        setBoard((b) => [...b, a]);
+      } catch (err) {
+        onAuthError(err);
+      }
+    }
+    setUploading(null);
+  };
+
+  const create = async () => {
+    setStep(3);
+    const vibe = [answers.vibe, ...answers.chips].filter(Boolean).join(", ");
+    const inspirationIds = board.map((a) => a.id);
+    setStatus("Studying your board…");
+    try {
+      const made = await api.generateBrand({ name: answers.name, what: answers.what, audience: answers.audience, vibe, inspirationIds });
+      onDone(made, true);
+      return;
+    } catch (err) {
+      onAuthError(err);
+    }
+    // No Claude available: build it here from the board's colors and the vibe.
+    setStatus("Pulling colors from your images…");
+    const palette = await paletteFromImages(board.map((a) => libraryUrl(a.file)));
+    const vibeId = VIBES.find((v) => [answers.vibe, ...answers.chips].join(" ").toLowerCase().includes(v.id))?.id ?? "calm";
+    const built = buildBrand({ name: answers.name, what: answers.what, audience: answers.audience, vibes: [vibeId], color: palette[0]?.hex ?? "#7C4DFF" }, brand);
+    onDone({ ...built, palette: palette.length >= 3 ? palette : built.palette, inspiration: inspirationIds }, false);
+  };
 
   return (
-    <main className="page stack">
-      <button className="link" onClick={onBack}>‹ Back</button>
-      <h1 className="serif">Build my brand</h1>
-      <p className="muted">A few quick questions. You can change everything afterwards.</p>
+    <div className="site">
+      <TopNav active="brand" />
+      <main className="page stack wide">
+        <button className="link" onClick={onBack}>‹ Back</button>
+        <span className="eyebrow">Step {step} of 3</span>
+        {step === 1 ? (
+          <>
+            <h1 className="display small">Show us what you love.</h1>
+            <p className="lede">Like a brand designer would ask: share 4 to 12 images that feel like the brand you want. Pinterest saves, other brands, colors, textures, places, outfits. We'll read the mood.</p>
+            <input ref={input} type="file" accept="image/*" multiple hidden onChange={(e) => (void addImages(e.target.files), (e.target.value = ""))} />
+            <div className="moodboard edit">
+              {board.map((a) => (
+                <div key={a.id} className="mood-item">
+                  <img src={libraryUrl(a.file)} alt="" />
+                  <button className="asset-delete" aria-label="Remove" onClick={() => setBoard(board.filter((x) => x.id !== a.id))}>×</button>
+                </div>
+              ))}
+              {board.length < 12 ? (
+                <button className="mood-add" onClick={() => input.current?.click()} disabled={uploading !== null}>
+                  <span className="add-plus">＋</span>
+                  {uploading === null ? "Add images" : `Uploading ${Math.round(uploading * 100)}%`}
+                </button>
+              ) : null}
+            </div>
+            <div className="row">
+              <button className="btn primary" disabled={board.length < 3} onClick={() => setStep(2)}>
+                Next: about you ›
+              </button>
+              <span className="muted small">{board.length < 3 ? `Add at least ${3 - board.length} more` : `${board.length} images`}</span>
+            </div>
+          </>
+        ) : null}
 
-      <section className="panel-card">
-        <Label>Your business name</Label>
-        <input value={answers.name} placeholder="e.g. The Calm Inbox Co." onChange={(e) => set({ name: e.target.value })} />
-        <Label>What you do</Label>
-        <input value={answers.what} placeholder="e.g. I'm a VA who manages inboxes and calendars" onChange={(e) => set({ what: e.target.value })} />
-        <Label>Who you help</Label>
-        <input value={answers.audience} placeholder="e.g. busy coaches and course creators" onChange={(e) => set({ audience: e.target.value })} />
-        <Label>Your vibe (pick up to 3, the first one sets your fonts)</Label>
-        <Options
-          value={answers.vibes[0] ?? ""}
-          onChange={(id) => {
-            const has = answers.vibes.includes(id);
-            set({ vibes: has ? answers.vibes.filter((v) => v !== id) : [...answers.vibes, id].slice(0, 3) });
-          }}
-          options={VIBES.map((v) => ({
-            value: v.id,
-            label: `${answers.vibes.includes(v.id) ? `${answers.vibes.indexOf(v.id) + 1}. ` : ""}${v.label}`,
-            style: fontStyle(v.fonts.headline),
-          }))}
-        />
-        <Label>A color you love</Label>
-        <div className="row">
-          <label className="kit-chip big" style={{ background: answers.color }}>
-            <input type="color" value={answers.color} onChange={(e) => set({ color: e.target.value.toUpperCase() })} />
-          </label>
-          <span className="muted small">Tap to pick. We'll build a palette around it.</span>
-        </div>
-      </section>
+        {step === 2 ? (
+          <>
+            <h1 className="display small">Tell us about you.</h1>
+            <section className="panel-card">
+              <Label>Your business name</Label>
+              <input value={answers.name} placeholder="Leave blank and we'll suggest one" onChange={(e) => setAnswers({ ...answers, name: e.target.value })} />
+              <Label>What you do</Label>
+              <input value={answers.what} placeholder="e.g. I'm a VA who manages inboxes and calendars" onChange={(e) => setAnswers({ ...answers, what: e.target.value })} />
+              <Label>Who you help</Label>
+              <input value={answers.audience} placeholder="e.g. busy coaches and course creators" onChange={(e) => setAnswers({ ...answers, audience: e.target.value })} />
+              <Label>How should your brand feel?</Label>
+              <textarea rows={2} value={answers.vibe} placeholder="In your own words, e.g. calm but confident, like a deep breath, not corporate" onChange={(e) => setAnswers({ ...answers, vibe: e.target.value })} />
+              <div className="options">
+                {VIBE_CHIPS.map((c) => {
+                  const on = answers.chips.includes(c);
+                  return (
+                    <button key={c} className={`option ${on ? "on" : ""}`} onClick={() => setAnswers({ ...answers, chips: on ? answers.chips.filter((x) => x !== c) : [...answers.chips, c] })}>
+                      <span className="option-label">{c}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+            <div className="row">
+              <button className="btn" onClick={() => setStep(1)}>‹ Back</button>
+              <button className="btn primary" onClick={create}>✨ Create my brand</button>
+            </div>
+          </>
+        ) : null}
 
-      <section className="panel-card">
-        <h3>Your brand, so far</h3>
-        <div className="kit-cover small-cover" style={{ background: preview.palette[2].hex, color: preview.palette[3].hex }}>
-          <div style={{ ...fontStyle(preview.fonts.headline), fontSize: 40, lineHeight: 1.05 }}>{preview.name}</div>
-          <div style={{ ...fontStyle(preview.fonts.body), fontSize: 16 }}>
-            {answers.what || "What you do"} · for {answers.audience || "who you help"}
+        {step === 3 ? (
+          <div className="generating">
+            <div className="moodboard small">
+              {board.slice(0, 6).map((a) => (
+                <img key={a.id} src={libraryUrl(a.file)} alt="" />
+              ))}
+            </div>
+            <div className="spinner" />
+            <h2 className="display small">{status}</h2>
+            <p className="muted">Choosing your palette, fonts and voice. This can take a minute or two.</p>
           </div>
-          <div style={{ ...fontStyle(preview.fonts.accent), fontSize: 22, color: preview.palette[0].hex }}>a little note in your accent font</div>
-          <div className="kit-cover-swatches">
-            {preview.palette.map((c) => (
-              <span key={c.role} style={{ background: c.hex }} />
-            ))}
-          </div>
-        </div>
-        <button className="btn primary" onClick={() => onDone(buildBrand(answers.vibes.length ? answers : { ...answers, vibes: ["calm"] }, brand))}>
-          Save my brand kit
-        </button>
-        <p className="muted small">Want it smarter? After saving, tell Claude “refine my brand kit” and it'll tune the colors, fonts and voice to your business.</p>
-      </section>
-    </main>
+        ) : null}
+      </main>
+    </div>
   );
 }

@@ -32,7 +32,7 @@ function kindOf(name: string, mimetype: string): Asset["kind"] | null {
   return null;
 }
 
-export async function addAsset(upload: { path: string; originalname: string; mimetype: string; source?: string }): Promise<Asset> {
+export async function addAsset(upload: { path: string; originalname: string; mimetype: string; source?: string; collection?: "inspo" }): Promise<Asset> {
   const kind = kindOf(upload.originalname, upload.mimetype);
   if (!kind) {
     await fs.rm(upload.path, { force: true });
@@ -62,6 +62,7 @@ export async function addAsset(upload: { path: string; originalname: string; mim
     file,
     thumb,
     source: upload.source,
+    collection: upload.collection,
     width: info.width || 1080,
     height: info.height || 1080,
     durationMs: info.durationMs || 0,

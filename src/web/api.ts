@@ -99,7 +99,10 @@ export const api = {
 
   listAssets: () => request<Asset[]>("/api/library"),
   deleteAsset: (id: string) => request<{ ok: true }>(`/api/library/${id}`, { method: "DELETE" }),
-  uploadAsset: (file: File, onProgress: (fraction: number) => void) => sendFile<Asset>("/api/library", { file }, onProgress),
+  uploadAsset: (file: File, onProgress: (fraction: number) => void, collection?: "inspo") =>
+    sendFile<Asset>("/api/library", collection ? { collection, file } : { file }, onProgress),
+  generateBrand: (answers: { name: string; what: string; audience: string; vibe: string; inspirationIds: string[] }) =>
+    request<BrandKit>("/api/brand/generate", { method: "POST", body: JSON.stringify(answers) }),
 
   upload: (file: File, autopilot: boolean, onProgress: (fraction: number) => void) =>
     sendFile<Project>("/api/projects", { autopilot: autopilot ? "1" : "0", video: file }, onProgress),

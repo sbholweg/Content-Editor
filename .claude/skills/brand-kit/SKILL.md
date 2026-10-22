@@ -40,6 +40,14 @@ story starts from it, and you follow its voice when writing.
    (`palette` replaces the whole list. Include `defaultStyle` so new reels use the brand.)
 3. Tell them to open the brand kit page to see it, and that they can tweak anything there.
 
+## From an inspiration board
+The brand kit page has "Build my brand": they upload 4-12 images they love, answer a few questions,
+and Claude builds the brand (the editor calls Claude Code to look at the images). If they ask you
+directly ("build my brand from my inspiration board"), read the board images (`library` lists
+items; inspiration images are the ones in the brand's `inspiration` list, files in data/library),
+then build the brand as below. Any Google Font is fine: if it isn't bundled, download its woff2
+from Google Fonts and upload it to the library as a font (name = the family name).
+
 ## Building a brand from scratch / refining
 Ask (briefly) what they do, who they help, 2-3 vibe words, and a color they love, unless the
 brand kit page already has answers (`npm run engine -- looks` shows the current kit). Choose a
