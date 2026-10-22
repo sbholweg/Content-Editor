@@ -2,6 +2,10 @@ import React from "react";
 import { Audio, interpolate, Sequence, useVideoConfig } from "remotion";
 import type { ReelProps, Word } from "../shared/types";
 
+// Sound effects sit well under the voice (like a pro mix): every effect is scaled by this,
+// so a cue at full volume still never competes with what's being said.
+const SFX_MIX = 0.35;
+
 // Sound effects play when their word is spoken; music plays under the whole reel and
 // dips while the creator is talking.
 export const Sounds: React.FC<{ sounds: ReelProps["sounds"]; music: ReelProps["music"]; words: Word[] }> = ({ sounds, music, words }) => {
@@ -21,7 +25,7 @@ export const Sounds: React.FC<{ sounds: ReelProps["sounds"]; music: ReelProps["m
         if (!w) return null;
         return (
           <Sequence key={s.id} from={Math.round((w.startMs / 1000) * fps)} durationInFrames={fps * 6} layout="none">
-            <Audio src={s.src} volume={s.volume} />
+            <Audio src={s.src} volume={s.volume * SFX_MIX} />
           </Sequence>
         );
       })}

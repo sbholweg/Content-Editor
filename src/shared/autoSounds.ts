@@ -6,7 +6,7 @@ const MONEY = /^\$|\$$|^(price|prices|pricing|priced|sale|sales|saving|savings|s
 const clean = (t: string) => t.replace(/[.,!?;:"“”'’()]/g, "");
 
 // Picks sound effects for a reel by moment, the way popular creators do:
-// a whoosh as the hook lands, a click on key words popping up, a pop on stickers and emojis,
+// a click on key words popping up, a pop on stickers and emojis,
 // a camera shutter when a screenshot or photo appears, and a cash register on money moments.
 // Keeps sounds apart so they never pile up, and leaves sounds already on the reel alone.
 export function autoSounds(reel: Pick<Project, "words" | "overlays" | "sounds" | "hookText">, assets: { id: string; kind: string }[]): SoundCue[] {
@@ -24,8 +24,7 @@ export function autoSounds(reel: Pick<Project, "words" | "overlays" | "sounds" |
   const CLICKS = ["sfx-click", "sfx-mouse-double"];
 
   // Strongest moments first, so they win when two land close together.
-  if (words[0] && reel.hookText) add(words[0].id, "sfx-whoosh", 0.6);
-
+  // (No whoosh on the first word: it lands right on top of the opening line.)
   for (const o of reel.overlays) {
     const kind = assets.find((a) => a.id === o.assetId)?.kind;
     if (o.placement === "full") add(o.startWordId, "sfx-swoosh-in", 0.6);

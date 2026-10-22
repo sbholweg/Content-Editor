@@ -212,7 +212,8 @@ app.get("/api/ai-status", (_req, res) => res.json({ source: claudeSource() }));
 app.post("/api/projects/:id/tighten", async (req, res) => {
   const project = await readProject(req.params.id);
   if (!project) return res.status(404).json({ error: "Not found" });
-  const silences = project.silences ?? (await detectSilences(projectFile(project.id, "video.mp4")).catch(() => []));
+  // Always listen again: reels made before the pause detector improved have stale (or no) pauses.
+  const silences = await detectSilences(projectFile(project.id, "video.mp4")).catch(() => project.silences ?? []);
   res.json(await updateProject(project.id, (p) => ({ silences, removePauses: true, words: tighten(p.words) })));
 });
 

@@ -36,7 +36,7 @@ description: Make plain-words changes to a reel, e.g. "make it softer", "cut the
   },
   "addMedia": [{"asset": "library item name", "fromWord": 10, "toWord": 14, "placement": "middle|top|bottom|full"}],
   "removeMedia": ["ov-..."],
-  "addSounds": [{"sound": "Whoosh", "atWord": 0}, {"sound": "Pop", "atWord": 12}],
+  "addSounds": [{"sound": "Pop", "atWord": 12}, {"sound": "Cash register", "atWord": 30, "volume": 0.6}],
   "removeSounds": ["snd-..."],
   "soundsEnabled": true,
   "autoSounds": true,
@@ -85,6 +85,10 @@ style and zoom. Save it as a named look with `npm run engine -- brand look.json`
 - "my brand colors": use `looks` to read their default look and saved looks; prefer those colors.
 - "cut the first sentence": cut the word numbers up to and including its last word.
 - "add <clip> when I talk about X": find the words in `show`, find the item with `library`, use addMedia.
+- "it still has pauses" / "cut the dead air" / "tighter": run `npm run engine -- tighten <id>`. It
+  listens to the audio again and cuts every pause, um and restart.
+- "the sounds are too loud": lower the cue volumes (`removeSounds` then `addSounds` with `"volume": 0.3`).
+  Effects are already mixed well under the voice; avoid sounds on the very first word.
 - "add sound effects": use `"autoSounds": true`, then `show` and tweak with addSounds/removeSounds if
   a moment it missed needs one. Keep them at least ~0.5s apart and don't overdo it.
 - "save this as my default / as a look": use the `brand` command with

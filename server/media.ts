@@ -65,26 +65,67 @@ export async function extractAudio(input: string, output: string) {
   await run("ffmpeg", ["-y", "-i", input, "-vn", "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", output]);
 }
 
-// Finds quiet stretches in the audio (where the speaker isn't talking). The threshold is set a
-// little below normal speech so breaths and room noise count as quiet.
+// Finds the quiet stretches (pauses) in a recording by measuring loudness every 20ms.
+// The cutoff adapts to each video: phones turn up the background hiss when you stop talking,
+// so a fixed "silence" level misses most real pauses. Instead we compare against this
+// recording's own room noise and speaking level.
+const FRAME_MS = 20;
+const SAMPLE_RATE = 16000;
+
 export async function detectSilences(input: string): Promise<{ startMs: number; endMs: number }[]> {
-  const log = await new Promise<string>((resolve, reject) => {
-    const child = spawn("ffmpeg", ["-i", input, "-af", "silencedetect=noise=-34dB:d=0.2", "-f", "null", "-"]);
-    let err = "";
-    child.stderr.on("data", (d) => (err += d));
+  const pcm = await new Promise<Buffer>((resolve, reject) => {
+    const child = spawn("ffmpeg", ["-v", "error", "-i", input, "-vn", "-ac", "1", "-ar", String(SAMPLE_RATE), "-f", "s16le", "-"]);
+    const chunks: Buffer[] = [];
+    child.stdout.on("data", (d: Buffer) => chunks.push(d));
     child.on("error", reject);
-    child.on("close", () => resolve(err));
+    child.on("close", () => resolve(Buffer.concat(chunks)));
   });
-  const out: { startMs: number; endMs: number }[] = [];
-  let start: number | null = null;
-  for (const line of log.split("\n")) {
-    const s = line.match(/silence_start: ([\d.]+)/);
-    const e = line.match(/silence_end: ([\d.]+)/);
-    if (s) start = Number(s[1]) * 1000;
-    if (e && start !== null) {
-      out.push({ startMs: Math.round(start), endMs: Math.round(Number(e[1]) * 1000) });
-      start = null;
+  return findPauses(loudness(pcm));
+}
+
+// Loudness of each 20ms frame, in dB (0 = as loud as possible).
+export function loudness(pcm: Buffer): number[] {
+  const perFrame = (SAMPLE_RATE * FRAME_MS) / 1000;
+  const samples = Math.floor(pcm.length / 2);
+  const out: number[] = [];
+  for (let f = 0; f + perFrame <= samples; f += perFrame) {
+    let sum = 0;
+    for (let i = f; i < f + perFrame; i++) {
+      const v = pcm.readInt16LE(i * 2) / 32768;
+      sum += v * v;
     }
+    out.push(10 * Math.log10(sum / perFrame + 1e-10));
+  }
+  return out;
+}
+
+export function findPauses(db: number[]): { startMs: number; endMs: number }[] {
+  if (db.length < 10) return [];
+  const sorted = [...db].sort((a, b) => a - b);
+  const pct = (p: number) => sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))];
+  const floor = pct(0.1);
+  const speech = pct(0.9);
+  // Too little difference between talking and not talking to tell them apart reliably.
+  if (speech - floor < 10) return [];
+  const cutoff = Math.max(floor + 0.4 * (speech - floor), speech - 26);
+
+  const quiet = db.map((v) => v < cutoff);
+  // A click or bump of up to 60ms inside a pause doesn't end the pause.
+  for (let i = 0; i < quiet.length; i++) {
+    if (quiet[i]) continue;
+    let j = i;
+    while (j < quiet.length && !quiet[j]) j++;
+    if (i > 0 && j < quiet.length && j - i <= 3) for (let k = i; k < j; k++) quiet[k] = true;
+    i = j;
+  }
+
+  const out: { startMs: number; endMs: number }[] = [];
+  for (let i = 0; i < quiet.length; i++) {
+    if (!quiet[i]) continue;
+    let j = i;
+    while (j < quiet.length && quiet[j]) j++;
+    if ((j - i) * FRAME_MS >= 200) out.push({ startMs: i * FRAME_MS, endMs: j * FRAME_MS });
+    i = j;
   }
   return out;
 }
