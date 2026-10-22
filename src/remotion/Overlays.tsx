@@ -6,7 +6,7 @@ import type { ResolvedOverlay } from "../shared/types";
 // A broken b-roll file shouldn't stop the whole reel from previewing or exporting.
 const ignoreMediaError = (err: Error) => console.warn("Overlay media failed to play:", err.message);
 
-const PLACEMENT_TOP: Record<Exclude<ResolvedOverlay["placement"], "full">, number> = {
+export const PLACEMENT_TOP: Record<Exclude<ResolvedOverlay["placement"], "full">, number> = {
   top: 22,
   middle: 45,
   bottom: 62,
@@ -57,8 +57,8 @@ const OverlayItem: React.FC<{ overlay: ResolvedOverlay; length: number }> = ({ o
     <div
       style={{
         position: "absolute",
-        left: "50%",
-        top: `${PLACEMENT_TOP[overlay.placement]}%`,
+        left: `${overlay.x ?? 50}%`,
+        top: `${overlay.y ?? PLACEMENT_TOP[overlay.placement]}%`,
         transform: `translate(-50%, -50%) scale(${scale}) rotate(${(1 - enter) * -6}deg)`,
       }}
     >

@@ -31,6 +31,8 @@ export type ReelStyle = {
   displayFont: string;
   hookColor: string;
   hookPosition: CaptionPosition;
+  // Where the hook was dragged to (its center, as % of the frame). Overrides hookPosition when set.
+  hookPlace: { x: number; y: number } | null;
   // "headline": one big line. "eyebrow": small line above a big one. "subhead": big line, small line below.
   hookLayout: HookLayout;
   // How long the hook stays on screen. 0 = the whole video.
@@ -133,6 +135,9 @@ export type Overlay = {
   placement: OverlayPlacement;
   // Width as a fraction of the frame (ignored for "full").
   size: number;
+  // Where it was dragged to (its center, as % of the frame). Overrides placement when set.
+  x?: number;
+  y?: number;
 };
 
 // A sound effect that plays when a word is spoken. soundId is a built-in sound or a library item.

@@ -32,6 +32,10 @@ export const ReelEdits = z
         displayFont: z.string(),
         hookColor: color,
         hookPosition: position,
+        hookPlace: z
+          .object({ x: z.number().min(0).max(100), y: z.number().min(0).max(100) })
+          .nullable()
+          .describe("hook center as % of the frame (x across, y down); null = use hookPosition"),
         hookLayout: z.enum(["headline", "eyebrow", "subhead"]),
         hookDurationMs: z.number().int().min(0),
         textColor: color,
@@ -59,8 +63,13 @@ export const ReelEdits = z
         toWord: z.number().int().nonnegative(),
         placement: z.enum(["top", "middle", "bottom", "full"]).optional(),
         size: z.number().min(0.3).max(0.95).optional(),
+        x: z.number().min(0).max(100).optional().describe("center, % across the frame"),
+        y: z.number().min(0).max(100).optional().describe("center, % down the frame"),
       }),
     ),
+    moveMedia: z
+      .record(z.string(), z.object({ x: z.number().min(0).max(100), y: z.number().min(0).max(100) }))
+      .describe("overlay id -> new center, % of the frame"),
     removeMedia: z.array(z.string()).describe("overlay ids"),
     addSounds: z.array(
       z.object({
@@ -139,8 +148,13 @@ export function applyEdits(project: Project, edits: ReelEdits, brand: BrandKit, 
         endWordId: at(to).id,
         placement: m.placement ?? (asset.kind === "video" ? "full" : "middle"),
         size: m.size ?? 0.6,
+        ...(m.x !== undefined && m.y !== undefined ? { x: m.x, y: m.y } : {}),
       },
     ];
+  }
+  for (const [id, place] of Object.entries(edits.moveMedia ?? {})) {
+    if (!overlays.some((o) => o.id === id)) throw new Error(`No media "${id}" on this reel. Use the ov-… ids from \`show\`.`);
+    overlays = overlays.map((o) => (o.id === id ? { ...o, ...place } : o));
   }
   if (overlays !== project.overlays) changes.overlays = overlays;
 

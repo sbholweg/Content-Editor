@@ -51,13 +51,13 @@ export const Hook: React.FC<{ text: string; subText: string; brand: ReelStyle }>
     <div
       style={{
         position: "absolute",
-        top: `${HOOK_TOP[brand.hookPosition]}%`,
-        left: 90,
-        right: 90,
+        top: `${brand.hookPlace?.y ?? HOOK_TOP[brand.hookPosition]}%`,
+        left: `${brand.hookPlace?.x ?? 50}%`,
+        width: 900,
         textAlign: "center",
         textShadow: SHADOW,
         opacity: enter * exit,
-        transform: `translateY(calc(-50% + ${(1 - enter) * 30}px))`,
+        transform: `translate(-50%, calc(-50% + ${(1 - enter) * 30}px))`,
         textWrap: "balance",
       }}
     >

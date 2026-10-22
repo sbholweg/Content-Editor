@@ -493,3 +493,29 @@ a.btn.primary { color: #fff; }
 .cover-thumb { width: 96px; aspect-ratio: 9 / 16; border-radius: 12px; overflow: hidden; background: var(--chip); display: grid; place-items: center; flex-shrink: 0; text-align: center; }
 .cover-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .group-hint { margin: -4px 0 6px; }
+
+/* Preview tools: move things, and see where Instagram's buttons will sit */
+.preview-tools { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.ig-layer { position: absolute; inset: 0; z-index: 3; pointer-events: none; container-type: inline-size; color: #fff; font-family: var(--sans); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
+.ig-layer::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 32%; background: linear-gradient(transparent, rgba(0, 0, 0, 0.45)); }
+.ig-layer > div { position: absolute; z-index: 1; }
+.ig-layer svg { width: 7.4cqw; height: 7.4cqw; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4)); }
+.ig-top { left: 4.5cqw; right: 4.5cqw; top: 3.5cqw; display: flex; justify-content: space-between; align-items: center; font-size: 6cqw; }
+.ig-side { right: 3cqw; bottom: 9%; display: flex; flex-direction: column; align-items: center; gap: 4.5cqw; font-size: 3.2cqw; font-weight: 600; }
+.ig-side span { display: flex; flex-direction: column; align-items: center; gap: 0.8cqw; }
+.ig-audio-thumb { width: 7cqw; height: 7cqw; border-radius: 1.6cqw; border: 0.6cqw solid #fff; background: #555; }
+.ig-bottom { left: 4cqw; right: 20cqw; bottom: 4.5cqw; display: flex; flex-direction: column; gap: 2cqw; font-size: 3.4cqw; }
+.ig-user { display: flex; align-items: center; gap: 2.2cqw; }
+.ig-avatar { width: 7.4cqw; height: 7.4cqw; border-radius: 50%; background: #9a8fa6; border: 0.4cqw solid #fff; }
+.ig-follow { padding: 0.8cqw 2.4cqw; border: 0.3cqw solid rgba(255, 255, 255, 0.8); border-radius: 1.8cqw; font-weight: 600; }
+.ig-caption { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ig-caption span { opacity: 0.7; }
+.move-layer { position: absolute; inset: 0; z-index: 4; background: rgba(17, 16, 20, 0.08); outline: 2px dashed rgba(255, 255, 255, 0.6); outline-offset: -10px; border-radius: 28px; }
+.move-handle {
+  position: absolute; transform: translate(-50%, -50%); touch-action: none; cursor: grab; user-select: none;
+  padding: 7px 12px; border-radius: 8px; border: 2px solid var(--ink); background: var(--violet); color: var(--ink);
+  font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: 0.04em; box-shadow: 3px 3px 0 var(--ink); white-space: nowrap;
+}
+.move-handle.media { background: var(--lime); }
+.move-handle:active { cursor: grabbing; }
+.move-hint { position: absolute; left: 12px; right: 12px; bottom: 16px; padding: 8px 10px; border-radius: 10px; background: rgba(17, 16, 20, 0.75); color: #fff; font-size: 12px; text-align: center; }

@@ -89,6 +89,10 @@ style and zoom. Save it as a named look with `npm run engine -- brand look.json`
   listens to the audio again and cuts every pause, um and restart.
 - "the sounds are too loud": lower the cue volumes (`removeSounds` then `addSounds` with `"volume": 0.3`).
   Effects are already mixed well under the voice; avoid sounds on the very first word.
+- "move the hook lower / to the left", "put the GIF by my head": positions are % of the frame
+  (x across, y down; 50/50 is the center; Instagram covers roughly the bottom 20% and the right
+  edge). Hook: `"style": {"hookPlace": {"x": 50, "y": 30}}` (`null` goes back to top/middle/bottom).
+  Media: `"moveMedia": {"ov-…": {"x": 70, "y": 35}}`. They can also drag them with "✥ Move" above the preview.
 - "add sound effects": use `"autoSounds": true`, then `show` and tweak with addSounds/removeSounds if
   a moment it missed needs one. Keep them at least ~0.5s apart and don't overdo it.
 - "save this as my default / as a look": use the `brand` command with

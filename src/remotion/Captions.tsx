@@ -21,8 +21,8 @@ function captionTop(brand: ReelStyle, hookVisible: boolean) {
   const top = POSITION_TOP[brand.position];
   if (!hookVisible) return top;
   // Captions that live at the top wait in the middle while the hook is up, then take its place.
-  if (brand.position === "top" && brand.hookPosition === "top") return POSITION_TOP.middle;
-  const hook = HOOK_TOP[brand.hookPosition];
+  if (!brand.hookPlace && brand.position === "top" && brand.hookPosition === "top") return POSITION_TOP.middle;
+  const hook = brand.hookPlace?.y ?? HOOK_TOP[brand.hookPosition];
   if (Math.abs(top - hook) >= MIN_GAP_FROM_HOOK) return top;
   return hook + MIN_GAP_FROM_HOOK <= 76 ? hook + MIN_GAP_FROM_HOOK : hook - MIN_GAP_FROM_HOOK;
 }

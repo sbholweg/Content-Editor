@@ -11,6 +11,7 @@ import { BrollEditor } from "./BrollEditor";
 import { CutTab } from "./editor/CutTab";
 import { EditorContext, formatTime, type EditorApi, type PickerTarget, type ReelState } from "./editor/context";
 import { FinishTab } from "./editor/FinishTab";
+import { InstagramOverlay, MoveLayer } from "./editor/PreviewLayers";
 import { SoundPicker, SoundTab } from "./editor/SoundTab";
 import { VisualsTab } from "./editor/VisualsTab";
 import { LibraryBrowser, Modal } from "./Media";
@@ -48,6 +49,23 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
     toastTimer.current = setTimeout(() => setToast(""), 4500);
   }, []);
   const player = useRef<PlayerRef>(null);
+  const [moving, setMoving] = useState(false);
+  // Remembered per browser: whether to show where Instagram's buttons will sit.
+  const [showIg, setShowIg] = useState(() => {
+    try {
+      return localStorage.getItem("cutroom.showIg") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleIg = (on: boolean) => {
+    setShowIg(on);
+    try {
+      localStorage.setItem("cutroom.showIg", on ? "1" : "0");
+    } catch {
+      // Private browsing: just don't remember it.
+    }
+  };
 
   const load = useCallback(async () => {
     try {
@@ -321,8 +339,16 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
           </div>
 
           <aside className="studio-preview">
+            <div className="preview-tools">
+              <button className={`chip ${moving ? "accent" : ""}`} onClick={() => setMoving(!moving)} aria-pressed={moving}>
+                {moving ? "✓ Done moving" : "✥ Move"}
+              </button>
+              <button className={`chip ${showIg ? "accent" : ""}`} onClick={() => toggleIg(!showIg)} aria-pressed={showIg}>
+                {showIg ? "✓ Instagram buttons" : "Show Instagram buttons"}
+              </button>
+            </div>
             <div className="phone">
-              <span className="phone-badge">Preview</span>
+              {moving || showIg ? null : <span className="phone-badge">Preview</span>}
               {inputProps ? (
                 <Player
                   ref={player}
@@ -336,6 +362,8 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
                   style={{ width: "100%", height: "100%" }}
                 />
               ) : null}
+              {showIg ? <InstagramOverlay handle={brand.name.toLowerCase().replace(/[^a-z0-9._]/g, "") || "yourname"} /> : null}
+              {moving ? <MoveLayer /> : null}
             </div>
           </aside>
         </div>

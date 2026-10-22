@@ -6,6 +6,7 @@ export const DEFAULT_STYLE: ReelStyle = {
   displayFont: "Instrument Serif",
   hookColor: "#FFFFFF",
   hookPosition: "top",
+  hookPlace: null,
   hookLayout: "headline",
   hookDurationMs: 5000,
   textColor: "#FFFFFF",

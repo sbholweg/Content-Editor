@@ -146,7 +146,12 @@ export function OverlayAdjust({
   return (
     <div className="adjust">
       <Label>Where it shows</Label>
-      <Options value={overlay.placement} onChange={(v) => onChange({ placement: v })} options={PLACEMENTS} />
+      <p className="muted small">Or tap “✥ Move” above the preview and drag it anywhere.</p>
+      <Options
+        value={overlay.x !== undefined && overlay.placement !== "full" ? ("custom" as Overlay["placement"]) : overlay.placement}
+        onChange={(v) => onChange({ placement: v, x: undefined, y: undefined })}
+        options={PLACEMENTS}
+      />
       {overlay.placement !== "full" ? (
         <Slider label="Size" value={Math.round(overlay.size * 100)} min={30} max={95} onChange={(v) => onChange({ size: v / 100 })} />
       ) : null}

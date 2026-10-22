@@ -185,9 +185,10 @@ export function HookPanel({ previewProps }: { previewProps: ReelProps }) {
       </div>
 
       <Label>Where it sits</Label>
+      <p className="muted small">Or tap “✥ Move” above the preview and drag it anywhere.{look.hookPlace ? " (It's in a spot you dragged it to; pick one below to reset.)" : ""}</p>
       <Options
-        value={look.hookPosition}
-        onChange={(v) => set("hookPosition", v)}
+        value={look.hookPlace ? ("custom" as ReelStyle["hookPosition"]) : look.hookPosition}
+        onChange={(v) => update({ style: { ...reel.style, hookPosition: v, hookPlace: null } })}
         options={[
           { value: "top", label: "Top", note: "top of the reel" },
           { value: "middle", label: "Middle", note: "centre of the frame" },
