@@ -5,7 +5,7 @@ import type { ReelProps, SlideProps } from "../shared/types";
 import { outputFrames, Reel, REEL_FPS, REEL_HEIGHT, REEL_WIDTH } from "./Reel";
 import { CAROUSEL_SIZE, SlideCard, STORY_SIZE } from "./Slide";
 
-const defaultProps: ReelProps = { videoSrc: "", hookText: "", words: [], brand: DEFAULT_STYLE, durationMs: 3000, removePauses: false, overlays: [], hookSubText: "", sounds: [], music: null, customFonts: [] };
+const defaultProps: ReelProps = { videoSrc: "", hookText: "", words: [], brand: DEFAULT_STYLE, durationMs: 3000, removePauses: false, silences: [], overlays: [], hookSubText: "", sounds: [], music: null, customFonts: [] };
 
 const sampleSlide: SlideProps = {
   slide: { id: "s", kind: "point", eyebrow: "reason one: your", title: "hook", body: "", pills: [], frameMs: 0 },

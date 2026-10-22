@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { isLineCut } from "../../shared/lines";
 import { isFiller } from "../../shared/words";
+import type { Project } from "../../shared/types";
+import { api } from "../api";
 import { formatTime, useEditor } from "./context";
 
-export function CutTab() {
-  const { reel, update, lines, outputTimes, timeMs, timeline, seekToWord } = useEditor();
+export function CutTab({ onTightened }: { onTightened: (p: Project) => void }) {
+  const { project, reel, update, lines, outputTimes, timeMs, timeline, seekToWord, onAuthError } = useEditor();
   const [showCut, setShowCut] = useState(false);
+  const [busy, setBusy] = useState(false);
   const words = reel.words;
   const fillers = words.filter((w) => isFiller(w.text) && !w.cut).length;
   const anyCut = words.some((w) => w.cut);
@@ -54,6 +57,30 @@ export function CutTab() {
         </div>
         <span className="mono muted">{formatTime(timeline.durationMs)} long</span>
       </header>
+
+      <div className="tighten">
+        <div className="grow">
+          <strong>Make it flow</strong>
+          <p className="muted small">Cuts every pause, um, repeat and restarted sentence so it plays like a tight reel. Undo anytime.</p>
+        </div>
+        <button
+          className="btn primary"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              const p = await api.tighten(project.id);
+              update({ words: p.words, removePauses: true });
+              onTightened(p);
+            } catch (err) {
+              onAuthError(err);
+            }
+            setBusy(false);
+          }}
+        >
+          {busy ? "Tightening…" : "✨ Tighten it"}
+        </button>
+      </div>
 
       <div className="row">
         <button className={`chip ${reel.removePauses ? "accent" : ""}`} onClick={() => update({ removePauses: !reel.removePauses })}>

@@ -3,7 +3,7 @@ import type { Asset, Project, ReelProps } from "./types";
 
 type ReelFields = Pick<
   Project,
-  "hookText" | "hookSubText" | "words" | "style" | "durationMs" | "removePauses" | "overlays" | "sounds" | "music" | "soundsEnabled"
+  "hookText" | "hookSubText" | "words" | "style" | "durationMs" | "removePauses" | "overlays" | "sounds" | "music" | "soundsEnabled" | "silences"
 >;
 
 // Turns a reel plus the creator's library into everything the video needs to draw and play.
@@ -29,6 +29,7 @@ export function reelProps(
     brand: reel.style,
     durationMs: reel.durationMs,
     removePauses: reel.removePauses,
+    silences: reel.silences ?? [],
     overlays: reel.overlays.flatMap((o) => {
       const a = byId.get(o.assetId);
       return a && (a.kind === "gif" || a.kind === "image" || a.kind === "video")

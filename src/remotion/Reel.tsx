@@ -16,13 +16,13 @@ export const REEL_HEIGHT = 1920;
 const toFrames = (ms: number) => Math.round((ms / 1000) * REEL_FPS);
 
 // Length of the finished reel after cuts.
-export const outputFrames = (props: Pick<ReelProps, "words" | "durationMs" | "removePauses">) =>
-  Math.max(1, toFrames(buildTimeline(props.words, props.durationMs, props.removePauses).durationMs));
+export const outputFrames = (props: Pick<ReelProps, "words" | "durationMs" | "removePauses" | "silences">) =>
+  Math.max(1, toFrames(buildTimeline(props.words, props.durationMs, props.removePauses, props.silences).durationMs));
 
 export const Reel: React.FC<ReelProps> = (props) => {
-  const { videoSrc, hookText, hookSubText, words, brand, durationMs, removePauses, overlays, sounds, music, customFonts } = props;
+  const { videoSrc, hookText, hookSubText, words, brand, durationMs, removePauses, silences, overlays, sounds, music, customFonts } = props;
   registerCustomFonts(customFonts ?? []);
-  const timeline = useMemo(() => buildTimeline(words, durationMs, removePauses), [words, durationMs, removePauses]);
+  const timeline = useMemo(() => buildTimeline(words, durationMs, removePauses, silences), [words, durationMs, removePauses, silences]);
   const frame = useCurrentFrame();
   const lineStarts = useMemo(() => buildLines(timeline.words).map((l) => l.words[0].startMs), [timeline]);
   // Zoom jumps: every other line is punched in a little, switching right as the line starts.

@@ -88,6 +88,7 @@ export const api = {
   writeCaption: (id: string, cta: string) => request<Project>(`/api/projects/${id}/caption`, { method: "POST", body: JSON.stringify({ cta }) }),
   makeTrialReels: (id: string) => request<Project[]>(`/api/projects/${id}/trial-reels`, { method: "POST" }),
   listTrialReels: (id: string) => request<Project[]>(`/api/projects/${id}/trial-reels`),
+  tighten: (id: string) => request<Project>(`/api/projects/${id}/tighten`, { method: "POST", body: "{}" }),
   draftSlides: (id: string, format: SlideFormat) => request<Project>(`/api/projects/${id}/${format}/draft`, { method: "POST", body: "{}" }),
   renderSlides: (id: string, format: SlideFormat) => request<{ images: string[] }>(`/api/projects/${id}/${format}/render`, { method: "POST", body: "{}" }),
   deleteProject: (id: string) => request<{ ok: true }>(`/api/projects/${id}`, { method: "DELETE" }),

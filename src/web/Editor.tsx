@@ -148,8 +148,8 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   }, [assets]);
 
   const timeline = useMemo(
-    () => buildTimeline(reel?.words ?? [], project?.durationMs ?? 0, reel?.removePauses ?? false),
-    [reel?.words, project?.durationMs, reel?.removePauses],
+    () => buildTimeline(reel?.words ?? [], project?.durationMs ?? 0, reel?.removePauses ?? false, project?.silences),
+    [reel?.words, project?.durationMs, reel?.removePauses, project?.silences],
   );
   const outputTimes = useMemo(() => new Map(timeline.words.map((w) => [w.id, w])), [timeline]);
   const lines = useMemo(() => buildLines(reel?.words ?? []), [reel?.words]);
@@ -157,13 +157,13 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   const inputProps = useMemo(
     () =>
       project && reel
-        ? reelProps({ ...reel, durationMs: project.durationMs }, assets, {
+        ? reelProps({ ...reel, durationMs: project.durationMs, silences: project.silences }, assets, {
             video: mediaUrl(id, "video.mp4"),
             library: libraryUrl,
             sfx: (file) => `/sfx/${file}`,
           })
         : null,
-    [project?.durationMs, reel, assets, id],
+    [project?.durationMs, project?.silences, reel, assets, id],
   );
 
   useEffect(() => {
@@ -297,7 +297,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
 
         <div className="studio-body">
           <div className="studio-main">
-            {tab === "cut" ? <CutTab /> : null}
+            {tab === "cut" ? <CutTab onTightened={setProject} /> : null}
             {tab === "visuals" && inputProps ? <VisualsTab previewProps={inputProps} /> : null}
             {tab === "sound" ? <SoundTab /> : null}
             {tab === "finish" ? <FinishTab exportControls={exportControls} /> : null}

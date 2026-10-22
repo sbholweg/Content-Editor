@@ -71,7 +71,7 @@ async function waitFor(id: string, done: (p: Project) => boolean, label: string)
 }
 
 function describe(p: Project, assets: Asset[]) {
-  const timeline = buildTimeline(p.words, p.durationMs, p.removePauses);
+  const timeline = buildTimeline(p.words, p.durationMs, p.removePauses, p.silences);
   const s = p.style;
   const lines = [
     `Reel ${p.id}${p.variantLabel ? ` (trial reel: ${p.variantLabel})` : ""}`,
@@ -171,7 +171,7 @@ const commands: Record<string, (args: string[]) => Promise<void>> = {
     const projects = await call<Project[]>("GET", "/api/projects");
     if (!projects.length) return console.log("No reels yet.");
     for (const p of projects) {
-      const len = fmt(buildTimeline(p.words, p.durationMs, p.removePauses).durationMs);
+      const len = fmt(buildTimeline(p.words, p.durationMs, p.removePauses, p.silences).durationMs);
       console.log(`${p.id.slice(0, 8)}  ${p.createdAt.slice(0, 16).replace("T", " ")}  ${len}  ${p.status}/${p.render.status}  ${p.variantLabel ? `[trial: ${p.variantLabel}] ` : ""}${p.hookText || p.originalName}`);
     }
   },
@@ -212,6 +212,14 @@ const commands: Record<string, (args: string[]) => Promise<void>> = {
     const edits = await readEdits(args[1]);
     const p = await call<Project>("POST", `/api/projects/${id}/apply`, { edits });
     console.log(`✓ Updated. The editor shows the change now.\n\n${describe(p, await call<Asset[]>("GET", "/api/library"))}`);
+  },
+
+  async tighten(args) {
+    const id = await resolveId(args[0]);
+    const before = await call<Project>("GET", `/api/projects/${id}`);
+    const p = await call<Project>("POST", `/api/projects/${id}/tighten`);
+    const was = fmt(buildTimeline(before.words, before.durationMs, before.removePauses, before.silences).durationMs);
+    console.log(`✓ Tightened: ${was} → ${fmt(buildTimeline(p.words, p.durationMs, p.removePauses, p.silences).durationMs)}. Check the cut lines in \`show\`.`);
   },
 
   async export(args) {
@@ -287,6 +295,7 @@ const HELP = `Engine commands (npm run engine -- <command>):
   import [files] [--do-it-all]  import clips (default: everything in the inbox folder)
   list                       list reels
   show [id|latest]           show a reel: words with numbers, hook, look, media, caption
+  tighten [id|latest]        cut pauses, ums, repeats and restarted sentences
   apply [id|latest] <json>   change a reel (JSON text, a .json file, or - for stdin)
   caption [id] [call to action]  write the post caption
   export [id|latest]         export to the outputs folder

@@ -64,3 +64,27 @@ export async function saveStill(input: string, output: string) {
 export async function extractAudio(input: string, output: string) {
   await run("ffmpeg", ["-y", "-i", input, "-vn", "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", output]);
 }
+
+// Finds quiet stretches in the audio (where the speaker isn't talking). The threshold is set a
+// little below normal speech so breaths and room noise count as quiet.
+export async function detectSilences(input: string): Promise<{ startMs: number; endMs: number }[]> {
+  const log = await new Promise<string>((resolve, reject) => {
+    const child = spawn("ffmpeg", ["-i", input, "-af", "silencedetect=noise=-34dB:d=0.2", "-f", "null", "-"]);
+    let err = "";
+    child.stderr.on("data", (d) => (err += d));
+    child.on("error", reject);
+    child.on("close", () => resolve(err));
+  });
+  const out: { startMs: number; endMs: number }[] = [];
+  let start: number | null = null;
+  for (const line of log.split("\n")) {
+    const s = line.match(/silence_start: ([\d.]+)/);
+    const e = line.match(/silence_end: ([\d.]+)/);
+    if (s) start = Number(s[1]) * 1000;
+    if (e && start !== null) {
+      out.push({ startMs: Math.round(start), endMs: Math.round(Number(e[1]) * 1000) });
+      start = null;
+    }
+  }
+  return out;
+}

@@ -8,13 +8,13 @@ import { normalizeBrand, normalizeStyle } from "../src/shared/brand.ts";
 import { applyEdits, ReelEdits } from "../src/shared/edits.ts";
 import { draftSlides } from "../src/shared/repurpose.ts";
 import type { BrandKit, MusicBed, Overlay, Project, Slide, SlideFormat, SoundCue, Word } from "../src/shared/types.ts";
-import { isFiller } from "../src/shared/words.ts";
+import { tighten } from "../src/shared/words.ts";
 import { accessToken, checkPassword, requireAuth } from "./auth.ts";
 import { writeCaption } from "./caption.ts";
 import { config } from "./config.ts";
 import { subscribe } from "./events.ts";
 import { planEdit } from "./highlights.ts";
-import { extractAudio, normalizeVideo, probe } from "./media.ts";
+import { detectSilences, extractAudio, normalizeVideo, probe } from "./media.ts";
 import { queueRender } from "./render.ts";
 import { ensureWhisper } from "./setup-whisper.ts";
 import {
@@ -127,14 +127,16 @@ async function processProject(id: string, original: string, autopilot: boolean) 
     const info = await probe(video);
     await updateProject(id, { ...info, step: "Listening to your video" });
     await extractAudio(video, audio);
+    const silences = await detectSilences(audio).catch(() => []);
     const words = await transcribeWords(audio);
-    await updateProject(id, { words, step: "Picking words to highlight" });
+    await updateProject(id, { words, silences, step: "Cutting pauses and retakes" });
     const brand = await readBrand();
     const plan = await planEdit(words, { ...brand.business, voice: brand.voice });
+    // Every reel starts tightly edited: ums, repeats and restarted sentences cut, pauses trimmed.
+    const cleaned = tighten(plan.words);
     if (!autopilot) {
-      await updateProject(id, { words: plan.words, hookText: plan.hook, status: "ready", step: undefined });
+      await updateProject(id, { words: cleaned, hookText: plan.hook, removePauses: true, status: "ready", step: undefined });
     } else {
-      const cleaned = plan.words.map((w) => (isFiller(w.text) ? { ...w, cut: true } : w));
       await updateProject(id, { words: cleaned, hookText: plan.hook, removePauses: true, step: "Writing your caption" });
       const postCaption = await writeCaption({ words: cleaned, hook: plan.hook, business: { ...brand.business, voice: brand.voice }, cta: "" }).catch(() => "");
       await updateProject(id, { postCaption, status: "ready", step: undefined, render: { status: "rendering", progress: 0 } });
@@ -189,6 +191,15 @@ app.post("/api/projects/:id/apply", async (req, res) => {
 });
 
 app.get("/api/events", subscribe);
+
+// Tighten an existing reel: detect the quiet parts of its audio (older reels don't have this
+// yet) and cut ums, repeats and restarted sentences.
+app.post("/api/projects/:id/tighten", async (req, res) => {
+  const project = await readProject(req.params.id);
+  if (!project) return res.status(404).json({ error: "Not found" });
+  const silences = project.silences ?? (await detectSilences(projectFile(project.id, "video.mp4")).catch(() => []));
+  res.json(await updateProject(project.id, (p) => ({ silences, removePauses: true, words: tighten(p.words) })));
+});
 
 // Carousel slides and story frames: draft them from the reel, then render to images.
 const FORMATS: SlideFormat[] = ["carousel", "stories"];

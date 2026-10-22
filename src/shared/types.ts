@@ -83,6 +83,7 @@ export type ReelProps = {
   // Length of the original, uncut video.
   durationMs: number;
   removePauses: boolean;
+  silences: { startMs: number; endMs: number }[];
   overlays: ResolvedOverlay[];
   hookSubText: string;
   sounds: (SoundCue & { src: string })[];
@@ -177,6 +178,8 @@ export type Project = {
   postCaption: string;
   words: Word[];
   removePauses: boolean;
+  // Quiet stretches detected in the audio, trimmed when removePauses is on.
+  silences?: { startMs: number; endMs: number }[];
   overlays: Overlay[];
   sounds: SoundCue[];
   music: MusicBed | null;

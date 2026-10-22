@@ -2,14 +2,19 @@ import type { Word } from "./types";
 
 export type Segment = { startMs: number; endMs: number };
 
-const CUT_PAD_MS = 60;
-const PAUSE_THRESHOLD_MS = 400;
-const PAUSE_KEEP_MS = 120;
-const EDGE_KEEP_MS = 150;
+// Tuned for fast-paced talking reels: any gap longer than a breath is trimmed to a short beat.
+const CUT_PAD_MS = 50;
+const PAUSE_THRESHOLD_MS = 220;
+const PAUSE_KEEP_MS = 80;
+const EDGE_KEEP_MS = 100;
+// Quiet stretches found in the audio itself (more accurate than gaps between transcribed words,
+// whose timings often run into the silence).
+const SILENCE_MIN_MS = 260;
+const SILENCE_KEEP_MS = 70;
 
 // Works out which parts of the original video to keep, given the words that were cut
 // and whether long pauses should be removed. Both the preview and the export use this.
-export function buildTimeline(words: Word[], durationMs: number, removePauses: boolean) {
+export function buildTimeline(words: Word[], durationMs: number, removePauses: boolean, silences: Segment[] = []) {
   const kept = words.filter((w) => !w.cut);
   const removed: Segment[] = [];
 
@@ -41,6 +46,9 @@ export function buildTimeline(words: Word[], durationMs: number, removePauses: b
       }
     }
     if (durationMs - last.endMs > EDGE_KEEP_MS * 2) removed.push({ startMs: last.endMs + EDGE_KEEP_MS, endMs: durationMs });
+    for (const q of silences) {
+      if (q.endMs - q.startMs >= SILENCE_MIN_MS) removed.push({ startMs: q.startMs + SILENCE_KEEP_MS, endMs: q.endMs - SILENCE_KEEP_MS });
+    }
   }
 
   // Merge overlapping removals, then keep everything in between.
