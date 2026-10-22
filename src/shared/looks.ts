@@ -12,6 +12,11 @@ const look = (id: string, name: string, note: string, style: Partial<ReelStyle>)
 
 // Ready-made looks to start from. Tapping one applies it to the reel; tweak from there.
 export const STARTER_LOOKS: StarterLook[] = [
+  look("purple-punk", "Purple Punk", "Anton hook, violet key-word blocks, zine energy", {
+    font: "DM Sans", displayFont: "Anton", fontSize: 66, hookLayout: "headline", hookColor: "#FFFFFF", hookDurationMs: 3000,
+    outlineColor: "#111014", highlightColor: "#B14EFF", highlightTextColor: "#111014", style: "pill", captionMode: "phrase",
+    wordsPerLine: 3, textEffect: "shadow", position: "bottom", zoomJumps: true,
+  }),
   look("golden-hour", "Golden Hour", "serif captions, soft yellow key words, zoom jumps", {
     font: "Instrument Serif (upright)", displayFont: "Instrument Serif (upright)", fontSize: 76, hookPosition: "top", hookLayout: "headline",
     hookDurationMs: 3000, highlightColor: "#F6E7A1", style: "color", captionMode: "phrase", wordsPerLine: 3, textEffect: "shadow",

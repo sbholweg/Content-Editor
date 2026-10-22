@@ -8,6 +8,12 @@ description: Set up, import or refine the person's brand kit (colors, fonts, log
 The brand kit lives in the editor at http://localhost:3000/#/brand. Every new reel, carousel and
 story starts from it, and you follow its voice when writing.
 
+## A ready-made brand file in `brands/`
+If they say "use my Purple Punk brand" (or name a file in `brands/`), apply it with
+`npm run engine -- brand brands/<file>.json`, then `looks` to confirm. It sets the palette, fonts,
+voice, default look and adds a saved look; it keeps their business profile and other saved looks.
+Then offer to apply the look to their existing reels.
+
 ## From their brand guide, screenshot, PDF or website
 1. Read what they shared (images and PDFs you can view directly). Pull out:
    - **Colors**: exact hex codes. If only shown visually, estimate carefully and say they're

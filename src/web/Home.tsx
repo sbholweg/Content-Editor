@@ -4,7 +4,7 @@ import { IDEA_STARTERS } from "../shared/library";
 import { buildTimeline } from "../shared/timeline";
 import type { Project } from "../shared/types";
 import { api, onEngineEvents, projectFileUrl } from "./api";
-import { TopNav } from "./Brandmark";
+import { Starburst, TopNav } from "./Brandmark";
 
 type Folder = "edit" | "ready" | "posted";
 
@@ -96,10 +96,11 @@ export function Home({ onOpen, onAuthError }: { onOpen: (id: string) => void; on
             void onFile(e.dataTransfer.files?.[0]);
           }}
         >
+          <Starburst className="hero-burst" />
           <div className="hero-copy">
             <span className="eyebrow">{APP_TAGLINE}</span>
             <h1 className="display">
-              Film it. <span className="accent-text">We'll cut it.</span>
+              Film it. We'll <span className="accent-text">cut</span> it.
             </h1>
             <p className="lede">Drop in a talking reel. The Cutroom trims the pauses and retakes, captions it in your brand, and hands you a reel, a carousel and stories, ready to post.</p>
           </div>

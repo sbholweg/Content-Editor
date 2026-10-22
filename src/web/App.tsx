@@ -1,5 +1,5 @@
 import { APP_TAGLINE } from "../shared/app";
-import { Brandmark } from "./Brandmark";
+import { Brandmark, Sparkle, Starburst } from "./Brandmark";
 import React, { useCallback, useEffect, useState } from "react";
 import { api, AuthError, setToken } from "./api";
 import { BrandKitPage } from "./BrandKit";
@@ -51,15 +51,18 @@ function Login({ onDone }: { onDone: () => void }) {
   return (
     <div className="login">
       <aside className="login-art">
-        <Brandmark size={24} />
+        <Starburst className="login-burst" />
+        <Sparkle className="login-sparkle" />
+        <Brandmark size={26} />
         <div>
-          <h1 className="display light">Film it.<br /><span className="accent-text">We'll cut it.</span></h1>
-          <p className="lede light">{APP_TAGLINE} Talking reels, carousels, stories and trial reels, all in your brand.</p>
+          <span className="eyebrow">{APP_TAGLINE}</span>
+          <h1 className="display">Film it.<br />We'll <span className="accent-text">cut</span> it.</h1>
+          <p className="lede">Talking reels, carousels, stories and trial reels, all in your brand.</p>
         </div>
         <div className="login-chips">
-          <span>✂ Cuts the pauses</span>
-          <span>Aa Captions in your fonts</span>
-          <span>↻ One reel, six posts</span>
+          <span className="sticker lime">Cuts the pauses</span>
+          <span className="sticker violet">Captions in your fonts</span>
+          <span className="sticker">One reel, six posts</span>
         </div>
       </aside>
     <form
