@@ -31,7 +31,7 @@ description: Make plain-words changes to a reel, e.g. "make it softer", "cut the
     "textColor": "#FFFFFF", "outlineColor": "#000000",
     "highlightColor": "#8656F6", "highlightTextColor": "#FFFFFF",
     "style": "pill|color|serif", "captionMode": "phrase|single", "textEffect": "shadow|outline",
-    "position": "top|middle|bottom", "wordsPerLine": 4, "uppercase": false, "fontSize": 64, "zoomJumps": true
+    "position": "top|middle|bottom", "wordsPerLine": 4, "uppercase": false, "fontSize": 64, "zoomJumps": true, "captionAlign": "center|left|right"
   },
   "addMedia": [{"asset": "library item name", "fromWord": 10, "toWord": 14, "placement": "middle|top|bottom|full"}],
   "removeMedia": ["ov-..."],
@@ -53,9 +53,16 @@ Serif: "Instrument Serif (upright)", "Instrument Serif" (italic), "Playfair Disp
 "Bodoni Moda (upright)", Fraunces, Abril Fatface... Script: Caveat, Dancing Script, Great Vibes...
 Fonts they uploaded are listed by `library`.
 
-Starter looks (in `src/shared/looks.ts`): Editorial (serif captions at the top, soft yellow
-colored key words, zoom jumps), Bold (one word at a time, purple bubbles), Soft (calm, lavender).
-To apply one, copy its style fields into "style".
+Starter looks (in `src/shared/looks.ts`): Golden Hour, Side Note, Main Character, Hot Take,
+Soft Launch, Clean Girl, Pop Star, Magazine, Notes App. To apply one, copy its style fields into "style".
+`captionAlign: "left"|"right"` puts captions beside their head (with `position: "top"` = eye level).
+
+## Making a look from a video they love
+If they share a reel/video and say "make this a look": run `npm run engine -- frames <video path>`
+to pull stills, look at them, and match font (closest in src/shared/fonts.ts), size, color,
+key-word style, caption mode (one word vs phrase), placement (incl. left/right of head), hook
+style and zoom. Save it as a named look with `npm run engine -- brand look.json` where look.json is
+`{"addLook": {"name": "...", "style": {...full style...}}}`, then apply it to their reel.
 
 ## Translating common requests
 - "softer / calmer": textEffect shadow, style serif or color, smaller fontSize (56-62), a softer

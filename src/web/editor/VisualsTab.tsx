@@ -2,102 +2,120 @@ import React, { useState } from "react";
 import { isLineCut, type Line } from "../../shared/lines";
 import type { Overlay, ReelProps } from "../../shared/types";
 import { api } from "../api";
-import { OverlayAdjust, Thumb } from "../Media";
+import { LibraryBrowser, Modal, OverlayAdjust, Thumb } from "../Media";
 import { formatTime, useEditor } from "./context";
-import { CaptionsPanel, FontsPanel, HookPanel, LibraryPanel, LooksPanel } from "./panels";
+import { LookGallery } from "./LookGallery";
+import { CaptionsPanel, FontsPanel, HookPanel } from "./panels";
 
-type PanelId = "captions" | "hook" | "fonts" | "library" | "looks";
+type Section = "captions" | "hook" | "fonts";
 
 const EMOJIS = ["🔥", "💰", "✨", "💡", "🚀", "💜", "😂", "👀", "✅", "❌", "⏰", "📈", "🙌", "💸", "🎯"];
 const LAYOUT_LABEL = { headline: "Headline", eyebrow: "Eyebrow + headline", subhead: "Headline + subhead" };
 const PLACEMENT_LABEL = { top: "top", middle: "middle", bottom: "lower", full: "full screen" };
 
 export function VisualsTab({ previewProps }: { previewProps: ReelProps }) {
-  const { project, reel, update, lines, assets, onAuthError } = useEditor();
-  const [panel, setPanel] = useState<PanelId | null>(null);
-  const [busy, setBusy] = useState(false);
-  const kept = lines.filter((l) => !isLineCut(l));
-  const looks = (reel.hookText ? 1 : 0) + reel.overlays.length;
-
-  const tools: { id: PanelId; label: string; title: string }[] = [
-    { id: "captions", label: `Captions: ${reel.style.captionMode === "single" ? "Single word" : "Phrase"}`, title: "Captions" },
-    { id: "hook", label: "Hook", title: "Hook" },
-    { id: "fonts", label: "Fonts & colours", title: "Fonts & colours" },
-    { id: "library", label: "Library", title: "Your library" },
-    { id: "looks", label: "Looks", title: "Your looks" },
-  ];
-
+  const [view, setView] = useState<"style" | "lines">("style");
   return (
     <>
       <section className="panel-card">
         <header className="panel-head">
           <div>
             <h2>Your visuals</h2>
-            <p className="muted small">Every look on your reel, line by line. Tap a word to make it a key word. Swap any look, or add one to a line.</p>
+            <p className="muted small">
+              {view === "style" ? "Pick a look, then fine-tune captions, hook, fonts and colors." : "Line by line: key words, emojis, and GIFs, images or b-roll on any line."}
+            </p>
           </div>
-          <span className="mono muted">{looks} looks</span>
         </header>
-        <div className="toolbar">
-          {tools.map((t) => (
-            <button key={t.id} className={`tool ${panel === t.id ? "on" : ""}`} onClick={() => setPanel(panel === t.id ? null : t.id)}>
-              {t.label}
-            </button>
-          ))}
-          <button
-            className={`tool ${reel.style.zoomJumps ? "on" : ""}`}
-            onClick={() => update({ style: { ...reel.style, zoomJumps: !reel.style.zoomJumps } })}
-            title="Punch in and out between lines"
-          >
-            {reel.style.zoomJumps ? "✓ Zoom jumps" : "Zoom jumps"}
-          </button>
-          <button
-            className="tool"
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true);
-              try {
-                const p = await api.autoHighlight(project.id);
-                update({ words: p.words, hookText: p.hookText });
-              } catch (err) {
-                onAuthError(err);
-              }
-              setBusy(false);
-            }}
-          >
-            {busy ? "Picking…" : "✨ Pick key words for me"}
-          </button>
+        <div className="segmented big">
+          <button className={view === "style" ? "on" : ""} onClick={() => setView("style")}>Style</button>
+          <button className={view === "lines" ? "on" : ""} onClick={() => setView("lines")}>Lines & media</button>
         </div>
       </section>
+      {view === "style" ? <StyleView previewProps={previewProps} /> : <LinesView />}
+    </>
+  );
+}
 
-      {panel ? (
-        <section className="panel-card open-panel">
-          <header className="panel-head">
-            <h3>{tools.find((t) => t.id === panel)?.title}</h3>
-            <button className="icon-btn" onClick={() => setPanel(null)} aria-label="Close">✕</button>
-          </header>
-          {panel === "captions" ? <CaptionsPanel /> : null}
-          {panel === "hook" ? <HookPanel previewProps={previewProps} /> : null}
-          {panel === "fonts" ? <FontsPanel /> : null}
-          {panel === "library" ? <LibraryPanel /> : null}
-          {panel === "looks" ? <LooksPanel /> : null}
-        </section>
-      ) : null}
-
+function StyleView({ previewProps }: { previewProps: ReelProps }) {
+  const [open, setOpen] = useState<Section | null>(null);
+  const sections: { id: Section; title: string; hint: string; body: React.ReactNode }[] = [
+    { id: "captions", title: "Captions", hint: "style, placement, size, zoom jumps", body: <CaptionsPanel /> },
+    { id: "hook", title: "Hook", hint: "the title, its style and position", body: <HookPanel previewProps={previewProps} /> },
+    { id: "fonts", title: "Fonts & colors", hint: "your fonts, upload your own, colors", body: <FontsPanel /> },
+  ];
+  return (
+    <>
       <section className="panel-card">
-        <div className="lines">
-          {kept.map((line, i) => (
-            <VisualLine key={line.id} line={line} first={i === 0} onOpenHook={() => setPanel("hook")} />
-          ))}
-        </div>
-        {assets.length === 0 ? (
-          <p className="muted small">Tip: add your favourite GIFs, graphics and b-roll to the ▦ Library once, then use them on any reel.</p>
-        ) : null}
+        <h3>Looks</h3>
+        <LookGallery previewProps={previewProps} />
+      </section>
+      <section className="panel-card accordion">
+        {sections.map((sec) => (
+          <div key={sec.id} className={`acc ${open === sec.id ? "open" : ""}`}>
+            <button className="acc-head" onClick={() => setOpen(open === sec.id ? null : sec.id)}>
+              <span className="grow left">
+                <strong>{sec.title}</strong>
+                <span className="muted small">{sec.hint}</span>
+              </span>
+              <span className="acc-caret">{open === sec.id ? "–" : "+"}</span>
+            </button>
+            {open === sec.id ? <div className="acc-body">{sec.body}</div> : null}
+          </div>
+        ))}
       </section>
     </>
   );
 }
 
-function VisualLine({ line, first, onOpenHook }: { line: Line; first: boolean; onOpenHook: () => void }) {
+function LinesView() {
+  const { project, update, lines, assets, setAssets, onAuthError, notify } = useEditor();
+  const [busy, setBusy] = useState(false);
+  const [library, setLibrary] = useState(false);
+  const kept = lines.filter((l) => !isLineCut(l));
+  return (
+    <section className="panel-card">
+      <div className="row">
+        <button
+          className="chip accent"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            notify("Picking key words… this can take up to a minute.");
+            try {
+              const [p, ai] = await Promise.all([api.autoHighlight(project.id), api.aiStatus()]);
+              update({ words: p.words, hookText: p.hookText });
+              const n = p.words.filter((w) => w.highlight && !w.cut).length;
+              notify(
+                ai.source === "rules"
+                  ? `Picked ${n} key words with simple rules. For smarter picks, ask Claude in chat: “pick my key words”.`
+                  : `Claude picked ${n} key words and a hook. Tap any word to change it.`,
+              );
+            } catch (err) {
+              onAuthError(err);
+            }
+            setBusy(false);
+          }}
+        >
+          {busy ? "Picking…" : "✨ Pick key words for me"}
+        </button>
+        <button className="chip" onClick={() => setLibrary(true)}>▦ Your library</button>
+        <span className="muted small grow">Tap a word to make it a key word.</span>
+      </div>
+      <div className="lines">
+        {kept.map((line, i) => (
+          <VisualLine key={line.id} line={line} first={i === 0} />
+        ))}
+      </div>
+      {library ? (
+        <Modal eyebrow="Your library" title="GIFs, images & b-roll" subtitle="Add them once, use them on any reel." onClose={() => setLibrary(false)}>
+          <LibraryBrowser assets={assets} onAssets={setAssets} onAuthError={onAuthError} />
+        </Modal>
+      ) : null}
+    </section>
+  );
+}
+
+function VisualLine({ line, first }: { line: Line; first: boolean }) {
   const { reel, update, outputTimes, timeMs, seekToWord, assets, openPicker } = useEditor();
   const [editing, setEditing] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
@@ -176,7 +194,7 @@ function VisualLine({ line, first, onOpenHook }: { line: Line; first: boolean; o
                 <strong>Hook · {LAYOUT_LABEL[reel.style.hookLayout]}</strong>
                 <span className="muted small">“{reel.hookText}”</span>
               </span>
-              <button className="chip" onClick={onOpenHook}>⇄ Swap</button>
+              <span className="muted small">change it in Style › Hook</span>
             </div>
           ) : null}
           {overlays.map((o) => {

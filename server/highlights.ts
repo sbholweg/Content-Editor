@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import type { BrandVoice, BusinessProfile, Word } from "../src/shared/types.ts";
+import { askClaudeCodeJson } from "./claude-cli.ts";
 import { config } from "./config.ts";
 
 const EditPlan = z.object({
@@ -40,40 +41,45 @@ export function businessContext(business: BusinessProfile & { voice?: BrandVoice
 
 export async function planEdit(words: Word[], business: BusinessProfile & { voice?: BrandVoice }): Promise<EditSuggestions> {
   if (words.length === 0) return { words, hook: "" };
-  if (!process.env.ANTHROPIC_API_KEY) return heuristicEdit(words);
+  const transcriptText = `${businessContext(business)}Transcript (${(words.at(-1)!.endMs / 1000).toFixed(0)}s):\n${words
+    .map((w, i) => `${i}:${w.text}`)
+    .join(" ")}`;
+  if (!process.env.ANTHROPIC_API_KEY) {
+    // No API key: use the buyer's Claude Code if it's installed, else simple rules.
+    const plan = await askClaudeCodeJson<z.infer<typeof EditPlan>>(
+      `${SYSTEM}\n\nReturn JSON like {"hook": "...", "highlights": [3, 9], "emojis": [{"index": 9, "emoji": "💰"}]}.\n\n${transcriptText}`,
+    );
+    const parsed = plan ? EditPlan.safeParse(plan) : null;
+    if (!parsed?.success) return heuristicEdit(words);
+    return applyPlan(words, parsed.data);
+  }
 
   try {
     const client = new Anthropic();
-    const transcript = words.map((w, i) => `${i}:${w.text}`).join(" ");
     const response = await client.beta.messages.parse({
       model: config.anthropicModel,
       max_tokens: 16000,
       system: SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: `${businessContext(business)}Transcript (${(words.at(-1)!.endMs / 1000).toFixed(0)}s):\n${transcript}`,
-        },
-      ],
+      messages: [{ role: "user", content: transcriptText }],
       output_config: { effort: "low", format: betaZodOutputFormat(EditPlan) },
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
     });
     if (response.stop_reason === "refusal" || !response.parsed_output) return heuristicEdit(words);
-
-    const highlight = new Set(response.parsed_output.highlights);
-    const emojis = new Map(response.parsed_output.emojis.map((e) => [e.index, e.emoji]));
-    return {
-      words: words.map((w, i) => ({ ...w, highlight: highlight.has(i), emoji: emojis.get(i) })),
-      hook: response.parsed_output.hook.trim(),
-    };
+    return applyPlan(words, response.parsed_output);
   } catch (err) {
     console.error("Claude highlight planning failed, using built-in rules instead:", err);
     return heuristicEdit(words);
   }
 }
 
-// Used when no Claude API key is configured.
+function applyPlan(words: Word[], plan: z.infer<typeof EditPlan>): EditSuggestions {
+  const highlight = new Set(plan.highlights);
+  const emojis = new Map(plan.emojis.map((e) => [e.index, e.emoji]));
+  return { words: words.map((w, i) => ({ ...w, highlight: highlight.has(i), emoji: emojis.get(i) })), hook: plan.hook.trim() };
+}
+
+// Used when Claude isn't available.
 function heuristicEdit(words: Word[]): EditSuggestions {
   return { words: heuristicHighlights(words), hook: firstSentence(words) };
 }

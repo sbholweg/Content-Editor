@@ -20,6 +20,7 @@ export const DEFAULT_STYLE: ReelStyle = {
   uppercase: false,
   fontSize: 64,
   zoomJumps: false,
+  captionAlign: "center",
 };
 
 export const DEFAULT_BRAND: BrandKit = {

@@ -48,6 +48,8 @@ export type ReelStyle = {
   fontSize: number;
   // Punch in and out between lines (hides cuts, keeps it moving).
   zoomJumps: boolean;
+  // Captions centered, or beside the speaker's head (left or right of frame).
+  captionAlign: "center" | "left" | "right";
 };
 
 export type SavedLook = { id: string; name: string; style: ReelStyle };

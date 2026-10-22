@@ -8,3 +8,4 @@ inbox/*
 outputs/*
 !outputs/README.txt
 edits.json
+frames/

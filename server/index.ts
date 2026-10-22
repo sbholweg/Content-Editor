@@ -11,6 +11,7 @@ import type { BrandKit, MusicBed, Overlay, Project, Slide, SlideFormat, SoundCue
 import { tighten } from "../src/shared/words.ts";
 import { accessToken, checkPassword, requireAuth } from "./auth.ts";
 import { writeCaption } from "./caption.ts";
+import { claudeSource } from "./claude-cli.ts";
 import { config } from "./config.ts";
 import { subscribe } from "./events.ts";
 import { planEdit } from "./highlights.ts";
@@ -191,6 +192,9 @@ app.post("/api/projects/:id/apply", async (req, res) => {
 });
 
 app.get("/api/events", subscribe);
+
+// Which writer the ✨ buttons use: an API key, the person's Claude Code, or simple rules.
+app.get("/api/ai-status", (_req, res) => res.json({ source: claudeSource() }));
 
 // Tighten an existing reel: detect the quiet parts of its audio (older reels don't have this
 // yet) and cut ums, repeats and restarted sentences.

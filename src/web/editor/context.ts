@@ -32,6 +32,8 @@ export type EditorApi = {
   timeMs: number;
   seekToWord: (wordId: string) => void;
   openPicker: (target: PickerTarget) => void;
+  // Shows a short confirmation at the bottom of the screen.
+  notify: (message: string) => void;
   onAuthError: (err: unknown) => void;
 };
 

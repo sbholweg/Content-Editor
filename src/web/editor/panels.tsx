@@ -5,8 +5,7 @@ import { swatchesFor } from "../../shared/brand";
 import { FONT_GROUPS } from "../../shared/fonts";
 import { HOOK_LIBRARY } from "../../shared/library";
 import type { HookLayout, ReelProps, ReelStyle } from "../../shared/types";
-import { LibraryBrowser, useUpload } from "../Media";
-import { LooksCard } from "../sections";
+import { useUpload } from "../Media";
 import { FontOptions, Label, Options, Slider, Swatches } from "../ui";
 import { useEditor } from "./context";
 
@@ -44,9 +43,19 @@ export function CaptionsPanel() {
         value={look.position}
         onChange={(v) => set("position", v)}
         options={[
-          { value: "top", label: "Top", note: "takes the hook's spot after it" },
+          { value: "top", label: "Top", note: "or eye level, if beside you" },
           { value: "middle", label: "Middle", note: "centre of the frame" },
           { value: "bottom", label: "Lower", note: "just above the Reels bar" },
+        ]}
+      />
+      <Label>Left, center or right</Label>
+      <Options
+        value={look.captionAlign}
+        onChange={(v) => set("captionAlign", v)}
+        options={[
+          { value: "center", label: "Center", note: "classic" },
+          { value: "left", label: "Left of me", note: "beside your head" },
+          { value: "right", label: "Right of me", note: "beside your head" },
         ]}
       />
       <Label>Text edge</Label>
@@ -68,7 +77,10 @@ export function CaptionsPanel() {
         <input type="checkbox" checked={look.uppercase} onChange={(e) => set("uppercase", e.target.checked)} />
         ALL CAPS
       </label>
-      <p className="muted small">Fonts and colours are under “Fonts & colours”.</p>
+      <label className="check">
+        <input type="checkbox" checked={look.zoomJumps} onChange={(e) => set("zoomJumps", e.target.checked)} />
+        Zoom jumps (punch in on every other line)
+      </label>
     </div>
   );
 }
@@ -258,21 +270,4 @@ export function FontsPanel() {
       </div>
     </div>
   );
-}
-
-export function LibraryPanel() {
-  const { assets, setAssets, onAuthError } = useEditor();
-  return (
-    <div className="panel-body">
-      <p className="muted small">
-        Your GIFs, graphics, photos and b-roll, ready for every reel. To put one on your reel, tap <strong>＋ Add</strong> next to a line below.
-      </p>
-      <LibraryBrowser assets={assets} onAssets={setAssets} onAuthError={onAuthError} />
-    </div>
-  );
-}
-
-export function LooksPanel() {
-  const { reel, update, brand, updateBrand } = useEditor();
-  return <LooksCard look={reel.style} onLook={(style) => update({ style })} brand={brand} onBrand={updateBrand} bare />;
 }

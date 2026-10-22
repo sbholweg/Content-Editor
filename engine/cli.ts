@@ -270,6 +270,12 @@ const commands: Record<string, (args: string[]) => Promise<void>> = {
     // {"voice": {...}} or {"defaultStyle": {...}}. Lists (palette, looks, calls to action) are replaced.
     const current = await call<BrandKit>("GET", "/api/brand");
     const edits = await readEdits(args[0]);
+    // {"addLook": {"name", "style"}} adds a saved look (replacing one with the same name).
+    if (edits.addLook) {
+      const others = current.looks.filter((l) => l.name.toLowerCase() !== String(edits.addLook.name).toLowerCase());
+      edits.looks = [...others, { id: `look-${Date.now()}`, name: edits.addLook.name, style: { ...current.defaultStyle, ...edits.addLook.style } }];
+      delete edits.addLook;
+    }
     const next = {
       ...current,
       ...edits,
@@ -280,6 +286,19 @@ const commands: Record<string, (args: string[]) => Promise<void>> = {
     };
     await call("PUT", "/api/brand", next);
     console.log("✓ Saved.");
+  },
+
+  // Pulls about one still per second from any video, so Claude can look at a style reference.
+  async frames(args) {
+    const file = args[0];
+    if (!file) fail("Give the path to a video.");
+    const out = path.join(config.root, "frames", path.basename(file).replace(/\.[^.]+$/, ""));
+    await fs.mkdir(out, { recursive: true });
+    const r = spawnSync("ffmpeg", ["-y", "-loglevel", "error", "-i", file, "-vf", "fps=1,scale=540:-2", path.join(out, "%02d.jpg")], {
+      shell: process.platform === "win32",
+    });
+    if (r.status !== 0) fail(`Couldn't read that video: ${r.stderr?.toString().slice(-300)}`);
+    console.log(`✓ Stills saved in ${out}`);
   },
 
   async library() {
@@ -302,7 +321,8 @@ const HELP = `Engine commands (npm run engine -- <command>):
   trials [id|latest]         make 3 trial reels and export them
   carousel [id] [slides.json]  make carousel images (drafts the slides if no file is given)
   stories [id] [slides.json]   make story frames (same)
-  looks                      show the default look, saved looks, business profile
+  looks                      show the brand kit, default look, saved looks, business profile
+  frames <video>             save stills from a video (to study a style you like)
   brand <json>               save business profile / default look / calls to action
   library                    list GIFs, images, b-roll, sounds and fonts`;
 

@@ -39,6 +39,13 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   const [playing, setPlaying] = useState(false);
   const [exportFile, setExportFile] = useState<File | null>(null);
   const [changedSinceExport, setChangedSinceExport] = useState(false);
+  const [toast, setToast] = useState("");
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const notify = useCallback((message: string) => {
+    setToast(message);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(""), 4500);
+  }, []);
   const player = useRef<PlayerRef>(null);
 
   const load = useCallback(async () => {
@@ -270,6 +277,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
       if (out) seekMs(out.startMs);
     },
     openPicker: setPicker,
+    notify,
     onAuthError,
   };
 
@@ -297,7 +305,14 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
 
         <div className="studio-body">
           <div className="studio-main">
-            {tab === "cut" ? <CutTab onTightened={setProject} /> : null}
+            {tab === "cut" ? (
+              <CutTab
+                onTightened={(p) => {
+                  setProject(p);
+                  notify(`Tightened: now ${formatTime(buildTimeline(p.words, p.durationMs, true, p.silences).durationMs)} long. Cut lines are at the bottom.`);
+                }}
+              />
+            ) : null}
             {tab === "visuals" && inputProps ? <VisualsTab previewProps={inputProps} /> : null}
             {tab === "sound" ? <SoundTab /> : null}
             {tab === "finish" ? <FinishTab exportControls={exportControls} /> : null}
@@ -345,6 +360,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
         </footer>
       </main>
 
+      {toast ? <div className="toast" role="status">{toast}</div> : null}
       {picker ? <PickerModal target={picker} onClose={() => setPicker(null)} /> : null}
     </EditorContext.Provider>
   );

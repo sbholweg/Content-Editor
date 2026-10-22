@@ -45,6 +45,7 @@ export const ReelEdits = z
         uppercase: z.boolean(),
         fontSize: z.number().min(30).max(140),
         zoomJumps: z.boolean(),
+        captionAlign: z.enum(["center", "left", "right"]),
       })
       .partial()
       .strict(),

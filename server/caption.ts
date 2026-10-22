@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { BrandVoice, BusinessProfile, Word } from "../src/shared/types.ts";
 import { businessContext } from "./highlights.ts";
+import { askClaudeCode } from "./claude-cli.ts";
 import { config } from "./config.ts";
 
 const SYSTEM = `You write Instagram captions for online service providers (virtual assistants, online business managers, social media managers, designers, coaches and similar) to post with their talking reels.
@@ -18,7 +19,12 @@ Keep it warm, plain-spoken and easy to skim. Use line breaks, at most 2 emojis. 
 export async function writeCaption(opts: { words: Word[]; hook: string; business: BusinessProfile & { voice?: BrandVoice }; cta: string }): Promise<string> {
   const spoken = opts.words.filter((w) => !w.cut).map((w) => w.text).join(" ");
   const cta = opts.cta.trim() || opts.business.cta.trim();
-  if (!process.env.ANTHROPIC_API_KEY) return templateCaption(opts.hook, spoken, cta);
+  const request =
+    businessContext({ ...opts.business, cta }) + (opts.hook ? `On-screen hook: ${opts.hook}\n\n` : "") + `What they say in the reel:\n${spoken}`;
+  if (!process.env.ANTHROPIC_API_KEY) {
+    const reply = await askClaudeCode(`${SYSTEM}\n\n${request}`);
+    return reply ?? templateCaption(opts.hook, spoken, cta);
+  }
 
   const client = new Anthropic();
   const response = await client.beta.messages.create({
@@ -28,10 +34,7 @@ export async function writeCaption(opts: { words: Word[]; hook: string; business
     messages: [
       {
         role: "user",
-        content:
-          businessContext({ ...opts.business, cta }) +
-          (opts.hook ? `On-screen hook: ${opts.hook}\n\n` : "") +
-          `What they say in the reel:\n${spoken}`,
+        content: request,
       },
     ],
     output_config: { effort: "low" },

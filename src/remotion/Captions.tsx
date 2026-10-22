@@ -16,6 +16,8 @@ const MIN_GAP_FROM_HOOK = 13;
 
 // While the hook is on screen, nudge the captions so the two never overlap.
 function captionTop(brand: ReelStyle, hookVisible: boolean) {
+  // Beside the head, "top" means eye level rather than the very top of the frame.
+  if (brand.captionAlign !== "center" && brand.position === "top") return 33;
   const top = POSITION_TOP[brand.position];
   if (!hookVisible) return top;
   // Captions that live at the top wait in the middle while the hook is up, then take its place.
@@ -65,14 +67,15 @@ export const Captions: React.FC<{ words: Word[]; brand: ReelStyle; hookText: str
     <div
       style={{
         position: "absolute",
-        left: 70,
-        right: 70,
+        // Beside the head: captions sit in the left or right third and line up on that side.
+        left: brand.captionAlign === "right" ? "58%" : 70,
+        right: brand.captionAlign === "left" ? "58%" : 70,
         top: `${captionTop(brand, hookVisible)}%`,
         transform: `translateY(-50%) scale(${soft && !single ? 1 : 0.85 + 0.15 * pageIn})`,
         opacity: Math.min(1, pageIn * 1.5),
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
+        alignItems: brand.captionAlign === "left" ? "flex-start" : brand.captionAlign === "right" ? "flex-end" : "center",
         gap: 10,
       }}
     >
@@ -81,7 +84,7 @@ export const Captions: React.FC<{ words: Word[]; brand: ReelStyle; hookText: str
           {emojiWord.emoji}
         </div>
       ) : null}
-      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "baseline", columnGap: fontSize * 0.26, rowGap: 4 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: brand.captionAlign === "left" ? "flex-start" : brand.captionAlign === "right" ? "flex-end" : "center", alignItems: "baseline", columnGap: fontSize * 0.26, rowGap: 4 }}>
         {page.words.map((w) => {
           const spoken = timeMs >= w.startMs;
           const active = spoken && timeMs < w.endMs + 80;

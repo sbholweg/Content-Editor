@@ -431,3 +431,28 @@ a.chip { color: var(--ink); }
 
 .tighten { display: flex; align-items: center; gap: 16px; padding: 14px 16px; border-radius: 16px; background: var(--accent-soft); }
 .tighten strong { font-family: var(--display); font-size: 17px; }
+
+.toast { position: fixed; left: 50%; bottom: 92px; transform: translateX(-50%); z-index: 60; max-width: min(560px, calc(100% - 32px)); padding: 12px 18px; border-radius: 14px; background: var(--ink); color: #fff; font-size: 14px; box-shadow: 0 16px 40px rgba(22, 18, 31, 0.3); animation: toast-in 0.2s ease-out; }
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px); } }
+
+/* Visuals: Style / Lines */
+.segmented.big { background: var(--chip); border: 1px solid var(--line); border-radius: 14px; padding: 4px; display: flex; }
+.segmented.big button { flex: 1; min-height: 40px; border-radius: 10px; font-weight: 700; color: var(--muted); }
+.segmented.big button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 4px rgba(22, 18, 31, 0.1); }
+.look-gallery-wrap { display: flex; flex-direction: column; gap: 14px; }
+.look-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 14px; }
+.look-tile { display: flex; flex-direction: column; gap: 6px; }
+.look-pick { position: relative; border-radius: 14px; overflow: hidden; border: 2px solid transparent; background: #000; }
+.look-tile.on .look-pick { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.look-pick .on-badge { left: 8px; bottom: 8px; }
+.look-info { display: flex; flex-direction: column; }
+.look-info strong { font-size: 14px; }
+.look-info .muted { font-size: 11px; line-height: 1.3; }
+.accordion { padding: 6px 20px; gap: 0; }
+.acc { border-top: 1px solid var(--line); }
+.acc:first-child { border-top: 0; }
+.acc-head { display: flex; align-items: center; gap: 12px; width: 100%; padding: 16px 0; text-align: left; }
+.acc-head strong { font-family: var(--display); font-size: 18px; letter-spacing: -0.01em; }
+.acc-caret { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--chip); font-weight: 700; }
+.acc.open .acc-caret { background: var(--ink); color: #fff; }
+.acc-body { padding: 0 0 18px; }
