@@ -25,6 +25,10 @@ description: Turn a reel into a carousel and/or Instagram stories (and trial ree
 - `title` is the big word(s), shown in their hook font: keep it to 1-3 words on point slides.
 - `eyebrow` is a short lead-in that reads into the title ("reason one: your" → "hook").
 - `pills` are optional short tags (2-4 words each, max 3).
+- Wrap the list as `{"design": "photo|framed|clean|bold", "slides": [...]}` to choose a design:
+  photo (full-bleed photo), framed (photo on their brand color), clean (no photo, light brand
+  background), bold (no photo, their main color). Clean/bold suit text-heavy carousels.
+- `bgAssetId` (optional) uses a photo from their library instead of a video frame (`library` lists ids).
 - `frameMs` picks the background: the start time of a word from `show` (the original video's
   time, before cuts). Pick moments where they're looking at the camera, matching the point.
 - **Carousel**: cover (the hook as a promise), 3-6 point slides (one idea each, in order),

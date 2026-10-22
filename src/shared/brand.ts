@@ -86,3 +86,13 @@ export function styleFromBrand(brand: BrandKit, base: ReelStyle): ReelStyle {
   const primary = brand.palette.find((c) => c.role === "primary")?.hex ?? base.highlightColor;
   return { ...base, font: brand.fonts.body, displayFont: brand.fonts.headline, highlightColor: primary };
 }
+
+// The brand colors slides are drawn with (falls back to the reel's colors).
+export function slideColors(brand: Pick<BrandKit, "palette">, style: ReelStyle) {
+  const role = (r: string) => brand.palette.find((c) => c.role === r)?.hex;
+  return {
+    background: role("background") ?? "#FAFAF9",
+    text: role("text") ?? "#16121F",
+    primary: role("primary") ?? style.highlightColor,
+  };
+}

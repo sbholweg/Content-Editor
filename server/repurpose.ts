@@ -7,7 +7,8 @@ import { config } from "./config.ts";
 import { listAssets } from "./library.ts";
 import { run } from "./media.ts";
 import { getBundle } from "./render.ts";
-import { projectFile } from "./storage.ts";
+import { projectFile, readBrand } from "./storage.ts";
+import { slideColors } from "../src/shared/brand.ts";
 
 // A still from the prepared video, used as a slide background (cached per moment).
 export async function frameAt(id: string, ms: number) {
@@ -26,18 +27,24 @@ export async function renderSlides(project: Project, format: SlideFormat): Promi
   const serveUrl = await getBundle();
   const tokenParam = accessToken ? `?t=${accessToken}` : "";
   const local = (route: string) => `http://127.0.0.1:${config.port}${route}${tokenParam}`;
-  const customFonts = (await listAssets()).filter((a) => a.kind === "font").map((a) => ({ name: a.name, url: local(`/media/library/${a.file}`) }));
+  const assets = await listAssets();
+  const customFonts = assets.filter((a) => a.kind === "font").map((a) => ({ name: a.name, url: local(`/media/library/${a.file}`) }));
+  const colors = slideColors(await readBrand(), project.style);
+  const design = project.slideDesign?.[format] ?? "photo";
   const browserExecutable = process.env.REMOTION_BROWSER || null;
   const compositionId = format === "carousel" ? "CarouselSlide" : "StoryFrame";
 
   const names: string[] = [];
   for (const [i, slide] of slides.entries()) {
-    await frameAt(project.id, slide.frameMs);
+    const photo = slide.bgAssetId ? assets.find((a) => a.id === slide.bgAssetId) : undefined;
+    if (!photo) await frameAt(project.id, slide.frameMs);
     const inputProps: SlideProps = {
       slide,
       format,
       style: project.style,
-      background: local(`/media/${project.id}/frame-${Math.round(slide.frameMs)}.jpg`),
+      design,
+      colors,
+      background: photo ? local(`/media/library/${photo.file}`) : local(`/media/${project.id}/frame-${Math.round(slide.frameMs)}.jpg`),
       customFonts,
     };
     const composition = await selectComposition({ serveUrl, id: compositionId, inputProps, browserExecutable });

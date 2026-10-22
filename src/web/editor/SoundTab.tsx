@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { isLineCut } from "../../shared/lines";
-import { BUILTIN_SOUNDS, builtinSound } from "../../shared/sounds";
+import { BUILTIN_SOUNDS, builtinSound, SOUND_GROUPS } from "../../shared/sounds";
 import type { Asset, SoundCue } from "../../shared/types";
 import { libraryUrl } from "../api";
 import { Modal, useUpload } from "../Media";
@@ -175,14 +175,17 @@ export function SoundPicker({ forMusic, onPick, onClose }: { forMusic: boolean; 
       ) : forMusic ? (
         <p className="muted small">Upload a track to use it as background music.</p>
       ) : null}
-      {starter.length ? (
-        <>
-          <div className="label">Starter sounds</div>
-          {starter.map((s) => (
-            <SoundOption key={s.id} name={s.name} detail="" src={sfxUrl(s.file)} onPick={() => onPick(s.id)} />
-          ))}
-        </>
-      ) : null}
+      {SOUND_GROUPS.map((g) => {
+        const inGroup = starter.filter((s) => s.group === g);
+        return inGroup.length ? (
+          <React.Fragment key={g}>
+            <div className="label">{g}</div>
+            {inGroup.map((s) => (
+              <SoundOption key={s.id} name={s.name} detail="" src={sfxUrl(s.file)} onPick={() => onPick(s.id)} />
+            ))}
+          </React.Fragment>
+        ) : null;
+      })}
     </Modal>
   );
 }

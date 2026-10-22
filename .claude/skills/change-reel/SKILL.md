@@ -43,7 +43,10 @@ description: Make plain-words changes to a reel, e.g. "make it softer", "cut the
 ```
 `hookDurationMs: 0` keeps the hook on for the whole video. Hook layouts: `headline` (one big line),
 `eyebrow` (small hookSubText above), `subhead` (small hookSubText below).
-Starter sounds: Whoosh, Swoosh in, Pop, Click, Blip, Ding, Sparkle, Riser, Boom, Camera shutter.
+Starter sounds: Whoosh, Swoosh in, Swipe, Riser, Pop, Click, Blip, Typing, Keyboard clack, Camera shutter,
+Notification, Ding, Cha-ching, Ta-da, Sparkle, Wrong buzz, Record scratch, Glitch, Boom, Kick, Heartbeat,
+Tick tock (see src/shared/sounds.ts). Typing fits screenshots of texts/DMs; Cha-ching fits money;
+Record scratch fits "but wait"; Notification fits DMs/comments.
 Music must be a track they uploaded (they need the rights to it); `"music": null` removes it. `style: "pill"` = colored bubble behind
 key words; `"color"` = key words change color; `"serif"` = key words in the hook font.
 

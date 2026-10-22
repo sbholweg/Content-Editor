@@ -2,14 +2,17 @@ import { Thumbnail } from "@remotion/player";
 import React, { useState } from "react";
 import { CAROUSEL_SIZE, SlideCard, STORY_SIZE } from "../../remotion/Slide";
 import { isLineCut } from "../../shared/lines";
-import type { Slide, SlideFormat, SlideProps } from "../../shared/types";
+import { slideColors } from "../../shared/brand";
+import type { Slide, SlideDesign, SlideFormat, SlideProps } from "../../shared/types";
+import { LibraryBrowser, Modal } from "../Media";
 import { api, libraryUrl, projectFileUrl } from "../api";
 import { Label, Options } from "../ui";
 import { useEditor } from "./context";
 
 // Turn the reel into a carousel and stories: draft, tweak each slide, then save the images.
 export function RepurposeCard() {
-  const { project, reel, update, lines, assets, onAuthError } = useEditor();
+  const { project, reel, update, lines, assets, setAssets, brand, onAuthError } = useEditor();
+  const [picking, setPicking] = useState(false);
   const [format, setFormat] = useState<SlideFormat>("carousel");
   const [selected, setSelected] = useState(0);
   const [busy, setBusy] = useState<"" | "draft" | "render">("");
@@ -26,13 +29,20 @@ export function RepurposeCard() {
     update({ [format]: next });
   };
   const setSlide = (patch: Partial<Slide>) => setSlides(slides.map((s) => (s.id === slide.id ? { ...s, ...patch } : s)));
-  const propsFor = (s: Slide): SlideProps => ({
-    slide: s,
-    format,
-    style: reel.style,
-    background: projectFileUrl(project.id, `frame-${Math.round(s.frameMs)}.jpg`),
-    customFonts,
-  });
+  const design: SlideDesign = reel.slideDesign?.[format] ?? "photo";
+  const colors = slideColors(brand, reel.style);
+  const propsFor = (s: Slide): SlideProps => {
+    const photo = s.bgAssetId ? assets.find((a) => a.id === s.bgAssetId) : undefined;
+    return {
+      slide: s,
+      format,
+      style: reel.style,
+      design,
+      colors,
+      background: photo ? libraryUrl(photo.file) : projectFileUrl(project.id, `frame-${Math.round(s.frameMs)}.jpg`),
+      customFonts,
+    };
+  };
 
   const draft = async () => {
     setBusy("draft");
@@ -104,6 +114,21 @@ export function RepurposeCard() {
         ]}
       />
 
+      <Label>Design</Label>
+      <Options
+        value={design}
+        onChange={(d) => {
+          setFiles([]);
+          update({ slideDesign: { ...reel.slideDesign, [format]: d } });
+        }}
+        options={[
+          { value: "photo", label: "Photo", note: "full-bleed photo" },
+          { value: "framed", label: "Framed", note: "photo on your color" },
+          { value: "clean", label: "Clean", note: "no photo, light" },
+          { value: "bold", label: "Bold", note: "no photo, your main color" },
+        ]}
+      />
+
       {!slides.length ? (
         <button className="btn primary" disabled={busy !== ""} onClick={draft}>
           {busy === "draft" ? "Writing…" : format === "carousel" ? "✨ Make a carousel" : "✨ Make stories"}
@@ -153,7 +178,14 @@ export function RepurposeCard() {
                 placeholder="loop the last line, tease part 2"
                 onChange={(e) => setSlide({ pills: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) })}
               />
-              <Label>Background</Label>
+              <Label>Background photo{design === "clean" || design === "bold" ? " (not shown in this design)" : ""}</Label>
+              <div className="row">
+                <button className={`chip ${slide.bgAssetId ? "" : "accent"}`} onClick={() => setSlide({ bgAssetId: undefined })}>From my video</button>
+                <button className={`chip ${slide.bgAssetId ? "accent" : ""}`} onClick={() => setPicking(true)}>
+                  {slide.bgAssetId ? "✓ Your photo · change" : "Use a photo instead"}
+                </button>
+              </div>
+              {!slide.bgAssetId ? (
               <select value={Math.round(slide.frameMs)} onChange={(e) => setSlide({ frameMs: Number(e.target.value) })}>
                 {keptLines.map((l) => {
                   const ms = Math.round(l.words.find((w) => !w.cut)!.startMs);
@@ -167,6 +199,7 @@ export function RepurposeCard() {
                   <option value={Math.round(slide.frameMs)}>Current frame</option>
                 ) : null}
               </select>
+              ) : null}
               <div className="row">
                 <button
                   className="link danger"
@@ -196,6 +229,20 @@ export function RepurposeCard() {
             )}
           </div>
           {error ? <p className="error small">{error}</p> : null}
+          {picking ? (
+            <Modal eyebrow="Background" title="Choose a photo" subtitle="Pick one from your library, or add new." onClose={() => setPicking(false)}>
+              <LibraryBrowser
+                assets={assets}
+                onAssets={setAssets}
+                onAuthError={onAuthError}
+                onPick={(a) => {
+                  if (a.kind !== "image" && a.kind !== "gif") return setError("Pick a photo (not a video) for slide backgrounds.");
+                  setSlide({ bgAssetId: a.id });
+                  setPicking(false);
+                }}
+              />
+            </Modal>
+          ) : null}
           <p className="muted small">Tip: ask Claude “write my carousel for this reel” for punchier wording.</p>
         </>
       )}

@@ -140,9 +140,15 @@ export type Slide = {
   title: string;
   body: string;
   pills: string[];
-  // Which moment of the original video to use as the background (milliseconds).
+  // Which moment of the original video to use as the background (milliseconds)...
   frameMs: number;
+  // ...unless a photo from the library is chosen instead.
+  bgAssetId?: string;
 };
+
+// "photo": full-bleed photo; "framed": photo in a frame on your brand color; "clean": no photo,
+// light brand background; "bold": no photo, your main color.
+export type SlideDesign = "photo" | "framed" | "clean" | "bold";
 
 export type SlideFormat = "carousel" | "stories";
 
@@ -150,6 +156,8 @@ export type SlideProps = {
   slide: Slide;
   format: SlideFormat;
   style: ReelStyle;
+  design: SlideDesign;
+  colors: { background: string; text: string; primary: string };
   background: string;
   customFonts: { name: string; url: string }[];
 };
@@ -189,6 +197,7 @@ export type Project = {
   soundsEnabled: boolean;
   carousel: Slide[];
   stories: Slide[];
+  slideDesign?: Partial<Record<SlideFormat, SlideDesign>>;
   style: ReelStyle;
   render: RenderState;
   // Marked by the creator once it's been posted (moves it to the Posted folder).

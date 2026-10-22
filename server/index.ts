@@ -176,6 +176,7 @@ app.patch("/api/projects/:id", async (req, res) => {
   if (typeof req.body?.posted === "boolean") patch.posted = req.body.posted;
   if (Array.isArray(req.body?.carousel)) patch.carousel = req.body.carousel as Slide[];
   if (Array.isArray(req.body?.stories)) patch.stories = req.body.stories as Slide[];
+  if (req.body?.slideDesign && typeof req.body.slideDesign === "object") patch.slideDesign = req.body.slideDesign;
   res.json(await updateProject(project.id, patch));
 });
 

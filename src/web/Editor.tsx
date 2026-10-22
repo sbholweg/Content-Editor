@@ -23,7 +23,7 @@ const TABS = [
 type Tab = (typeof TABS)[number]["id"];
 
 const EDITABLE: (keyof ReelState)[] = [
-  "words", "hookText", "hookSubText", "postCaption", "removePauses", "style", "overlays", "sounds", "music", "soundsEnabled", "carousel", "stories",
+  "words", "hookText", "hookSubText", "postCaption", "removePauses", "style", "overlays", "sounds", "music", "soundsEnabled", "carousel", "stories", "slideDesign",
 ];
 const pickReel = (p: Project): ReelState => Object.fromEntries(EDITABLE.map((k) => [k, p[k]])) as ReelState;
 

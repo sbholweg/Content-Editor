@@ -6,7 +6,7 @@ import type { Asset, BrandKit, Project, Word } from "../../shared/types";
 // The parts of a reel you can edit; saved together.
 export type ReelState = Pick<
   Project,
-  "words" | "hookText" | "hookSubText" | "postCaption" | "removePauses" | "style" | "overlays" | "sounds" | "music" | "soundsEnabled" | "carousel" | "stories"
+  "words" | "hookText" | "hookSubText" | "postCaption" | "removePauses" | "style" | "overlays" | "sounds" | "music" | "soundsEnabled" | "carousel" | "stories" | "slideDesign"
 >;
 
 // What the library picker was opened for.

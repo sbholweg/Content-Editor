@@ -11,6 +11,8 @@ const sampleSlide: SlideProps = {
   slide: { id: "s", kind: "point", eyebrow: "reason one: your", title: "hook", body: "", pills: [], frameMs: 0 },
   format: "carousel",
   style: DEFAULT_STYLE,
+  design: "photo",
+  colors: { background: "#FAFAF9", text: "#16121F", primary: DEFAULT_STYLE.highlightColor },
   background: "",
   customFonts: [],
 };

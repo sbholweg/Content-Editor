@@ -134,7 +134,13 @@ async function readEdits(arg: string | undefined) {
 
 async function repurpose(format: "carousel" | "stories", args: string[]) {
   const id = await resolveId(args[0]);
-  const body = args[1] ? { slides: await readEdits(args[1]) } : {};
+  // The file can be a list of slides, or {"design": "photo|framed|clean|bold", "slides": [...]}.
+  const file = args[1] ? await readEdits(args[1]) : null;
+  const body = file ? { slides: Array.isArray(file) ? file : file.slides } : {};
+  if (file && !Array.isArray(file) && file.design) {
+    const current = await call<Project>("GET", `/api/projects/${id}`);
+    await call("PATCH", `/api/projects/${id}`, { slideDesign: { ...current.slideDesign, [format]: file.design } });
+  }
   const p = await call<Project>("POST", `/api/projects/${id}/${format}/draft`, body);
   console.log(`${format === "carousel" ? "Carousel" : "Stories"} for ${p.id.slice(0, 8)}:`);
   for (const [i, s] of p[format].entries()) {
