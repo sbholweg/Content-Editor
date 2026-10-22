@@ -30,8 +30,9 @@ description: Make plain-words changes to a reel, e.g. "make it softer", "cut the
     "hookColor": "#FFFFFF", "hookPosition": "top|middle|bottom", "hookLayout": "headline|eyebrow|subhead", "hookDurationMs": 5000,
     "textColor": "#FFFFFF", "outlineColor": "#000000",
     "highlightColor": "#8656F6", "highlightTextColor": "#FFFFFF",
-    "style": "pill|color|serif", "captionMode": "phrase|single", "textEffect": "shadow|outline",
-    "position": "top|middle|bottom", "wordsPerLine": 4, "uppercase": false, "fontSize": 64, "zoomJumps": true, "captionAlign": "center|left|right"
+    "style": "pill|color|serif", "captionMode": "phrase|single|karaoke", "textEffect": "shadow|outline",
+    "position": "top|middle|bottom", "wordsPerLine": 4, "uppercase": false, "fontSize": 64, "zoomJumps": true, "captionAlign": "center|left|right",
+    "captionsOn": true, "logo": "off|top-left|top-right|bottom-right"
   },
   "addMedia": [{"asset": "library item name", "fromWord": 10, "toWord": 14, "placement": "middle|top|bottom|full"}],
   "removeMedia": ["ov-..."],
@@ -71,7 +72,8 @@ style and zoom. Save it as a named look with `npm run engine -- brand look.json`
 - "softer / calmer": textEffect shadow, style serif or color, smaller fontSize (56-62), a softer
   displayFont (Instrument Serif, Fraunces).
 - "bolder / louder": textEffect outline, style pill, captionMode single, fontSize 80+, Anton or Montserrat.
-- "karaoke / one word at a time": captionMode single.
+- "one word at a time": captionMode single. "karaoke": captionMode karaoke (whole phrase, words light up).
+- "no captions": captionsOn false. "add my logo": logo top-right (needs a logo in the brand kit).
 - "zoom in and out / punch-ins / make it more dynamic": zoomJumps true.
 - "editorial / classy / screenshots on screen": Editorial starter look; put their
   screenshots on the lines they talk about with addMedia (placement middle, size ~0.6) and a Pop on each.

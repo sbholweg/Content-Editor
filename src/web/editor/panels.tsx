@@ -17,6 +17,7 @@ function useLook() {
 
 export function CaptionsPanel() {
   const { look, set } = useLook();
+  const { brand } = useEditor();
   return (
     <div className="panel-body">
       <Label>Caption style</Label>
@@ -26,6 +27,7 @@ export function CaptionsPanel() {
         options={[
           { value: "phrase", label: "Phrase", note: "a few words at a time" },
           { value: "single", label: "Single word", note: "one word at a time, bigger" },
+          { value: "karaoke", label: "Karaoke", note: "words light up as you say them" },
         ]}
       />
       <Label>Key words</Label>
@@ -69,7 +71,7 @@ export function CaptionsPanel() {
       />
       <div className="two">
         <Slider label="Caption size" value={look.fontSize} min={44} max={110} onChange={(v) => set("fontSize", v)} />
-        {look.captionMode === "phrase" ? (
+        {look.captionMode !== "single" ? (
           <Slider label={`Words at once · ${look.wordsPerLine}`} value={look.wordsPerLine} min={2} max={7} onChange={(v) => set("wordsPerLine", v)} />
         ) : null}
       </div>
@@ -77,6 +79,25 @@ export function CaptionsPanel() {
         <input type="checkbox" checked={look.uppercase} onChange={(e) => set("uppercase", e.target.checked)} />
         ALL CAPS
       </label>
+      <label className="check">
+        <input type="checkbox" checked={look.captionsOn !== false} onChange={(e) => set("captionsOn", e.target.checked)} />
+        Show captions
+      </label>
+      <Label>Your logo on the reel</Label>
+      {brand.logoAssetId ? (
+        <Options
+          value={look.logo ?? "off"}
+          onChange={(v) => set("logo", v)}
+          options={[
+            { value: "off", label: "Off" },
+            { value: "top-left", label: "Top left" },
+            { value: "top-right", label: "Top right" },
+            { value: "bottom-right", label: "Bottom right" },
+          ]}
+        />
+      ) : (
+        <p className="muted small">Upload your logo in your <a href="#/brand">Brand kit</a> to add it here.</p>
+      )}
       <label className="check">
         <input type="checkbox" checked={look.zoomJumps} onChange={(e) => set("zoomJumps", e.target.checked)} />
         Zoom jumps (punch in on every other line)

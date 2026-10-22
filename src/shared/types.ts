@@ -11,7 +11,7 @@ export type Word = {
 
 // How key words stand out: a colored bubble behind the word, colored text, or colored text in the display font.
 export type KeyWordStyle = "pill" | "color" | "serif";
-export type CaptionMode = "phrase" | "single";
+export type CaptionMode = "phrase" | "single" | "karaoke";
 export type TextEffect = "shadow" | "outline";
 export type CaptionPosition = "top" | "middle" | "bottom";
 
@@ -50,6 +50,10 @@ export type ReelStyle = {
   zoomJumps: boolean;
   // Captions centered, or beside the speaker's head (left or right of frame).
   captionAlign: "center" | "left" | "right";
+  // Captions can be switched off entirely (e.g. when only the hook should show).
+  captionsOn: boolean;
+  // Where the brand logo sits on the reel, if anywhere.
+  logo: "off" | "top-left" | "top-right" | "bottom-right";
 };
 
 export type SavedLook = { id: string; name: string; style: ReelStyle };
@@ -95,6 +99,7 @@ export type ReelProps = {
   music: (MusicBed & { src: string }) | null;
   // Fonts uploaded by the creator: family name and file URL.
   customFonts: { name: string; url: string }[];
+  logoSrc: string;
 };
 
 export type AssetKind = "gif" | "image" | "video" | "audio" | "font";
@@ -221,6 +226,8 @@ export type Project = {
   slideDesign?: Partial<Record<SlideFormat, SlideDesign>>;
   style: ReelStyle;
   render: RenderState;
+  // The moment of the original video used as the cover image.
+  coverMs?: number;
   // Marked by the creator once it's been posted (moves it to the Posted folder).
   posted?: boolean;
   // Set on trial reel versions: the reel they were made from and which angle they use.

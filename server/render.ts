@@ -7,7 +7,8 @@ import type { BrollReelProps, ReelProps } from "../src/shared/types.ts";
 import { accessToken } from "./auth.ts";
 import { config } from "./config.ts";
 import { listAssets } from "./library.ts";
-import { projectFile, readProject, updateProject } from "./storage.ts";
+import { frameAt } from "./repurpose.ts";
+import { projectFile, readBrand, readProject, updateProject } from "./storage.ts";
 
 let bundlePromise: Promise<string> | null = null;
 
@@ -33,6 +34,9 @@ async function copyToOutputs(id: string) {
   await fs.mkdir(config.outputsDir, { recursive: true });
   await fs.copyFile(projectFile(id, "export.mp4"), `${base}.mp4`);
   if (project.postCaption) await fs.writeFile(`${base}-caption.txt`, project.postCaption);
+  if (project.coverMs !== undefined && project.kind !== "broll") {
+    await fs.copyFile(await frameAt(id, project.coverMs), `${base}-cover.jpg`).catch(() => {});
+  }
 }
 
 async function renderProject(id: string) {
@@ -45,7 +49,7 @@ async function renderProject(id: string) {
     const assets = await listAssets();
     const urls = { video: local(`/media/${id}/video.mp4`), library: (file: string) => local(`/media/library/${file}`), sfx: (file: string) => local(`/sfx/${file}`) };
     const broll = project.kind === "broll";
-    const inputProps: ReelProps | BrollReelProps = broll ? brollProps(project, assets, urls) : reelProps(project, assets, urls);
+    const inputProps: ReelProps | BrollReelProps = broll ? brollProps(project, assets, urls) : reelProps(project, assets, urls, (await readBrand()).logoAssetId);
     const browserExecutable = process.env.REMOTION_BROWSER || null;
     const composition = await selectComposition({ serveUrl, id: broll ? "BrollReel" : "Reel", inputProps, browserExecutable });
 

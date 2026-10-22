@@ -175,6 +175,7 @@ app.patch("/api/projects/:id", async (req, res) => {
   if (req.body && "music" in req.body) patch.music = req.body.music as MusicBed | null;
   if (typeof req.body?.soundsEnabled === "boolean") patch.soundsEnabled = req.body.soundsEnabled;
   if (typeof req.body?.posted === "boolean") patch.posted = req.body.posted;
+  if (typeof req.body?.coverMs === "number") patch.coverMs = Math.max(0, Math.round(req.body.coverMs));
   if (req.body?.broll && Array.isArray(req.body.broll.clipIds)) patch.broll = { clipIds: req.body.broll.clipIds, lengthMs: Number(req.body.broll.lengthMs) || 7000 };
   // On b-roll trial reels (which have no in-editor "export again" state), a change to what's in
   // the video means the last export is out of date.

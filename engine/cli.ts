@@ -78,7 +78,7 @@ function describe(p: Project, assets: Asset[]) {
     `  Open in the editor: ${editorUrl(p.id)}`,
     `  From: ${p.originalName} · status ${p.status} · ${fmt(timeline.durationMs)} after cuts (${fmt(p.durationMs)} raw) · pauses ${p.removePauses ? "removed" : "kept"} · export ${p.render.status}`,
     `  Hook: ${p.hookText ? `"${p.hookText}"` : "(none)"}${p.hookSubText ? ` + "${p.hookSubText}"` : ""} · ${s.hookLayout} · ${s.displayFont} ${s.hookColor} at ${s.hookPosition}, ${s.hookDurationMs ? `${s.hookDurationMs / 1000}s` : "whole video"}`,
-    `  Captions: ${s.captionMode === "single" ? "one word at a time" : `phrase, ${s.wordsPerLine} words`} · ${s.font} ${s.fontSize}px ${s.textColor} · ${s.textEffect} · at ${s.position}${s.uppercase ? " · ALL CAPS" : ""}${s.zoomJumps ? " · zoom jumps" : ""}`,
+    `  Captions: ${s.captionsOn === false ? "OFF" : s.captionMode === "single" ? "one word at a time" : `${s.captionMode === "karaoke" ? "karaoke" : "phrase"}, ${s.wordsPerLine} words`} · ${s.font} ${s.fontSize}px ${s.textColor} · ${s.textEffect} · at ${s.position}${s.uppercase ? " · ALL CAPS" : ""}${s.zoomJumps ? " · zoom jumps" : ""}${s.logo && s.logo !== "off" ? ` · logo ${s.logo}` : ""}`,
     `  Key words: ${s.style === "pill" ? `bubble ${s.highlightColor} with ${s.highlightTextColor} text` : s.style === "color" ? `coloured text ${s.highlightColor}` : `serif word ${s.highlightColor}`}`,
     "",
     "  Words ([n] = word number, *word* = key word, ~word~ = cut):",
@@ -260,6 +260,31 @@ const commands: Record<string, (args: string[]) => Promise<void>> = {
     await repurpose("stories", args);
   },
 
+  // plan [days]: a numbered posting plan of reels that are exported and not yet posted.
+  async plan(args) {
+    const days = Math.max(1, Number(args[0]) || 7);
+    const projects = await call<Project[]>("GET", "/api/projects");
+    const ready = projects.filter((p) => !p.parentId && p.render.status === "done" && !p.posted).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    if (!ready.length) return console.log("Nothing ready to post yet. Export some reels first.");
+    const start = new Date();
+    const lines = [`# Posting plan (${start.toISOString().slice(0, 10)})`, ""];
+    ready.slice(0, days).forEach((p, i) => {
+      const day = new Date(start.getTime() + i * 86400000).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+      const trials = projects.filter((t) => t.parentId === p.id && t.render.status === "done");
+      lines.push(`## ${i + 1}. ${day}: ${p.hookText || p.originalName}`, "");
+      lines.push(`- Reel: the outputs file starting with \`${p.createdAt.slice(0, 10)}\` and ending in \`${p.id.slice(0, 6)}.mp4\``);
+      if (p.carousel.length) lines.push(`- Carousel (${p.carousel.length} slides): post 2-3 days after the reel`);
+      if (p.stories.length) lines.push(`- Stories (${p.stories.length} frames): post the same day, after the reel`);
+      if (trials.length) lines.push(`- Trial reels: ${trials.map((t) => t.variantLabel).join(", ")} (post as trials over the following days)`);
+      lines.push("", "Caption:", "", p.postCaption || "(no caption yet: ask Claude to write one)", "");
+    });
+    const file = path.join(config.outputsDir, `posting-plan-${start.toISOString().slice(0, 10)}.md`);
+    await fs.mkdir(config.outputsDir, { recursive: true });
+    await fs.writeFile(file, lines.join("\n"));
+    console.log(lines.join("\n"));
+    console.log(`\n✓ Saved to ${file}`);
+  },
+
   async looks() {
     const brand = await call<BrandKit>("GET", "/api/brand");
     console.log(`Brand kit${brand.setUp ? "" : " (not set up yet)"}: ${brand.name}${brand.tagline ? ` · ${brand.tagline}` : ""}`);
@@ -327,10 +352,17 @@ const HELP = `Engine commands (npm run engine -- <command>):
   trials [id|latest]         make 3 trial reels and export them
   carousel [id] [slides.json]  make carousel images (drafts the slides if no file is given)
   stories [id] [slides.json]   make story frames (same)
+  plan [days]                write a numbered posting plan for exported reels
   looks                      show the brand kit, default look, saved looks, business profile
   frames <video>             save stills from a video (to study a style you like)
   brand <json>               save business profile / default look / calls to action
   library                    list GIFs, images, b-roll, sounds and fonts`;
+
+// Output piped into something that stops reading early (like `head`) is fine.
+process.stdout.on("error", (err: NodeJS.ErrnoException) => {
+  if (err.code === "EPIPE") process.exit(0);
+  throw err;
+});
 
 const [command, ...args] = process.argv.slice(2);
 if (!command || !commands[command]) {

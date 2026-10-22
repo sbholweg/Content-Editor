@@ -51,7 +51,7 @@ export const Captions: React.FC<{ words: Word[]; brand: ReelStyle; hookText: str
   const perPage = single ? 1 : brand.wordsPerLine;
   const pages = useMemo(() => buildPages(words, perPage), [words, perPage]);
   const page = pages.find((p) => timeMs >= p.startMs && timeMs < p.endMs);
-  if (!page) return null;
+  if (!page || brand.captionsOn === false) return null;
 
   const pageFrame = Math.round((page.startMs / 1000) * fps);
   const pageIn = spring({ frame: frame - pageFrame, fps, config: { damping: 14, stiffness: 180 } });
@@ -124,6 +124,15 @@ const CaptionWord: React.FC<{
     opacity: soft ? (spoken ? 1 : 0.55) : 1,
     whiteSpace: "nowrap",
   };
+
+  // Karaoke: the whole phrase is there; each word lights up in the key word color as it's said.
+  if (brand.captionMode === "karaoke") {
+    return (
+      <span style={{ ...plain, opacity: 1, color: spoken ? brand.highlightColor : brand.textColor, transform: `scale(${active ? 1 + 0.06 * wordIn : 1})` }}>
+        {text}
+      </span>
+    );
+  }
 
   if (!word.highlight) return <span style={plain}>{text}</span>;
 

@@ -38,7 +38,7 @@ export const ReelEdits = z
         highlightColor: color,
         highlightTextColor: color,
         style: z.enum(["pill", "color", "serif"]),
-        captionMode: z.enum(["phrase", "single"]),
+        captionMode: z.enum(["phrase", "single", "karaoke"]),
         textEffect: z.enum(["shadow", "outline"]),
         position,
         wordsPerLine: z.number().int().min(1).max(7),
@@ -46,6 +46,8 @@ export const ReelEdits = z
         fontSize: z.number().min(30).max(140),
         zoomJumps: z.boolean(),
         captionAlign: z.enum(["center", "left", "right"]),
+        captionsOn: z.boolean(),
+        logo: z.enum(["off", "top-left", "top-right", "bottom-right"]),
       })
       .partial()
       .strict(),

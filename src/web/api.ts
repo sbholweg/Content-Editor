@@ -2,7 +2,7 @@ import type { Asset, BrandKit, Project, SlideFormat } from "../shared/types";
 
 type EditableField =
   | "words" | "hookText" | "hookSubText" | "postCaption" | "removePauses" | "style" | "overlays" | "sounds" | "music" | "soundsEnabled"
-  | "carousel" | "stories" | "posted" | "slideDesign" | "broll";
+  | "carousel" | "stories" | "posted" | "slideDesign" | "broll" | "coverMs";
 
 const TOKEN_KEY = "content-editor-token";
 

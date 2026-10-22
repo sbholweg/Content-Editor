@@ -35,14 +35,24 @@ Done
 - Claude Code layer: CLAUDE.md + skills (set me up, edit my reels, plain-words changes, update me),
   engine commands, inbox/outputs folders, editor updates live while Claude works
 
+- Renamed The Cutroom; cleaner site design; reel folders (To edit / Ready to post / Posted)
+- Tight editing: silences detected from the audio, retakes and repeats cut, Tighten button
+- AI buttons use the creator's own Claude Code when there's no API key
+- Visuals: Style (look gallery with previews) and Lines & media; 9 named looks; captions beside
+  your head; karaoke captions; captions on/off; logo on reels; zoom jumps
+- 22 starter sounds; slide designs (photo, framed, clean, bold) and photo backgrounds
+- B-roll trial reels with the content in the caption; broll folder
+- Brand kit built from an inspiration board (any Google Font)
+- Cover picker; mark as posted; posting plan; repurpose-old-content and weekly-batch skills
+
 Next (in rough order)
 1. Test on a real Windows PC with Claude Code (Sarabeth is the first "buyer")
-2. Make every "✨" button in the editor work through the buyer's Claude instead of an API key
-3. "Your snaps": save any frame as the cover image
-4. Client wins: testimonial to quote card, and client case study carousel
-5. Weekly batch: upload several videos, get back a numbered posting queue with captions
-6. "Tell Claude what you want" for a line (three options to pick from)
-7. Graphic cards Claude can fill in: count-up number, stat card, checklist, quote
+2. Graphic cards Claude can fill in: count-up number, stat card, checklist, quote
+3. Client wins: testimonial to quote card, and client case study carousel
+4. "Tell Claude what you want" for a line (three options to pick from)
+5. Drag text anywhere on the preview
+6. Cover a face (blur or sticker that follows a face)
+7. Replace the synthesized starter sounds with a licensed sound pack
 
 ## Later: Version B, VAs editing reels for their clients (upgrade)
 - Multiple brand kits, one per client (the brand kit is built so this can be added)

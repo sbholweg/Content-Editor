@@ -21,6 +21,8 @@ export const DEFAULT_STYLE: ReelStyle = {
   fontSize: 64,
   zoomJumps: false,
   captionAlign: "center",
+  captionsOn: true,
+  logo: "off",
 };
 
 export const DEFAULT_BRAND: BrandKit = {

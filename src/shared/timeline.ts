@@ -83,3 +83,14 @@ export function buildTimeline(words: Word[], durationMs: number, removePauses: b
 
   return { segments, words: outWords, durationMs: Math.max(outDuration, 100) };
 }
+
+// The moment in the original video that a time in the cut reel comes from.
+export function toOriginalMs(segments: Segment[], outputMs: number) {
+  let offset = 0;
+  for (const s of segments) {
+    const len = s.endMs - s.startMs;
+    if (outputMs < offset + len) return s.startMs + (outputMs - offset);
+    offset += len;
+  }
+  return segments.at(-1)?.endMs ?? 0;
+}

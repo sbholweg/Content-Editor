@@ -12,6 +12,7 @@ export function reelProps(
   reel: ReelFields,
   assets: Asset[],
   urls: { video: string; library: (file: string) => string; sfx: (file: string) => string },
+  logoAssetId = "",
 ): ReelProps {
   const byId = new Map(assets.map((a) => [a.id, a]));
   const soundSrc = (id: string) => {
@@ -48,6 +49,10 @@ export function reelProps(
       return src ? { ...reel.music, src } : null;
     })(),
     customFonts: assets.filter((a) => a.kind === "font").map((a) => ({ name: a.name, url: urls.library(a.file) })),
+    logoSrc: (() => {
+      const logo = byId.get(logoAssetId);
+      return logo ? urls.library(logo.file) : "";
+    })(),
   };
 }
 

@@ -169,9 +169,9 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
             video: mediaUrl(id, "video.mp4"),
             library: libraryUrl,
             sfx: (file) => `/sfx/${file}`,
-          })
+          }, brand?.logoAssetId)
         : null,
-    [project?.durationMs, project?.silences, reel, assets, id],
+    [project?.durationMs, project?.silences, reel, assets, id, brand?.logoAssetId],
   );
 
   useEffect(() => {
@@ -317,7 +317,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
             ) : null}
             {tab === "visuals" && inputProps ? <VisualsTab previewProps={inputProps} /> : null}
             {tab === "sound" ? <SoundTab /> : null}
-            {tab === "finish" ? <FinishTab exportControls={exportControls} /> : null}
+            {tab === "finish" ? <FinishTab exportControls={exportControls} onProject={setProject} /> : null}
           </div>
 
           <aside className="studio-preview">

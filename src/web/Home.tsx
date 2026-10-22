@@ -160,7 +160,7 @@ export function Home({ onOpen, onAuthError }: { onOpen: (id: string) => void; on
                   <button key={p.id} className="reel-card" onClick={() => onOpen(p.id)}>
                     <div className="reel-thumb">
                       {p.status === "ready" ? (
-                        <img src={projectFileUrl(p.id, `frame-${Math.round(firstWord?.startMs ?? 500)}.jpg`)} alt="" loading="lazy" />
+                        <img src={projectFileUrl(p.id, `frame-${Math.round(p.coverMs ?? firstWord?.startMs ?? 500)}.jpg`)} alt="" loading="lazy" />
                       ) : null}
                       <span className={`status ${p.status === "error" ? "bad" : ""}`}>
                         {p.status === "processing" ? "Working…" : p.status === "error" ? "Problem" : p.render.status === "rendering" ? "Exporting…" : fmt(length)}
