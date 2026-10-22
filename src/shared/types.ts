@@ -104,6 +104,8 @@ export type Asset = {
   file: string;
   // Still image shown in the library for b-roll clips.
   thumb?: string;
+  // File name it came from, when it was added from the broll folder (so it isn't added twice).
+  source?: string;
   width: number;
   height: number;
   durationMs: number;
@@ -170,8 +172,22 @@ export type RenderState = {
   error?: string;
 };
 
+// Props for a b-roll trial reel: a few clips cut together with a big hook on top.
+export type BrollReelProps = {
+  clips: { src: string; durationMs: number }[];
+  hookText: string;
+  hookSubText: string;
+  style: ReelStyle;
+  lengthMs: number;
+  music: (MusicBed & { src: string }) | null;
+  customFonts: { name: string; url: string }[];
+};
+
 export type Project = {
   id: string;
+  // "broll": a trial reel made from b-roll clips (no talking), with the info in the caption.
+  kind?: "talking" | "broll";
+  broll?: { clipIds: string[]; lengthMs: number };
   // Goes up by one on every save, so open editors can tell when someone else changed the reel.
   rev?: number;
   createdAt: string;

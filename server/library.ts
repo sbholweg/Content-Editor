@@ -32,7 +32,7 @@ function kindOf(name: string, mimetype: string): Asset["kind"] | null {
   return null;
 }
 
-export async function addAsset(upload: { path: string; originalname: string; mimetype: string }): Promise<Asset> {
+export async function addAsset(upload: { path: string; originalname: string; mimetype: string; source?: string }): Promise<Asset> {
   const kind = kindOf(upload.originalname, upload.mimetype);
   if (!kind) {
     await fs.rm(upload.path, { force: true });
@@ -61,6 +61,7 @@ export async function addAsset(upload: { path: string; originalname: string; mim
     kind,
     file,
     thumb,
+    source: upload.source,
     width: info.width || 1080,
     height: info.height || 1080,
     durationMs: info.durationMs || 0,
@@ -77,4 +78,25 @@ export async function deleteAsset(id: string) {
   await fs.rm(path.join(libraryDir, asset.file), { force: true });
   if (asset.thumb) await fs.rm(path.join(libraryDir, asset.thumb), { force: true });
   await saveAssets(assets.filter((a) => a.id !== id));
+}
+
+// Adds any new clips from the broll folder to the library. The files in the folder are copied,
+// never moved or changed.
+let syncing: Promise<number> | null = null;
+export function syncBrollFolder() {
+  syncing ??= (async () => {
+    await fs.mkdir(config.brollDir, { recursive: true });
+    const known = new Set((await listAssets()).map((a) => a.source).filter(Boolean));
+    let added = 0;
+    for (const name of await fs.readdir(config.brollDir)) {
+      if (!/\.(mov|mp4|m4v|webm)$/i.test(name) || known.has(name)) continue;
+      const temp = path.join(config.dataDir, "uploads", `broll-${Date.now()}-${name}`);
+      await fs.mkdir(path.dirname(temp), { recursive: true });
+      await fs.copyFile(path.join(config.brollDir, name), temp);
+      await addAsset({ path: temp, originalname: name, mimetype: "video/mp4", source: name }).catch((err) => console.error(`Couldn't add ${name}:`, err));
+      added++;
+    }
+    return added;
+  })().finally(() => (syncing = null));
+  return syncing;
 }

@@ -1,5 +1,5 @@
 import { builtinSound } from "./sounds";
-import type { Asset, Project, ReelProps } from "./types";
+import type { Asset, BrollReelProps, Project, ReelProps } from "./types";
 
 type ReelFields = Pick<
   Project,
@@ -47,6 +47,31 @@ export function reelProps(
       const src = soundSrc(reel.music.soundId);
       return src ? { ...reel.music, src } : null;
     })(),
+    customFonts: assets.filter((a) => a.kind === "font").map((a) => ({ name: a.name, url: urls.library(a.file) })),
+  };
+}
+
+// Everything a b-roll trial reel needs to draw and play.
+export function brollProps(
+  reel: Pick<Project, "hookText" | "hookSubText" | "style" | "broll" | "music">,
+  assets: Asset[],
+  urls: { library: (file: string) => string; sfx: (file: string) => string },
+): BrollReelProps {
+  const byId = new Map(assets.map((a) => [a.id, a]));
+  const clips = (reel.broll?.clipIds ?? []).flatMap((id) => {
+    const a = byId.get(id);
+    return a && a.kind === "video" ? [{ src: urls.library(a.file), durationMs: a.durationMs }] : [];
+  });
+  const musicAsset = reel.music?.enabled ? byId.get(reel.music.soundId) : undefined;
+  const builtin = reel.music?.enabled ? builtinSound(reel.music.soundId) : undefined;
+  const musicSrc = builtin ? urls.sfx(builtin.file) : musicAsset?.kind === "audio" ? urls.library(musicAsset.file) : null;
+  return {
+    clips,
+    hookText: reel.hookText,
+    hookSubText: reel.hookSubText,
+    style: reel.style,
+    lengthMs: reel.broll?.lengthMs ?? 7000,
+    music: reel.music && musicSrc ? { ...reel.music, src: musicSrc } : null,
     customFonts: assets.filter((a) => a.kind === "font").map((a) => ({ name: a.name, url: urls.library(a.file) })),
   };
 }

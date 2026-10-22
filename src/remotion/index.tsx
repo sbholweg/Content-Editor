@@ -1,8 +1,9 @@
 import React from "react";
 import { Composition, registerRoot } from "remotion";
 import { DEFAULT_STYLE } from "../shared/brand";
-import type { ReelProps, SlideProps } from "../shared/types";
+import type { BrollReelProps, ReelProps, SlideProps } from "../shared/types";
 import { outputFrames, Reel, REEL_FPS, REEL_HEIGHT, REEL_WIDTH } from "./Reel";
+import { BROLL_FPS, brollFrames, BrollReel } from "./BrollReel";
 import { CAROUSEL_SIZE, SlideCard, STORY_SIZE } from "./Slide";
 
 const defaultProps: ReelProps = { videoSrc: "", hookText: "", words: [], brand: DEFAULT_STYLE, durationMs: 3000, removePauses: false, silences: [], overlays: [], hookSubText: "", sounds: [], music: null, customFonts: [] };
@@ -17,6 +18,8 @@ const sampleSlide: SlideProps = {
   customFonts: [],
 };
 
+const sampleBroll: BrollReelProps = { clips: [], hookText: "", hookSubText: "", style: DEFAULT_STYLE, lengthMs: 7000, music: null, customFonts: [] };
+
 const Root: React.FC = () => (
   <>
     <Composition
@@ -28,6 +31,16 @@ const Root: React.FC = () => (
       durationInFrames={outputFrames(defaultProps)}
       defaultProps={defaultProps}
       calculateMetadata={({ props }) => ({ durationInFrames: outputFrames(props) })}
+    />
+    <Composition
+      id="BrollReel"
+      component={BrollReel}
+      width={REEL_WIDTH}
+      height={REEL_HEIGHT}
+      fps={BROLL_FPS}
+      durationInFrames={brollFrames(sampleBroll.lengthMs)}
+      defaultProps={sampleBroll}
+      calculateMetadata={({ props }) => ({ durationInFrames: brollFrames(props.lengthMs) })}
     />
     <Composition id="CarouselSlide" component={SlideCard} {...CAROUSEL_SIZE} fps={30} durationInFrames={1} defaultProps={sampleSlide} />
     <Composition id="StoryFrame" component={SlideCard} {...STORY_SIZE} fps={30} durationInFrames={1} defaultProps={{ ...sampleSlide, format: "stories" }} />

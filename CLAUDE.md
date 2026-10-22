@@ -9,7 +9,8 @@ explain things in plain words, never ask them to type commands, and keep replies
   engine commands to work. Start it in the background and leave it running.
 - You edit reels with the engine commands below. Every change shows up live in the editor,
   so the person can watch while you work.
-- `inbox/` is where they drop raw clips. `outputs/` is where finished reels and captions land.
+- `inbox/` is where they drop raw clips. `broll/` is for b-roll clips (used by trial reels).
+  `outputs/` is where finished reels, captions, carousels and stories land.
 - Their brand (default look, saved looks, business profile, calls to action) is shared by
   every reel. Each reel also has its own copy of the look.
 
@@ -18,7 +19,7 @@ explain things in plain words, never ask them to type commands, and keep replies
 - `import [--do-it-all]`: import everything in the inbox and transcribe it
 - `list` / `show [id|latest]`: see reels; `show` prints every word with a number like `[12]`
 - `apply [id|latest] edits.json`: change a reel (see the change-reel skill for the format)
-- `caption`, `export`, `trials`, `carousel`, `stories`, `looks`, `brand`, `library`: see `npm run engine` for help
+- `tighten`, `caption`, `export`, `trials`, `carousel`, `stories`, `looks`, `brand`, `library`: see `npm run engine` for help
 
 To change a reel: write the JSON to `edits.json` in this folder with your file-writing tool,
 then run `npm run engine -- apply latest edits.json`. Don't pass JSON on the command line

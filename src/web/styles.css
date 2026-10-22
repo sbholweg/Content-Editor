@@ -456,3 +456,9 @@ a.chip { color: var(--ink); }
 .acc-caret { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--chip); font-weight: 700; }
 .acc.open .acc-caret { background: var(--ink); color: #fff; }
 .acc-body { padding: 0 0 18px; }
+
+.broll-editor { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 28px; max-width: 1160px; margin: 0 auto; padding: 28px 24px 60px; }
+.asset.picked { outline: 3px solid var(--accent); outline-offset: -3px; }
+@media (max-width: 860px) { .broll-editor { grid-template-columns: 1fr; padding: 16px; } .broll-editor .studio-preview { position: static; } }
+a.btn { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; color: var(--ink); }
+a.btn.primary { color: #fff; }

@@ -7,6 +7,7 @@ import { reelProps } from "../shared/props";
 import { buildTimeline } from "../shared/timeline";
 import type { Asset, BrandKit, Project } from "../shared/types";
 import { api, libraryUrl, mediaUrl, onEngineEvents } from "./api";
+import { BrollEditor } from "./BrollEditor";
 import { CutTab } from "./editor/CutTab";
 import { EditorContext, formatTime, type EditorApi, type PickerTarget, type ReelState } from "./editor/context";
 import { FinishTab } from "./editor/FinishTab";
@@ -219,6 +220,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   };
 
   if (error && !project) return <div className="center error">{error}</div>;
+  if (project?.kind === "broll") return <BrollEditor project={project} onAuthError={onAuthError} />;
   if (!project || !brand || !reel) return <div className="center muted">Loading…</div>;
 
   if (project.status === "processing" || project.status === "uploaded") {

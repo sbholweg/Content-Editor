@@ -12,7 +12,10 @@ description: Turn a reel into a carousel and/or Instagram stories (and trial ree
    (Running it without a file makes a quick draft from the reel's key words.)
 3. Tell them the images are ready in the outputs folder and in the Finish tab, where they can
    tweak any slide and tap "Make the images" again.
-4. Offer trial reels too: `npm run engine -- trials <id>`.
+4. Offer trial reels too: `npm run engine -- trials <id>`. These are short b-roll reels (no talking)
+   with a different hook on screen each, and the reel's content in the caption. They need b-roll:
+   clips in the `broll` folder (added to the library automatically) or uploaded in the Library.
+   If there's none, tell them where to put some.
 
 ## Slide format
 ```json

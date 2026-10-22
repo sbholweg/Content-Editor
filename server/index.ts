@@ -22,10 +22,10 @@ import {
   deleteProject, ensureDirs, listProjects, projectDir, projectFile, projectsDir,
   readBrand, readProject, updateProject, writeBrand, writeProject,
 } from "./storage.ts";
-import { addAsset, deleteAsset, libraryDir, listAssets } from "./library.ts";
+import { addAsset, deleteAsset, libraryDir, listAssets, syncBrollFolder } from "./library.ts";
 import { transcribeWords } from "./transcribe.ts";
 import { frameAt, renderSlides } from "./repurpose.ts";
-import { createTrialReels } from "./trials.ts";
+import { createTrialReels, NoBrollError } from "./trials.ts";
 
 await ensureDirs();
 
@@ -174,6 +174,12 @@ app.patch("/api/projects/:id", async (req, res) => {
   if (req.body && "music" in req.body) patch.music = req.body.music as MusicBed | null;
   if (typeof req.body?.soundsEnabled === "boolean") patch.soundsEnabled = req.body.soundsEnabled;
   if (typeof req.body?.posted === "boolean") patch.posted = req.body.posted;
+  if (req.body?.broll && Array.isArray(req.body.broll.clipIds)) patch.broll = { clipIds: req.body.broll.clipIds, lengthMs: Number(req.body.broll.lengthMs) || 7000 };
+  // On b-roll trial reels (which have no in-editor "export again" state), a change to what's in
+  // the video means the last export is out of date.
+  if (project.kind === "broll" && project.render.status === "done" && Object.keys(patch).some((k) => k !== "posted" && k !== "postCaption")) {
+    patch.render = { status: "idle", progress: 0 };
+  }
   if (Array.isArray(req.body?.carousel)) patch.carousel = req.body.carousel as Slide[];
   if (Array.isArray(req.body?.stories)) patch.stories = req.body.stories as Slide[];
   if (req.body?.slideDesign && typeof req.body.slideDesign === "object") patch.slideDesign = req.body.slideDesign;
@@ -257,7 +263,12 @@ app.post("/api/projects/:id/caption", async (req, res) => {
 app.post("/api/projects/:id/trial-reels", async (req, res) => {
   const project = await readProject(req.params.id);
   if (!project || project.status !== "ready") return res.status(404).json({ error: "Not found" });
-  res.json(await createTrialReels(project));
+  try {
+    res.json(await createTrialReels(project));
+  } catch (err) {
+    if (err instanceof NoBrollError) return res.status(400).json({ error: err.message });
+    throw err;
+  }
 });
 
 app.get("/api/projects/:id/trial-reels", async (req, res) => {
@@ -285,7 +296,10 @@ app.put("/api/brand", async (req, res) => {
   res.json(brand);
 });
 
-app.get("/api/library", async (_req, res) => res.json(await listAssets()));
+app.get("/api/library", async (_req, res) => {
+  await syncBrollFolder().catch(() => 0);
+  res.json(await listAssets());
+});
 
 const libraryUpload = multer({
   dest: path.join(config.dataDir, "uploads"),

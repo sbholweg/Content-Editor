@@ -9,3 +9,5 @@ outputs/*
 !outputs/README.txt
 edits.json
 frames/
+broll/*
+!broll/README.txt

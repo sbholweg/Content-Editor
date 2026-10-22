@@ -2,8 +2,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition } from "@remotion/renderer";
-import { reelProps } from "../src/shared/props.ts";
-import type { ReelProps } from "../src/shared/types.ts";
+import { brollProps, reelProps } from "../src/shared/props.ts";
+import type { BrollReelProps, ReelProps } from "../src/shared/types.ts";
 import { accessToken } from "./auth.ts";
 import { config } from "./config.ts";
 import { listAssets } from "./library.ts";
@@ -42,13 +42,12 @@ async function renderProject(id: string) {
     const serveUrl = await getBundle();
     const tokenParam = accessToken ? `?t=${accessToken}` : "";
     const local = (route: string) => `http://127.0.0.1:${config.port}${route}${tokenParam}`;
-    const inputProps: ReelProps = reelProps(project, await listAssets(), {
-      video: local(`/media/${id}/video.mp4`),
-      library: (file) => local(`/media/library/${file}`),
-      sfx: (file) => local(`/sfx/${file}`),
-    });
+    const assets = await listAssets();
+    const urls = { video: local(`/media/${id}/video.mp4`), library: (file: string) => local(`/media/library/${file}`), sfx: (file: string) => local(`/sfx/${file}`) };
+    const broll = project.kind === "broll";
+    const inputProps: ReelProps | BrollReelProps = broll ? brollProps(project, assets, urls) : reelProps(project, assets, urls);
     const browserExecutable = process.env.REMOTION_BROWSER || null;
-    const composition = await selectComposition({ serveUrl, id: "Reel", inputProps, browserExecutable });
+    const composition = await selectComposition({ serveUrl, id: broll ? "BrollReel" : "Reel", inputProps, browserExecutable });
 
     let lastSaved = 0;
     let writes: Promise<unknown> = Promise.resolve();
