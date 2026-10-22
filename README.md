@@ -1,4 +1,4 @@
-# Content Studio (working name)
+# The Cutroom
 
 A reel editing engine that runs on your own computer inside Claude Code. Claude edits your
 talking reels, and you watch and tweak them in the visual editor. **New here? Start with

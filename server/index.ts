@@ -170,6 +170,7 @@ app.patch("/api/projects/:id", async (req, res) => {
   if (Array.isArray(req.body?.sounds)) patch.sounds = req.body.sounds as SoundCue[];
   if (req.body && "music" in req.body) patch.music = req.body.music as MusicBed | null;
   if (typeof req.body?.soundsEnabled === "boolean") patch.soundsEnabled = req.body.soundsEnabled;
+  if (typeof req.body?.posted === "boolean") patch.posted = req.body.posted;
   if (Array.isArray(req.body?.carousel)) patch.carousel = req.body.carousel as Slide[];
   if (Array.isArray(req.body?.stories)) patch.stories = req.body.stories as Slide[];
   res.json(await updateProject(project.id, patch));

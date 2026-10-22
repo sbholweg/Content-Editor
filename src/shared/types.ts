@@ -186,6 +186,8 @@ export type Project = {
   stories: Slide[];
   style: ReelStyle;
   render: RenderState;
+  // Marked by the creator once it's been posted (moves it to the Posted folder).
+  posted?: boolean;
   // Set on trial reel versions: the reel they were made from and which angle they use.
   parentId?: string;
   variantLabel?: string;

@@ -1,4 +1,4 @@
-# Content Studio: reel editing engine
+# The Cutroom: reel editing engine
 
 This folder is a reel editor for online service providers (VAs, OBMs, social media managers,
 coaches). The person you're helping is usually **not technical**: run every command yourself,

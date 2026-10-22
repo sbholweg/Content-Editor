@@ -1,2 +1,3 @@
-// Product name shown in the app. Placeholder until the final name is chosen.
-export const APP_NAME = "Content Studio";
+// Product name shown in the app.
+export const APP_NAME = "The Cutroom";
+export const APP_TAGLINE = "The editing room for busy service providers.";
