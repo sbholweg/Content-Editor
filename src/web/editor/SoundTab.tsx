@@ -1,7 +1,8 @@
 import React, { useRef, useState } from "react";
 import { isLineCut } from "../../shared/lines";
-import { BUILTIN_SOUNDS, builtinSound, SOUND_GROUPS } from "../../shared/sounds";
-import type { Asset, SoundCue } from "../../shared/types";
+import { autoSounds } from "../../shared/autoSounds";
+import { BUILTIN_SOUNDS, builtinSound, SOUND_GROUP_HINTS, SOUND_GROUPS } from "../../shared/sounds";
+import type { Asset } from "../../shared/types";
 import { libraryUrl } from "../api";
 import { Modal, useUpload } from "../Media";
 import { Slider } from "../ui";
@@ -25,25 +26,16 @@ export function soundInfo(id: string, assets: Asset[]) {
 }
 
 export function SoundTab() {
-  const { reel, update, lines, outputTimes, assets, openPicker } = useEditor();
+  const { reel, update, lines, outputTimes, assets, openPicker, notify } = useEditor();
   const kept = lines.filter((l) => !isLineCut(l));
   const music = reel.music;
   const musicInfo = music ? soundInfo(music.soundId, assets) : null;
 
   const addForMe = () => {
-    const cues: SoundCue[] = [...reel.sounds];
-    // Keep sounds at least half a second apart so they don't pile up.
-    const at = (wordId: string) => outputTimes.get(wordId)?.startMs;
-    const crowded = (wordId: string) => cues.some((c) => Math.abs((at(c.wordId) ?? -1e9) - (at(wordId) ?? 1e9)) < 500);
-    const add = (wordId: string, soundId: string) => {
-      if (at(wordId) !== undefined && !crowded(wordId)) cues.push({ id: `snd-${Date.now()}-${cues.length}`, wordId, soundId, volume: 0.8 });
-    };
-    // A whoosh as the hook lands, a pop whenever something appears on screen, a sparkle on emojis.
-    const first = reel.words.find((w) => !w.cut);
-    if (first && reel.hookText) add(first.id, "sfx-whoosh");
-    for (const o of reel.overlays) add(o.startWordId, o.placement === "full" ? "sfx-swoosh-in" : "sfx-pop");
-    for (const w of reel.words) if (w.emoji && !w.cut) add(w.id, "sfx-sparkle");
-    update({ sounds: cues, soundsEnabled: true });
+    const sounds = autoSounds(reel, assets);
+    const added = sounds.length - reel.sounds.length;
+    update({ sounds, soundsEnabled: true });
+    notify(added ? `Added ${added} sound${added === 1 ? "" : "s"}: clicks on key words, pops on stickers, shutters on screenshots, cha-ching on money talk.` : "No new spots for sounds. Add key words, emojis or media first.");
   };
 
   return (
@@ -180,6 +172,7 @@ export function SoundPicker({ forMusic, onPick, onClose }: { forMusic: boolean; 
         return inGroup.length ? (
           <React.Fragment key={g}>
             <div className="label">{g}</div>
+            {q ? null : <p className="muted small group-hint">{SOUND_GROUP_HINTS[g]}</p>}
             {inGroup.map((s) => (
               <SoundOption key={s.id} name={s.name} detail="" src={sfxUrl(s.file)} onPick={() => onPick(s.id)} />
             ))}

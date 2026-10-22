@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { normalizeStyle } from "./brand";
+import { autoSounds } from "./autoSounds";
 import { BUILTIN_SOUNDS } from "./sounds";
 import type { BrandKit, Project } from "./types";
 import { isFiller } from "./words";
@@ -70,6 +71,7 @@ export const ReelEdits = z
     ),
     removeSounds: z.array(z.string()).describe('sound cue ids, or "all"'),
     soundsEnabled: z.boolean(),
+    autoSounds: z.boolean().describe("true adds sound effects by moment: clicks on key words, pops on stickers/emojis, shutters on screenshots, cash register on money talk"),
     music: z
       .object({
         sound: z.string().describe("library sound name"),
@@ -162,6 +164,11 @@ export function applyEdits(project: Project, edits: ReelEdits, brand: BrandKit, 
   if (edits.removeSounds?.length) sounds = edits.removeSounds.includes("all") ? [] : sounds.filter((c) => !edits.removeSounds!.includes(c.id));
   for (const s of edits.addSounds ?? []) {
     sounds = [...sounds, { id: `snd-${Date.now()}-${sounds.length}`, soundId: findSound(s.sound), wordId: at(s.atWord).id, volume: s.volume ?? 0.8 }];
+  }
+  if (edits.autoSounds) {
+    // Runs after the other changes so new key words, emojis and media get sounds too.
+    sounds = autoSounds({ ...project, ...changes, sounds }, library);
+    changes.soundsEnabled = true;
   }
   if (sounds !== project.sounds) changes.sounds = sounds;
 

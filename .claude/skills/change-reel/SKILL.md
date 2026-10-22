@@ -39,15 +39,20 @@ description: Make plain-words changes to a reel, e.g. "make it softer", "cut the
   "addSounds": [{"sound": "Whoosh", "atWord": 0}, {"sound": "Pop", "atWord": 12}],
   "removeSounds": ["snd-..."],
   "soundsEnabled": true,
+  "autoSounds": true,
   "music": {"sound": "library sound name", "volume": 0.35, "duck": true}
 }
 ```
 `hookDurationMs: 0` keeps the hook on for the whole video. Hook layouts: `headline` (one big line),
 `eyebrow` (small hookSubText above), `subhead` (small hookSubText below).
-Starter sounds: Whoosh, Swoosh in, Swipe, Riser, Pop, Click, Blip, Typing, Keyboard clack, Camera shutter,
-Notification, Ding, Cha-ching, Ta-da, Sparkle, Wrong buzz, Record scratch, Glitch, Boom, Kick, Heartbeat,
-Tick tock (see src/shared/sounds.ts). Typing fits screenshots of texts/DMs; Cha-ching fits money;
-Record scratch fits "but wait"; Notification fits DMs/comments.
+Starter sounds are grouped by moment (see src/shared/sounds.ts):
+- Text pop-ups (text or a key word pops on screen): Mouse click, Mouse click (double), Keyboard clicks, Keyboard typing
+- Stickers & emojis (GIF, emoji, arrow, sticker): Pop (cartoon), Pop, Mobile select, Notification (chat)
+- Screenshots & photos (screenshot, DM, comment, review, receipt, photo): Camera shutter 2, Camera shutter, Item pickup (gaming)
+- Money moments (price, sale, savings, income, $): Cash register, Coin collect (gaming), Coins clinking
+- Transitions: Whoosh, Swoosh in, Swipe, Riser. Reactions: Blip, Notification, Ding, Ta-da, Sparkle,
+  Wrong buzz, Record scratch ("but wait"), Glitch. Impacts: Boom, Kick, Heartbeat, Tick tock.
+`"autoSounds": true` places sounds by those moment rules (and runs after the other changes in the same file).
 Music must be a track they uploaded (they need the rights to it); `"music": null` removes it. `style: "pill"` = colored bubble behind
 key words; `"color"` = key words change color; `"serif"` = key words in the hook font.
 
@@ -80,8 +85,8 @@ style and zoom. Save it as a named look with `npm run engine -- brand look.json`
 - "my brand colors": use `looks` to read their default look and saved looks; prefer those colors.
 - "cut the first sentence": cut the word numbers up to and including its last word.
 - "add <clip> when I talk about X": find the words in `show`, find the item with `library`, use addMedia.
-- "add sound effects": a Whoosh on the first word (hook), a Pop where media appears, maybe a Ding on a
-  big number or result. Keep them at least ~0.5s apart and don't overdo it.
+- "add sound effects": use `"autoSounds": true`, then `show` and tweak with addSounds/removeSounds if
+  a moment it missed needs one. Keep them at least ~0.5s apart and don't overdo it.
 - "save this as my default / as a look": use the `brand` command with
   `{"defaultStyle": {...}}`, or ask them to tap "Save this as a look" in the Visuals tab.
 

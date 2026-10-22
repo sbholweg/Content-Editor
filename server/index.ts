@@ -4,6 +4,7 @@ import path from "node:path";
 import express from "express";
 import multer from "multer";
 import { z } from "zod";
+import { autoSounds } from "../src/shared/autoSounds.ts";
 import { normalizeBrand, normalizeStyle } from "../src/shared/brand.ts";
 import { applyEdits, ReelEdits } from "../src/shared/edits.ts";
 import { draftSlides } from "../src/shared/repurpose.ts";
@@ -141,7 +142,8 @@ async function processProject(id: string, original: string, autopilot: boolean) 
     } else {
       await updateProject(id, { words: cleaned, hookText: plan.hook, removePauses: true, step: "Writing your caption" });
       const postCaption = await writeCaption({ words: cleaned, hook: plan.hook, business: { ...brand.business, voice: brand.voice }, cta: "" }).catch(() => "");
-      await updateProject(id, { postCaption, status: "ready", step: undefined, render: { status: "rendering", progress: 0 } });
+      const sounds = autoSounds({ words: cleaned, overlays: [], sounds: [], hookText: plan.hook }, []);
+      await updateProject(id, { postCaption, sounds, status: "ready", step: undefined, render: { status: "rendering", progress: 0 } });
       queueRender(id);
     }
     await fs.rm(original, { force: true });

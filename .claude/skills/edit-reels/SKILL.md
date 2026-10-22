@@ -21,7 +21,8 @@ description: Turn raw clips into finished, on-brand reels. Use when the person s
    - **emojis**: at most one per ~15 seconds, only where it clearly fits.
    - **fixWords**: obvious transcription mistakes (names, brand terms, their business words).
    - **hookText**: 3-8 words, lowercase, conversational, in their voice, based only on what they say.
-   - **addSounds**: a Whoosh on the first word, a Pop where media appears; a few at most.
+   - **autoSounds: true**: sounds by moment (clicks on key words, pops on emojis/stickers, shutter on
+     screenshots, cash register on money talk). Add one by hand only for a moment it can't see.
    - **postCaption**: hook line; 2-4 short lines for their ideal client; their call to action on its
      own line (from the business profile or saved calls to action); blank line; 3-5 hashtags.
      At most 2 emojis. Never invent results or numbers.
