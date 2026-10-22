@@ -61,7 +61,7 @@ export function CutTab({ onTightened }: { onTightened: (p: Project) => void }) {
       <div className="tighten">
         <div className="grow">
           <strong>Make it flow</strong>
-          <p className="muted small">Cuts every pause, um, repeat and restarted sentence so it plays like a tight reel. Undo anytime.</p>
+          <p className="muted small">Claude reads your take like an editor and cuts every pause, flub, restart, repeat and um, so it plays like one clean take. Tap any word to bring it back.</p>
         </div>
         <button
           className="btn primary"
@@ -78,7 +78,7 @@ export function CutTab({ onTightened }: { onTightened: (p: Project) => void }) {
             setBusy(false);
           }}
         >
-          {busy ? "Tightening…" : "✨ Tighten it"}
+          {busy ? "Reading your take… (up to a minute)" : "✨ Tighten it"}
         </button>
       </div>
 

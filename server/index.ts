@@ -16,6 +16,7 @@ import { claudeSource } from "./claude-cli.ts";
 import { config } from "./config.ts";
 import { subscribe } from "./events.ts";
 import { planEdit } from "./highlights.ts";
+import { smartCut } from "./smartcut.ts";
 import { detectSilences, extractAudio, normalizeVideo, probe } from "./media.ts";
 import { queueRender } from "./render.ts";
 import { ensureWhisper } from "./setup-whisper.ts";
@@ -132,11 +133,14 @@ async function processProject(id: string, original: string, autopilot: boolean) 
     await extractAudio(video, audio);
     const silences = await detectSilences(audio).catch(() => []);
     const words = await transcribeWords(audio);
-    await updateProject(id, { words, silences, step: "Cutting pauses and retakes" });
+    await updateProject(id, { words, silences, step: "Reading it like an editor" });
+    // Every reel starts tightly edited: Claude cuts flubs, restarts and repeats, then the
+    // built-in rules catch any ums and repeats left, and pauses are trimmed from the audio.
+    const edited = await smartCut(words);
+    await updateProject(id, { step: "Cutting pauses and retakes" });
     const brand = await readBrand();
-    const plan = await planEdit(words, { ...brand.business, voice: brand.voice });
-    // Every reel starts tightly edited: ums, repeats and restarted sentences cut, pauses trimmed.
-    const cleaned = tighten(plan.words);
+    const plan = await planEdit(tighten(edited.words), { ...brand.business, voice: brand.voice });
+    const cleaned = plan.words;
     if (!autopilot) {
       await updateProject(id, { words: cleaned, hookText: plan.hook, removePauses: true, status: "ready", step: undefined });
     } else {
@@ -214,7 +218,14 @@ app.post("/api/projects/:id/tighten", async (req, res) => {
   if (!project) return res.status(404).json({ error: "Not found" });
   // Always listen again: reels made before the pause detector improved have stale (or no) pauses.
   const silences = await detectSilences(projectFile(project.id, "video.mp4")).catch(() => project.silences ?? []);
-  res.json(await updateProject(project.id, (p) => ({ silences, removePauses: true, words: tighten(p.words) })));
+  // Claude reads it like an editor (flubs, restarts, repeats), then the built-in rules run.
+  const edited = await smartCut(project.words);
+  const updated = await updateProject(project.id, (p) => {
+    const editedById = new Map(edited.words.map((w) => [w.id, w]));
+    const words = p.words.map((w) => (editedById.get(w.id)?.cut ? { ...w, cut: true } : w));
+    return { silences, removePauses: true, words: tighten(words) };
+  });
+  res.json({ ...updated, smartCut: edited.by, smartCutWords: edited.cut });
 });
 
 // Carousel slides and story frames: draft them from the reel, then render to images.

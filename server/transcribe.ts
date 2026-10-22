@@ -26,7 +26,7 @@ export async function transcribeWords(wavPath: string): Promise<Word[]> {
   const words: Word[] = [];
   for (const c of captions) {
     const text = c.text;
-    if (!text.trim() || /^\[.*\]$/.test(text.trim())) continue;
+    if (!text.trim()) continue;
     const prev = words[words.length - 1];
     if (prev && !text.startsWith(" ")) {
       prev.text += text;
@@ -35,5 +35,7 @@ export async function transcribeWords(wavPath: string): Promise<Word[]> {
       words.push({ id: `w${words.length}`, text: text.trim(), startMs: c.startMs, endMs: c.endMs, highlight: false });
     }
   }
-  return words;
+  // Non-speech the transcriber notices, like [coughs], (laughs) or [BLANK_AUDIO], is kept as a
+  // cut word so that stretch of video is removed too, rather than silently left in.
+  return words.map((w) => (/^[[(].*[\])][.,!?]*$/.test(w.text) ? { ...w, cut: true } : w));
 }

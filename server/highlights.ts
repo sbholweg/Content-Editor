@@ -42,7 +42,7 @@ export function businessContext(business: BusinessProfile & { voice?: BrandVoice
 export async function planEdit(words: Word[], business: BusinessProfile & { voice?: BrandVoice }): Promise<EditSuggestions> {
   if (words.length === 0) return { words, hook: "" };
   const transcriptText = `${businessContext(business)}Transcript (${(words.at(-1)!.endMs / 1000).toFixed(0)}s):\n${words
-    .map((w, i) => `${i}:${w.text}`)
+    .flatMap((w, i) => (w.cut ? [] : [`${i}:${w.text}`]))
     .join(" ")}`;
   if (!process.env.ANTHROPIC_API_KEY) {
     // No API key: use the buyer's Claude Code if it's installed, else simple rules.

@@ -10,8 +10,9 @@ description: Turn raw clips into finished, on-brand reels. Use when the person s
    For clips outside the inbox, pass their paths: `npm run engine -- import "C:\path\clip.mov"`.
 3. For each reel, read `npm run engine -- looks` once (their business profile and default look),
    then decide the edit and apply it in one go with `apply <id> edits.json`:
-   - Import already tightens automatically (pauses from the audio, ums, repeats, restarted
-     sentences). Then read the words in `show` like an editor of a fast IG/TikTok talking reel and
+   - Import already tightens automatically: Claude reads the take and cuts flubs, restarts,
+     repeats and coughs, then pauses are trimmed from the audio. Then read the kept words in `show`
+     out loud in your head, like an editor of a fast IG/TikTok talking reel and
      **cut** anything that still drags: false starts the automatic pass missed, rambling asides,
      "so yeah", "anyway", trailing "and um so", duplicate points, and slow intros before the hook.
      The reel should flow seamlessly. Don't cut content they clearly meant to say.
