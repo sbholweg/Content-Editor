@@ -255,12 +255,13 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
     () =>
       project && reel
         ? reelProps({ ...reel, durationMs: project.durationMs, silences: project.silences, colorStats: project.colorStats }, assets, {
-            video: mediaUrl(id, "video.mp4"),
+            // The clean-audio copy once it's switched on and ready.
+            video: mediaUrl(id, reel.style.cleanAudio && project.cleanAudio === "ready" ? "video-clean.mp4" : "video.mp4"),
             library: libraryUrl,
             sfx: (file) => `/sfx/${file}`,
           }, brand?.logoAssetId)
         : null,
-    [project?.durationMs, project?.silences, project?.colorStats, reel, assets, id, brand?.logoAssetId],
+    [project?.durationMs, project?.silences, project?.colorStats, project?.cleanAudio, reel, assets, id, brand?.logoAssetId],
   );
 
   useEffect(() => {

@@ -27,6 +27,7 @@ export const DEFAULT_STYLE: ReelStyle = {
   zoomJumps: false,
   speed: 1,
   grade: "off",
+  cleanAudio: false,
   captionAlign: "center",
   captionsOn: true,
   logo: "off",

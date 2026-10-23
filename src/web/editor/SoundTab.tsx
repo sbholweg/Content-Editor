@@ -26,7 +26,9 @@ export function soundInfo(id: string, assets: Asset[]) {
 }
 
 export function SoundTab() {
-  const { reel, update, lines, outputTimes, assets, openPicker, notify } = useEditor();
+  const { project, reel, update, lines, outputTimes, assets, openPicker, notify } = useEditor();
+  const clean = reel.style.cleanAudio;
+  const cleanStatus = project.cleanAudio;
   const kept = lines.filter((l) => !isLineCut(l));
   const music = reel.music;
   const musicInfo = music ? soundInfo(music.soundId, assets) : null;
@@ -40,6 +42,19 @@ export function SoundTab() {
 
   return (
     <>
+      <section className="panel-card">
+        <div className="row">
+          <div className="grow">
+            <h3>Clean up my voice</h3>
+            <p className="muted small">Less background hiss and hum, even volume, and as loud as other reels in the feed. Your original stays untouched.</p>
+            {clean && cleanStatus !== "ready" ? (
+              <p className="small">{cleanStatus === "error" ? "Couldn't clean this one. Turn it off and on to try again." : "Cleaning… about half a minute. The preview switches over when it's ready."}</p>
+            ) : null}
+          </div>
+          <Toggle on={Boolean(clean)} onChange={(on) => update({ style: { ...reel.style, cleanAudio: on } })} />
+        </div>
+      </section>
+
       <section className="panel-card">
         <header className="panel-head">
           <div>

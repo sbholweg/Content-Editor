@@ -19,6 +19,7 @@ import { subscribe } from "./events.ts";
 import { planEdit } from "./highlights.ts";
 import { smartCut } from "./smartcut.ts";
 import { phoneLinks } from "./phone.ts";
+import { ensureCleanAudio } from "./cleanaudio.ts";
 import { suggestGraphics } from "./graphics.ts";
 import { colorStats, detectSilences, extractAudio, normalizeVideo, probe } from "./media.ts";
 import { queueRender } from "./render.ts";
@@ -133,6 +134,7 @@ async function processProject(id: string, original: string, autopilot: boolean) 
     await normalizeVideo(original, video);
     const info = await probe(video);
     const color = await colorStats(video).catch(() => undefined);
+    if ((await readBrand()).defaultStyle.cleanAudio) void ensureCleanAudio(id);
     await updateProject(id, { ...info, colorStats: color, step: "Listening to your video" });
     await extractAudio(video, audio);
     const silences = await detectSilences(audio).catch(() => []);
@@ -205,6 +207,7 @@ app.patch("/api/projects/:id", async (req, res) => {
   if (Array.isArray(req.body?.carousel)) patch.carousel = req.body.carousel as Slide[];
   if (Array.isArray(req.body?.stories)) patch.stories = req.body.stories as Slide[];
   if (req.body?.slideDesign && typeof req.body.slideDesign === "object") patch.slideDesign = req.body.slideDesign;
+  if (patch.style?.cleanAudio) void ensureCleanAudio(project.id);
   res.json(await updateProject(project.id, patch));
 });
 
@@ -214,7 +217,9 @@ app.post("/api/projects/:id/apply", async (req, res) => {
   if (!(await readProject(req.params.id))) return res.status(404).json({ error: "Not found" });
   try {
     const [brand, library] = await Promise.all([readBrand(), listAssets()]);
-    res.json(await updateProject(req.params.id, (p) => applyEdits(p, parsed.data, brand, library)));
+    const updated = await updateProject(req.params.id, (p) => applyEdits(p, parsed.data, brand, library));
+    if (updated.style.cleanAudio) void ensureCleanAudio(updated.id);
+    res.json(updated);
   } catch (err) {
     res.status(400).json({ error: (err as Error).message });
   }
@@ -417,7 +422,7 @@ app.get("/media/library/:file", async (req, res) => {
 // Serves the prepared video and the finished export.
 app.get("/media/:id/:file", async (req, res) => {
   const { id, file } = req.params;
-  const allowed = ["video.mp4", "export.mp4"].includes(file) || /^(carousel|story)-\d{2}\.png$|^frame-\d+\.jpg$/.test(file);
+  const allowed = ["video.mp4", "video-clean.mp4", "export.mp4"].includes(file) || /^(carousel|story)-\d{2}\.png$|^frame-\d+\.jpg$/.test(file);
   if (!(await readProject(id)) || !allowed) return res.status(404).end();
   if (file.startsWith("frame-")) await frameAt(id, Number(file.slice(6, -4))).catch(() => {});
   if (file === "export.mp4") res.attachment("reel.mp4");

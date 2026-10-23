@@ -68,7 +68,7 @@ export const projectFileUrl = (id: string, name: string, bust = "") => {
   return `/media/${id}/${name}?${params.toString()}`;
 };
 
-export const mediaUrl = (id: string, file: "video.mp4" | "export.mp4", bust = "") => {
+export const mediaUrl = (id: string, file: "video.mp4" | "video-clean.mp4" | "export.mp4", bust = "") => {
   const params = new URLSearchParams();
   const token = getToken();
   if (token) params.set("t", token);

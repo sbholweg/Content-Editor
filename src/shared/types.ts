@@ -60,6 +60,8 @@ export type ReelStyle = {
   zoomJumps: boolean;
   // Playback speed of the talking (1 = normal; 1.2 is a popular, energetic talking-reel speed).
   speed: number;
+  // Clean audio: less background noise, even volume, social-media loudness (uses video-clean.mp4).
+  cleanAudio: boolean;
   // Color grading: off, an automatic fix, or a look (each also corrects the video's own light).
   grade: "off" | "auto" | "bright" | "warm" | "soft";
   // Captions centered, or beside the speaker's head (left or right of frame).
@@ -282,6 +284,8 @@ export type Project = {
   colorStats?: { r: number; g: number; b: number; luma: number; white?: { r: number; g: number; b: number } };
   // Branded closing card with the call to action.
   endCard?: EndCard;
+  // The clean-audio copy of the video: being made, or ready.
+  cleanAudio?: "working" | "ready" | "error";
   // "Notes on the draft": what to change at a moment of the finished reel, for Claude to apply.
   notes?: ReelNote[];
   // Set on trial reel versions: the reel they were made from and which angle they use.

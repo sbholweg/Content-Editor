@@ -164,3 +164,13 @@ export async function colorStats(input: string): Promise<ColorStats> {
     white: { r: round(white[0]), g: round(white[1]), b: round(white[2]) },
   };
 }
+
+// Clean audio: rumble filtered out, background hiss reduced, volume evened out and brought to the
+// loudness phones play social video at (about -14 LUFS). The picture is copied untouched.
+export async function cleanAudio(input: string, output: string) {
+  await run("ffmpeg", [
+    "-y", "-i", input, "-c:v", "copy",
+    "-af", "highpass=f=80,afftdn=nf=-28:tn=1,acompressor=threshold=-20dB:ratio=3:attack=5:release=150:makeup=2,loudnorm=I=-14:TP=-1.5:LRA=11",
+    "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", output,
+  ]);
+}

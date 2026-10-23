@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition } from "@remotion/renderer";
+import { ensureCleanAudio, videoFileFor } from "./cleanaudio.ts";
 import { brollProps, reelProps } from "../src/shared/props.ts";
 import type { BrollReelProps, ReelProps } from "../src/shared/types.ts";
 import { accessToken } from "./auth.ts";
@@ -47,7 +48,10 @@ async function renderProject(id: string) {
     const tokenParam = accessToken ? `?t=${accessToken}` : "";
     const local = (route: string) => `http://127.0.0.1:${config.port}${route}${tokenParam}`;
     const assets = await listAssets();
-    const urls = { video: local(`/media/${id}/video.mp4`), library: (file: string) => local(`/media/library/${file}`), sfx: (file: string) => local(`/sfx/${file}`) };
+    // Clean audio: make sure the cleaned copy exists before exporting with it.
+    if (project.style.cleanAudio && project.kind !== "broll") await ensureCleanAudio(id);
+    const fresh = (await readProject(id)) ?? project;
+    const urls = { video: local(`/media/${id}/${videoFileFor(fresh)}`), library: (file: string) => local(`/media/library/${file}`), sfx: (file: string) => local(`/sfx/${file}`) };
     const broll = project.kind === "broll";
     const inputProps: ReelProps | BrollReelProps = broll ? brollProps(project, assets, urls) : reelProps(project, assets, urls, (await readBrand()).logoAssetId);
     const browserExecutable = process.env.REMOTION_BROWSER || null;
