@@ -1,4 +1,4 @@
-import type { BrandKit, ReelStyle } from "./types";
+import type { BrandKit, Project, Recipe, ReelStyle } from "./types";
 
 // Placeholder look until the real colors and fonts are chosen in the editor.
 export const DEFAULT_STYLE: ReelStyle = {
@@ -46,6 +46,7 @@ export const DEFAULT_BRAND: BrandKit = {
   business: { what: "", audience: "", cta: "" },
   defaultStyle: DEFAULT_STYLE,
   looks: [],
+  recipes: [],
   ctaKeywords: [],
 };
 
@@ -81,6 +82,7 @@ export function normalizeBrand(saved: Partial<BrandKit> & Partial<ReelStyle> = {
     // Before saved looks existed, the style fields lived directly on the brand.
     defaultStyle: normalizeStyle(saved.defaultStyle ?? (saved as Partial<ReelStyle>)),
     looks: (saved.looks ?? []).map((l) => ({ ...l, style: normalizeStyle(l.style) })),
+    recipes: (saved.recipes ?? []).map((r) => ({ ...r, style: normalizeStyle(r.style), autoSounds: Boolean(r.autoSounds), suggestGraphics: Boolean(r.suggestGraphics), endCard: r.endCard ?? null })),
     ctaKeywords: saved.ctaKeywords ?? [],
   };
 }
@@ -109,4 +111,15 @@ export function slideColors(brand: Pick<BrandKit, "palette">, style: ReelStyle) 
     text: role("text") ?? "#16121F",
     primary: role("primary") ?? style.highlightColor,
   };
+}
+
+// Puts a recipe on a reel: its look (keeping where this reel's hook was dragged), its end card, and
+// sound effects by moment if the recipe adds them. Suggesting graphics needs Claude, so the server
+// runs that part separately.
+export function recipeChanges(project: Project, recipe: Recipe, autoSoundsFn: (p: Project) => Project["sounds"]): Partial<Project> {
+  const changes: Partial<Project> = { style: { ...recipe.style, hookPlace: project.style.hookPlace } };
+  if (recipe.endCard) changes.endCard = recipe.endCard;
+  if (recipe.autoSounds) changes.sounds = autoSoundsFn({ ...project, ...changes } as Project);
+  if (recipe.autoSounds) changes.soundsEnabled = true;
+  return changes;
 }

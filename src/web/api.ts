@@ -100,6 +100,8 @@ export const api = {
   getBrand: () => request<BrandKit>("/api/brand"),
   saveBrand: (brand: BrandKit) => request<BrandKit>("/api/brand", { method: "PUT", body: JSON.stringify(brand) }),
 
+  applyRecipe: (projectIds: string[], recipe: { recipeId?: string; recipe?: unknown }) =>
+    request<{ applied: number; recipe: string; suggesting: boolean }>("/api/recipes/apply", { method: "POST", body: JSON.stringify({ projectIds, ...recipe }) }),
   giphyKey: () => request<{ key: string }>("/api/giphy-key"),
   addFromGiphy: (url: string, name: string) => request<Asset>("/api/library/from-giphy", { method: "POST", body: JSON.stringify({ url, name }) }),
   listAssets: () => request<Asset[]>("/api/library"),

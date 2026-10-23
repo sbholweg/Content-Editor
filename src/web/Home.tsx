@@ -3,7 +3,7 @@ import { APP_TAGLINE } from "../shared/app";
 import { plainHook } from "../shared/hookText";
 import { IDEA_STARTERS } from "../shared/library";
 import { buildTimeline } from "../shared/timeline";
-import type { Project } from "../shared/types";
+import type { Project, Recipe } from "../shared/types";
 import { api, onEngineEvents, projectFileUrl } from "./api";
 import { Starburst, TopNav } from "./Brandmark";
 
@@ -36,9 +36,33 @@ export function Home({ onOpen, onAuthError }: { onOpen: (id: string) => void; on
   const autopilot = useRef(true);
 
   const [brandReady, setBrandReady] = useState(true);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   useEffect(() => {
-    api.getBrand().then((b) => setBrandReady(b.setUp), onAuthError);
+    api.getBrand().then((b) => {
+      setBrandReady(b.setUp);
+      setRecipes(b.recipes);
+    }, onAuthError);
   }, [onAuthError]);
+
+  // Select mode: pick several reels and apply a recipe to all of them at once.
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [recipeId, setRecipeId] = useState("");
+  const [applyNote, setApplyNote] = useState("");
+  const toggle = (id: string) => setSelected((s) => { const next = new Set(s); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+  const applyToSelected = async () => {
+    const id = recipeId || recipes[0]?.id;
+    if (!id || !selected.size) return;
+    try {
+      const r = await api.applyRecipe([...selected], { recipeId: id });
+      setApplyNote(`“${r.recipe}” applied to ${r.applied} reel${r.applied === 1 ? "" : "s"}.${r.suggesting ? " Claude is suggesting graphics for each." : ""}`);
+      setSelected(new Set());
+      setSelecting(false);
+    } catch (err) {
+      onAuthError(err);
+      setApplyNote((err as Error).message);
+    }
+  };
 
   useEffect(() => {
     api.listProjects().then(setProjects, onAuthError);
@@ -143,12 +167,30 @@ export function Home({ onOpen, onAuthError }: { onOpen: (id: string) => void; on
         ) : null}
 
         <section className="reels-section">
+          {selecting ? (
+            <div className="select-bar">
+              <strong>{selected.size} selected</strong>
+              {recipes.length ? (
+                <>
+                  <select value={recipeId || recipes[0].id} onChange={(e) => setRecipeId(e.target.value)} aria-label="Recipe to apply">
+                    {recipes.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                  </select>
+                  <button className="btn primary small-btn" disabled={!selected.size} onClick={applyToSelected}>Apply recipe</button>
+                </>
+              ) : (
+                <span className="muted small">Save a recipe first: open a reel › Visuals › Recipes.</span>
+              )}
+              <button className="link" onClick={() => (setSelecting(false), setSelected(new Set()))}>Cancel</button>
+            </div>
+          ) : null}
+          {applyNote ? <p className="small">{applyNote}</p> : null}
           <div className="folder-tabs" role="tablist">
             {FOLDERS.map((f) => (
               <button key={f.id} role="tab" aria-selected={folder === f.id} className={folder === f.id ? "on" : ""} onClick={() => setFolder(f.id)}>
                 {f.label} <span className="count">{reels.filter((p) => folderOf(p) === f.id).length}</span>
               </button>
             ))}
+            {!selecting && shown.length ? <button className="select-toggle" onClick={() => setSelecting(true)}>Select</button> : null}
           </div>
 
           {shown.length === 0 ? (
@@ -159,7 +201,8 @@ export function Home({ onOpen, onAuthError }: { onOpen: (id: string) => void; on
                 const length = buildTimeline(p.words, p.durationMs, p.removePauses, p.silences, p.style.speed).durationMs;
                 const firstWord = p.words.find((w) => !w.cut);
                 return (
-                  <button key={p.id} className="reel-card" onClick={() => onOpen(p.id)}>
+                  <button key={p.id} className={`reel-card ${selecting && selected.has(p.id) ? "selected" : ""}`} onClick={() => (selecting ? toggle(p.id) : onOpen(p.id))} aria-pressed={selecting ? selected.has(p.id) : undefined}>
+                    {selecting ? <span className="select-dot" aria-hidden>{selected.has(p.id) ? "✓" : ""}</span> : null}
                     <div className="reel-thumb">
                       {p.status === "ready" ? (
                         <img src={projectFileUrl(p.id, `frame-${Math.round(p.coverMs ?? firstWord?.startMs ?? 500)}.jpg`)} alt="" loading="lazy" />

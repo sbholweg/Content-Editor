@@ -88,6 +88,9 @@ style and zoom. Save it as a named look with `npm run engine -- brand look.json`
 - "type the hook on" / "typewriter hook": `"style": {"hookAnimation": "typewriter"}` (a key click per
   letter, synced; with a hookSubText and an eyebrow/subhead layout, the small line types under the
   big one). `"pop"` goes back.
+- "save this as a recipe" / "use my Tuesday Tips recipe": recipes live in the brand kit (`looks` shows
+  them). Apply with `npm run engine -- recipe "<name>" <id|latest>` (no ids = every reel in To edit).
+  Saving one is easiest in the editor (Visuals › Recipes › Save this reel as a recipe).
 - "suggest graphics" / "add some graphics": `npm run engine -- suggest <id>`. They land on the reel
   marked SUGGESTED; tell them to keep, change or drop each in Visuals › Graphics, or do it for them:
   `"keepSuggestions": "all"` (or ids), `"removeMedia": ["ov-…"]`. To add one yourself:

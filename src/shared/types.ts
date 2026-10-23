@@ -74,6 +74,17 @@ export type ReelStyle = {
 
 export type SavedLook = { id: string; name: string; style: ReelStyle };
 
+// A recipe: the look (with speed, color grade, clean audio, zoom style…) plus what to add.
+export type Recipe = {
+  id: string;
+  name: string;
+  style: ReelStyle;
+  // Add sound effects by moment, and have Claude suggest graphics, when it's applied.
+  autoSounds: boolean;
+  suggestGraphics: boolean;
+  endCard: EndCard | null;
+};
+
 export type ColorRole = "primary" | "accent" | "background" | "text" | "extra";
 export type BrandColor = { hex: string; name: string; role: ColorRole };
 
@@ -96,6 +107,8 @@ export type BrandKit = {
   business: BusinessProfile;
   defaultStyle: ReelStyle;
   looks: SavedLook[];
+  // Saved recipes: a whole reel setup, applied to one or many reels in a tap.
+  recipes: Recipe[];
   // Calls to action the creator reuses, e.g. 'Comment "VA" for my checklist'.
   ctaKeywords: string[];
 };

@@ -231,6 +231,20 @@ const commands: Record<string, (args: string[]) => Promise<void>> = {
     console.log(`✓ Updated. The editor shows the change now.\n\n${describe(p, await call<Asset[]>("GET", "/api/library"))}`);
   },
 
+  // Applies a saved recipe to reels: recipe "<name>" <id|latest|to-edit> [more ids]
+  async recipe(args) {
+    const [name, ...targets] = args;
+    if (!name) return fail('Which recipe? e.g. npm run engine -- recipe "Tuesday Tips" latest');
+    let ids: string[] = [];
+    if (!targets.length || targets.includes("to-edit")) {
+      const all = await call<Project[]>("GET", "/api/projects");
+      ids = all.filter((p) => !p.parentId && !p.posted && p.render.status !== "done" && p.status === "ready").map((p) => p.id);
+    }
+    for (const t of targets.filter((x) => x !== "to-edit")) ids.push(await resolveId(t));
+    const r = await call<{ applied: number; recipe: string; suggesting: boolean }>("POST", "/api/recipes/apply", { recipeId: name, projectIds: ids });
+    console.log(`✓ "${r.recipe}" applied to ${r.applied} reel${r.applied === 1 ? "" : "s"}.${r.suggesting ? " Claude is suggesting graphics for each; they appear in the editor in a minute." : ""}`);
+  },
+
   // Claude suggests graphics for a reel (they wait for Keep / Change / Drop in the editor).
   async suggest(args) {
     const id = await resolveId(args[0]);
@@ -321,6 +335,7 @@ const commands: Record<string, (args: string[]) => Promise<void>> = {
     console.log(`Voice: ${JSON.stringify(brand.voice)}\n`);
     console.log(`Default look: ${JSON.stringify(brand.defaultStyle)}`);
     for (const l of brand.looks) console.log(`"${l.name}": ${JSON.stringify(l.style)}`);
+    for (const r of brand.recipes ?? []) console.log(`Recipe "${r.name}": ${r.autoSounds ? "adds sounds · " : ""}${r.suggestGraphics ? "suggests graphics · " : ""}${r.endCard ? `end card "${r.endCard.text}" · ` : ""}look ${JSON.stringify(r.style)}`);
     console.log(`\nBusiness: ${JSON.stringify(brand.business)}\nSaved calls to action: ${JSON.stringify(brand.ctaKeywords)}`);
   },
 
@@ -373,6 +388,7 @@ const HELP = `Engine commands (npm run engine -- <command>):
   import [files] [--do-it-all]  import clips (default: everything in the inbox folder)
   list                       list reels
   show [id|latest]           show a reel: words with numbers, hook, look, media, caption
+  recipe "<name>" [ids|to-edit]  apply a saved recipe to reels (default: everything in To edit)
   suggest [id|latest]        Claude suggests graphics (stickers, counting numbers, comment bubbles, GIFs)
   phone                      the link to open the editor on your phone (same Wi-Fi)
   tighten [id|latest]        cut pauses, ums, repeats and restarted sentences

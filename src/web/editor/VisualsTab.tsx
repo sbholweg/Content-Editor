@@ -6,6 +6,7 @@ import { LibraryBrowser, Modal, OverlayAdjust, Thumb } from "../Media";
 import { formatTime, useEditor } from "./context";
 import { LookGallery } from "./LookGallery";
 import { GraphicsCards } from "./GraphicsCards";
+import { RecipesCard } from "./Recipes";
 import { plainHook } from "../../shared/hookText";
 import { CaptionsPanel, ColorPanel, FontsPanel, HookPanel } from "./panels";
 
@@ -33,6 +34,7 @@ export function VisualsTab({ previewProps }: { previewProps: ReelProps }) {
           <button className={view === "lines" ? "on" : ""} onClick={() => setView("lines")}>Lines & media</button>
         </div>
       </section>
+      <RecipesCard />
       <GraphicsCards />
       {view === "style" ? <StyleView previewProps={previewProps} /> : <LinesView />}
     </>

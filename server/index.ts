@@ -6,10 +6,10 @@ import express from "express";
 import multer from "multer";
 import { z } from "zod";
 import { autoSounds } from "../src/shared/autoSounds.ts";
-import { normalizeBrand, normalizeStyle } from "../src/shared/brand.ts";
+import { normalizeBrand, normalizeStyle, recipeChanges } from "../src/shared/brand.ts";
 import { applyEdits, ReelEdits } from "../src/shared/edits.ts";
 import { draftSlides } from "../src/shared/repurpose.ts";
-import type { BrandKit, MusicBed, Overlay, Project, ReelNote, Slide, SlideFormat, SoundCue, Word } from "../src/shared/types.ts";
+import type { BrandKit, MusicBed, Overlay, Project, Recipe, ReelNote, Slide, SlideFormat, SoundCue, Word } from "../src/shared/types.ts";
 import { tighten } from "../src/shared/words.ts";
 import { accessToken, checkPassword, requireAuth } from "./auth.ts";
 import { writeCaption } from "./caption.ts";
@@ -363,6 +363,30 @@ app.put("/api/brand", async (req, res) => {
   const brand = normalizeBrand({ ...(await readBrand()), ...(req.body as Partial<BrandKit>) });
   await writeBrand(brand);
   res.json(brand);
+});
+
+// Applies a saved recipe (or one sent inline, like "my last reel's settings") to one or many reels.
+app.post("/api/recipes/apply", async (req, res) => {
+  const brand = await readBrand();
+  const inline = req.body?.recipe as Recipe | undefined;
+  const recipe = inline ? normalizeBrand({ recipes: [inline] }).recipes[0] : brand.recipes.find((r) => r.id === req.body?.recipeId || r.name.toLowerCase() === String(req.body?.recipeId ?? "").toLowerCase());
+  if (!recipe) return res.status(404).json({ error: "No recipe with that name." });
+  const ids: string[] = Array.isArray(req.body?.projectIds) ? req.body.projectIds.map(String) : [];
+  const library = await listAssets();
+  const done: string[] = [];
+  for (const id of ids) {
+    if (!(await readProject(id))) continue;
+    const updated = await updateProject(id, (p) => recipeChanges(p, recipe, (q) => autoSounds(q, library)));
+    if (updated.style.cleanAudio) void ensureCleanAudio(id);
+    if (recipe.suggestGraphics) {
+      // Claude's suggestions take a little while; they arrive in the editor when ready.
+      void suggestGraphics(updated.words, library, { ...brand.business, voice: brand.voice })
+        .then(({ overlays }) => updateProject(id, (p) => ({ overlays: [...p.overlays.filter((o) => !o.suggested), ...overlays] })))
+        .catch((err) => console.error("Recipe graphics failed:", err));
+    }
+    done.push(id);
+  }
+  res.json({ applied: done.length, recipe: recipe.name, suggesting: recipe.suggestGraphics });
 });
 
 app.get("/api/library", async (_req, res) => {
