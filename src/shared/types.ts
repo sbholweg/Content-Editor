@@ -58,6 +58,8 @@ export type ReelStyle = {
   fontSize: number;
   // Punch in and out between lines (hides cuts, keeps it moving).
   zoomJumps: boolean;
+  // Which kind of zoom, when zooms are on.
+  zoomStyle: "lines" | "keywords" | "push" | "crash";
   // Playback speed of the talking (1 = normal; 1.2 is a popular, energetic talking-reel speed).
   speed: number;
   // Clean audio: less background noise, even volume, social-media loudness (uses video-clean.mp4).

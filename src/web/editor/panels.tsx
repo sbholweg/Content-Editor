@@ -4,6 +4,7 @@ import { outputFrames, Reel, REEL_FPS, REEL_HEIGHT, REEL_WIDTH } from "../../rem
 import { swatchesFor } from "../../shared/brand";
 import { FONT_GROUPS } from "../../shared/fonts";
 import { GRADES } from "../../shared/grade";
+import { ZOOM_STYLES } from "../../shared/zoom";
 import { HOOK_LIBRARY } from "../../shared/library";
 import type { HookLayout, ReelProps, ReelStyle } from "../../shared/types";
 import { api } from "../api";
@@ -117,8 +118,11 @@ export function CaptionsPanel() {
       )}
       <label className="check">
         <input type="checkbox" checked={look.zoomJumps} onChange={(e) => set("zoomJumps", e.target.checked)} />
-        Zoom jumps (punch in on every other line)
+        Zooms (keep it moving and hide the cuts)
       </label>
+      {look.zoomJumps ? (
+        <Options value={look.zoomStyle ?? "lines"} onChange={(v) => set("zoomStyle", v)} options={ZOOM_STYLES} />
+      ) : null}
     </div>
   );
 }

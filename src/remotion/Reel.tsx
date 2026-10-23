@@ -1,5 +1,6 @@
 import React, { useId, useMemo } from "react";
 import { gradeMatrix } from "../shared/grade";
+import { zoomAt } from "../shared/zoom";
 import { AbsoluteFill, Audio, Img, OffthreadVideo, Sequence, useCurrentFrame } from "remotion";
 import { buildLines } from "../shared/lines";
 import { overlayTimes } from "../shared/overlays";
@@ -27,10 +28,9 @@ export const Reel: React.FC<ReelProps> = (props) => {
   const speed = brand.speed || 1;
   const timeline = useMemo(() => buildTimeline(words, durationMs, removePauses, silences, speed), [words, durationMs, removePauses, silences, speed]);
   const frame = useCurrentFrame();
-  const lineStarts = useMemo(() => buildLines(timeline.words).map((l) => l.words[0].startMs), [timeline]);
+  const lineSpans = useMemo(() => buildLines(timeline.words).map((l) => ({ startMs: l.words[0].startMs, endMs: l.words[l.words.length - 1].endMs })), [timeline]);
   // Zoom jumps: every other line is punched in a little, switching right as the line starts.
-  const lineIndex = lineStarts.filter((ms) => ms <= (frame / REEL_FPS) * 1000).length - 1;
-  const zoom = brand.zoomJumps && lineIndex % 2 === 1 ? 1.14 : 1;
+  const { scale: zoom, shake } = brand.zoomJumps ? zoomAt(brand.zoomStyle ?? "lines", (frame / REEL_FPS) * 1000, lineSpans, timeline.words) : { scale: 1, shake: 0 };
   const placed = useMemo(() => overlayTimes(overlays ?? [], words, timeline.words), [overlays, words, timeline]);
   // Color grading is an SVG color matrix on the video layer only (captions and graphics keep their colors).
   const grade = gradeMatrix(brand.grade, props.colorStats);
@@ -56,7 +56,7 @@ export const Reel: React.FC<ReelProps> = (props) => {
           </filter>
         </svg>
       ) : null}
-      <AbsoluteFill style={{ transform: `scale(${zoom})`, transformOrigin: "50% 38%", filter: grade ? `url(#${gradeId})` : undefined }}>
+      <AbsoluteFill style={{ transform: `scale(${zoom}) rotate(${shake}deg)`, transformOrigin: "50% 38%", filter: grade ? `url(#${gradeId})` : undefined }}>
         {videoSrc
           ? pieces.map((p) => (
               <Sequence key={`${p.start}-${p.length}`} from={p.from} durationInFrames={p.length} premountFor={REEL_FPS}>

@@ -25,6 +25,7 @@ export const DEFAULT_STYLE: ReelStyle = {
   uppercase: false,
   fontSize: 64,
   zoomJumps: false,
+  zoomStyle: "lines",
   speed: 1,
   grade: "off",
   cleanAudio: false,
