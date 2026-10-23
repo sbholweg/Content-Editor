@@ -109,7 +109,16 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   const pending = useRef<Partial<ReelState>>({});
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const lastLocalEdit = useRef(0);
-  const update = useCallback(
+  // Undo / redo: the reel as it was before each change. Quick bursts of the same kind of change
+  // (typing the hook, dragging something) count as one step.
+  const reelRef = useRef<ReelState | null>(null);
+  reelRef.current = reel;
+  const past = useRef<ReelState[]>([]);
+  const future = useRef<ReelState[]>([]);
+  const lastStep = useRef({ at: 0, keys: "" });
+  const [, setHistoryVersion] = useState(0);
+
+  const save = useCallback(
     (patch: Partial<ReelState>) => {
       lastLocalEdit.current = Date.now();
       setReel((prev) => (prev ? { ...prev, ...patch } : prev));
@@ -125,6 +134,63 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
     },
     [id, onAuthError],
   );
+
+  const update = useCallback(
+    (patch: Partial<ReelState>) => {
+      const before = reelRef.current;
+      if (before) {
+        const keys = Object.keys(patch).sort().join(",");
+        const now = Date.now();
+        if (now - lastStep.current.at > 700 || keys !== lastStep.current.keys) {
+          past.current = [...past.current.slice(-99), before];
+          future.current = [];
+          setHistoryVersion((v) => v + 1);
+        }
+        lastStep.current = { at: now, keys };
+      }
+      save(patch);
+    },
+    [save],
+  );
+
+  // Puts back a whole earlier (or later) version of the reel, saving only what differs.
+  const restore = useCallback(
+    (from: React.MutableRefObject<ReelState[]>, to: React.MutableRefObject<ReelState[]>) => {
+      const current = reelRef.current;
+      const target = from.current.at(-1);
+      if (!current || !target) return;
+      from.current = from.current.slice(0, -1);
+      to.current = [...to.current, current];
+      lastStep.current = { at: 0, keys: "" };
+      const changed = Object.fromEntries(
+        (Object.keys(target) as (keyof ReelState)[]).filter((k) => JSON.stringify(target[k]) !== JSON.stringify(current[k])).map((k) => [k, target[k]]),
+      ) as Partial<ReelState>;
+      if (Object.keys(changed).length) save(changed);
+      setHistoryVersion((v) => v + 1);
+    },
+    [save],
+  );
+  const undo = useCallback(() => restore(past, future), [restore]);
+  const redo = useCallback(() => restore(future, past), [restore]);
+
+  // Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z (or Ctrl+Y), except while typing in a box, which has its own undo.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest("input, textarea, select, [contenteditable]")) return;
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const key = e.key.toLowerCase();
+      if (key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if ((key === "z" && e.shiftKey) || key === "y") {
+        e.preventDefault();
+        redo();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [undo, redo]);
 
   // When Claude (or another tab) changes this reel, show it right away. Changes are only
   // taken over when you haven't edited in the last couple of seconds, so typing isn't lost.
@@ -337,6 +403,10 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
               </button>
             ))}
           </nav>
+          <div className="history" role="group" aria-label="Undo and redo">
+            <button className="icon-btn" onClick={undo} disabled={!past.current.length} aria-label="Undo" title="Undo (Ctrl+Z)">↶</button>
+            <button className="icon-btn" onClick={redo} disabled={!future.current.length} aria-label="Redo" title="Redo (Ctrl+Shift+Z)">↷</button>
+          </div>
           <div className={`head-actions ${tab === "finish" ? "on-finish" : ""}`}>
             {savedAt ? <span className="saved muted small">Saved {savedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span> : null}
             {tab === "finish" ? exportControls : <button className="btn primary small-btn" onClick={() => setTab(TABS[current + 1].id)}>{TABS[current].next} ›</button>}
