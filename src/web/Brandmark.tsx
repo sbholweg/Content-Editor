@@ -35,13 +35,14 @@ export function Sparkle({ className, fill = "var(--violet)" }: { className?: str
   );
 }
 
-export function TopNav({ active, right }: { active: "reels" | "brand"; right?: React.ReactNode }) {
+export function TopNav({ active, right }: { active: "reels" | "brand" | "prompter"; right?: React.ReactNode }) {
   return (
     <header className="topnav">
       <Brandmark />
       <nav className="topnav-links">
         <a className={active === "reels" ? "on" : ""} href="#">Reels</a>
         <a className={active === "brand" ? "on" : ""} href="#/brand">Brand kit</a>
+        <a className={active === "prompter" ? "on" : ""} href="#/prompter">Teleprompter</a>
       </nav>
       <div className="topnav-right">
         <PhoneButton className="chip phone-btn" />

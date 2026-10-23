@@ -234,7 +234,9 @@ export function Home({ onOpen, onAuthError }: { onOpen: (id: string) => void; on
                 <div className="label">{g.category}</div>
                 <ul>
                   {g.ideas.map((idea) => (
-                    <li key={idea}>{idea}</li>
+                    <li key={idea}>
+                      {idea} <a className="small" href={`#/prompter?idea=${encodeURIComponent(idea)}`}>✍️ Script it</a>
+                    </li>
                   ))}
                 </ul>
               </div>

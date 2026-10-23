@@ -19,6 +19,7 @@ import { subscribe } from "./events.ts";
 import { planEdit } from "./highlights.ts";
 import { smartCut } from "./smartcut.ts";
 import { phoneLinks } from "./phone.ts";
+import { writeScript } from "./script.ts";
 import { ensureCleanAudio } from "./cleanaudio.ts";
 import { suggestGraphics } from "./graphics.ts";
 import { colorStats, detectSilences, extractAudio, normalizeVideo, probe } from "./media.ts";
@@ -363,6 +364,16 @@ app.put("/api/brand", async (req, res) => {
   const brand = normalizeBrand({ ...(await readBrand()), ...(req.body as Partial<BrandKit>) });
   await writeBrand(brand);
   res.json(brand);
+});
+
+// Teleprompter: Claude writes a script from an idea, in the creator's voice.
+app.post("/api/script", async (req, res) => {
+  const idea = String(req.body?.idea ?? "").trim().slice(0, 500);
+  if (!idea) return res.status(400).json({ error: "What's the reel about?" });
+  const brand = await readBrand();
+  const script = await writeScript(idea, { ...brand.business, voice: brand.voice });
+  if (!script) return res.status(503).json({ error: "Claude isn't available right now. Write the script yourself, or try again in a minute." });
+  res.json({ script });
 });
 
 // Applies a saved recipe (or one sent inline, like "my last reel's settings") to one or many reels.

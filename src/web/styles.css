@@ -652,3 +652,20 @@ a.btn.primary { color: #fff; }
 .select-dot { position: absolute; z-index: 2; top: 10px; right: 10px; width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; background: rgba(17, 16, 20, 0.35); color: var(--ink); display: grid; place-items: center; font-weight: 800; }
 .reel-card.selected .select-dot { background: var(--lime); border-color: var(--ink); }
 .reel-card.selected .reel-thumb { outline: 3px solid var(--violet); outline-offset: 2px; }
+
+/* Teleprompter */
+.script-box { width: 100%; font: inherit; font-size: 16px; line-height: 1.6; padding: 14px; border: 1px solid var(--line); border-radius: 12px; resize: vertical; background: #fff; }
+.prompter { position: fixed; inset: 0; background: var(--ink); color: #fff; display: flex; flex-direction: column; z-index: 50; }
+.prompter-cam { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); opacity: 0.35; }
+.prompter-text { position: relative; flex: 1; overflow-y: auto; padding: 0 max(24px, 8vw); font-family: "DM Sans", sans-serif; font-weight: 700; line-height: 1.35; scrollbar-width: none; cursor: pointer;
+  mask-image: linear-gradient(transparent, #000 18%, #000 70%, transparent); -webkit-mask-image: linear-gradient(transparent, #000 18%, #000 70%, transparent); }
+.prompter-text p { margin: 0 0 0.5em; max-width: 900px; margin-inline: auto; }
+.prompter-pad { height: 33vh; }
+.prompter-guide { position: absolute; left: 0; right: 0; top: 33vh; border-top: 3px solid var(--lime); opacity: 0.7; pointer-events: none; }
+.prompter-count { position: absolute; inset: 0; display: grid; place-items: center; font-family: Anton, sans-serif; font-size: 34vmin; color: var(--lime); pointer-events: none; }
+.prompter-controls { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: rgba(17, 16, 20, 0.92); border-top: 1px solid #2c2a33; }
+.prompter-controls .chip { color: var(--ink); }
+.prompter-controls .btn.primary { background: var(--violet); border-color: var(--violet); box-shadow: 3px 3px 0 var(--lime); }
+.prompter-controls .btn.rec { background: #e5484d; border-color: #e5484d; }
+.prompter-slider { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #cfcbd6; }
+.prompter-slider input { width: 110px; }

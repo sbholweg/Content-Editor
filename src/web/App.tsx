@@ -5,9 +5,11 @@ import { api, AuthError, setToken } from "./api";
 import { BrandKitPage } from "./BrandKit";
 import { Editor } from "./Editor";
 import { Home } from "./Home";
+import { Teleprompter } from "./Teleprompter";
 
 function currentRoute() {
   if (window.location.hash.startsWith("#/brand")) return "brand";
+  if (window.location.hash.startsWith("#/prompter")) return "prompter";
   const match = window.location.hash.match(/^#\/p\/([a-z0-9-]+)/);
   return match ? match[1] : null;
 }
@@ -50,6 +52,8 @@ export function App() {
   if (!authed) return <Login onDone={() => setAuthed(true)} />;
 
   if (projectId === "brand") return <BrandKitPage onBack={() => (window.location.hash = "")} onAuthError={onAuthError} />;
+
+  if (projectId === "prompter") return <Teleprompter onAuthError={onAuthError} onOpenReel={(id) => (window.location.hash = `#/p/${id}`)} />;
 
   return projectId ? (
     <Editor key={projectId} id={projectId} onBack={() => (window.location.hash = "")} onAuthError={onAuthError} />
