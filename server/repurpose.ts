@@ -1,3 +1,4 @@
+import { plainHook } from "../src/shared/hookText.ts";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { renderStill, selectComposition } from "@remotion/renderer";
@@ -58,7 +59,7 @@ export async function renderSlides(project: Project, format: SlideFormat): Promi
     if (f.startsWith(format === "carousel" ? "carousel-" : "story-") && !names.includes(f)) await fs.rm(projectFile(project.id, f));
   }
 
-  const slug = (project.hookText || project.originalName).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "reel";
+  const slug = (plainHook(project.hookText) || project.originalName).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "reel";
   const dir = path.join(config.outputsDir, `${project.createdAt.slice(0, 10)}-${slug}-${format}-${project.id.slice(0, 6)}`);
   await fs.rm(dir, { recursive: true, force: true });
   await fs.mkdir(dir, { recursive: true });

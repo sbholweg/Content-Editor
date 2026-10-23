@@ -1,5 +1,6 @@
 import React from "react";
 import { Audio, interpolate, Sequence, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { hookParts, plainHook } from "../shared/hookText";
 import { typedLine, typeTimes } from "../shared/typewriter";
 import { SFX_MIX } from "./Sounds";
 import type { ReelStyle } from "../shared/types";
@@ -16,19 +17,53 @@ const SHADOW = "0 2px 8px rgba(0,0,0,0.35), 0 6px 40px rgba(0,0,0,0.35)";
 
 // The title on the reel ("nobody's saying it, so I will"), optionally with a smaller second line:
 // above it ("eyebrow") or below it ("subhead").
-// A line that types on: every character keeps its place (so the line never jumps), unrevealed
-// ones are invisible, and a caret blinks at the end while it's typing.
-const Typed: React.FC<{ times: ReturnType<typeof typeTimes>; ms: number; color: string }> = ({ times, ms, color }) => {
-  const shown = times.filter((t) => t.atMs <= ms).length;
-  const typing = shown < times.length;
+// The style for *starred* hook words: the brand's accent font, in a block of the key color (or
+// just colored), so one word carries the brand's signature like on a brand board.
+function accentStyle(brand: ReelStyle, visible: boolean): React.CSSProperties {
+  const accent = getFont(brand.accentFont || "Instrument Serif");
+  const base: React.CSSProperties = { fontFamily: accent.fontFamily, fontWeight: accent.fontWeight, fontStyle: accent.fontStyle, fontSize: "1.06em" };
+  if (brand.hookAccent === "color") return { ...base, color: brand.highlightColor };
+  return {
+    ...base,
+    color: brand.highlightTextColor,
+    background: visible ? brand.highlightColor : "transparent",
+    textShadow: "none",
+    padding: "0 0.14em",
+    borderRadius: "0.12em",
+    boxDecorationBreak: "clone",
+    WebkitBoxDecorationBreak: "clone",
+  };
+}
+
+// A hook line, with any *starred* words in the accent style. When typing on, every character keeps
+// its place (so the line never jumps), unrevealed ones are invisible, and a caret blinks at the end.
+const HookLine: React.FC<{ text: string; brand: ReelStyle; times?: ReturnType<typeof typeTimes>; ms?: number; caretColor: string }> = ({
+  text, brand, times, ms = 0, caretColor,
+}) => {
+  const shown = times ? times.filter((t) => t.atMs <= ms).length : Infinity;
+  const typing = times ? shown < times.length : false;
+  let index = 0;
   return (
     <>
-      {times.map((t, i) => (
-        <span key={i} style={{ opacity: i < shown ? 1 : 0 }}>
-          {t.char}
-          {typing && i === shown - 1 ? <span style={{ position: "absolute", marginLeft: 2, color, opacity: Math.floor(ms / 400) % 2 ? 0.2 : 1 }}>|</span> : null}
-        </span>
-      ))}
+      {hookParts(text).map((part, p) => {
+        const first = index;
+        const chars = [...part.text].map((c) => {
+          const i = index++;
+          return (
+            <span key={i} style={{ opacity: i < shown ? 1 : 0 }}>
+              {c}
+              {typing && i === shown - 1 ? <span style={{ position: "absolute", marginLeft: 2, color: caretColor, opacity: Math.floor(ms / 400) % 2 ? 0.2 : 1 }}>|</span> : null}
+            </span>
+          );
+        });
+        return part.accent ? (
+          <span key={p} style={accentStyle(brand, first < shown)}>
+            {chars}
+          </span>
+        ) : (
+          <React.Fragment key={p}>{chars}</React.Fragment>
+        );
+      })}
     </>
   );
 };
@@ -51,9 +86,11 @@ export const Hook: React.FC<{ text: string; subText: string; brand: ReelStyle; t
   const ms = (frame / fps) * 1000;
   const typewriter = brand.hookAnimation === "typewriter";
   const typed = typedLine(text, layout === "headline" ? "" : subText);
-  const times = typewriter ? typeTimes(typed.text, typed.startMs, (endFrame / fps) * 1000) : [];
-  const subContent = typewriter && typed.line === "sub" ? <Typed times={times} ms={ms} color={brand.textColor} /> : subText;
-  const mainContent = typewriter && typed.line === "main" ? <Typed times={times} ms={ms} color={brand.hookColor} /> : text;
+  const times = typewriter ? typeTimes(plainHook(typed.text), typed.startMs, (endFrame / fps) * 1000) : [];
+  const typedSub = typewriter && typed.line === "sub";
+  const typedMain = typewriter && typed.line === "main";
+  const subContent = <HookLine text={subText} brand={brand} times={typedSub ? times : undefined} ms={ms} caretColor={brand.textColor} />;
+  const mainContent = <HookLine text={text} brand={brand} times={typedMain ? times : undefined} ms={ms} caretColor={brand.hookColor} />;
   const second = (
     <div
       style={{

@@ -1,3 +1,4 @@
+import { plainHook } from "../shared/hookText";
 import React, { useEffect, useState } from "react";
 import type { Asset, Project } from "../shared/types";
 import { api, mediaUrl } from "./api";
@@ -62,7 +63,7 @@ export function TrialReelsCard({ projectId, onOpen, onAuthError }: { projectId: 
             <div key={t.id} className="trial">
               <div className="grow left">
                 <span className="tag">{t.variantLabel}</span>
-                <strong className="trial-hook">{t.hookText}</strong>
+                <strong className="trial-hook">{plainHook(t.hookText)}</strong>
                 {t.kind === "broll" ? <span className="muted small">b-roll · {Math.round((t.broll?.lengthMs ?? 7000) / 1000)}s · caption ready</span> : null}
                 {t.render.status === "rendering" ? (
                   <div className="bar"><div style={{ width: `${t.render.progress * 100}%` }} /></div>

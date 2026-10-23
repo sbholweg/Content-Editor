@@ -40,6 +40,21 @@ export function CaptionsPanel() {
           { value: "pill", label: "Bubble", note: "colour block behind the word" },
           { value: "color", label: "Coloured text", note: "the word changes colour" },
           { value: "serif", label: "Serif word", note: "coloured, in your hook font" },
+          { value: "accent", label: "Accent word", note: "in your accent font, like your brand board" },
+          { value: "swipe", label: "Highlighter", note: "a marker swipe draws across it" },
+          { value: "underline", label: "Underline", note: "an underline draws itself" },
+        ]}
+      />
+      <Label>How lines come in</Label>
+      <Options
+        value={look.captionAnimation ?? "pop"}
+        onChange={(v) => set("captionAnimation", v)}
+        options={[
+          { value: "pop", label: "Pop", note: "a quick spring" },
+          { value: "bounce", label: "Bounce", note: "playful, overshoots" },
+          { value: "slide", label: "Slide up", note: "smooth and calm" },
+          { value: "fade", label: "Fade", note: "soft, minimal" },
+          { value: "reveal", label: "Word by word", note: "each word appears as it's said" },
         ]}
       />
       <Label>Caption position</Label>
@@ -186,6 +201,16 @@ export function HookPanel({ previewProps }: { previewProps: ReelProps }) {
         ))}
       </div>
 
+      <Label>Your signature word</Label>
+      <p className="muted small">Put *stars* around a word in the hook (like “nobody tells you this about *clients*”) to give it your accent font.</p>
+      <Options
+        value={look.hookAccent ?? "block"}
+        onChange={(v) => set("hookAccent", v)}
+        options={[
+          { value: "block", label: "Color block", note: "accent font in a block of your color" },
+          { value: "color", label: "Colored word", note: "accent font in your color" },
+        ]}
+      />
       <Label>How it appears</Label>
       <Options
         value={look.hookAnimation ?? "pop"}
@@ -274,8 +299,11 @@ export function FontsPanel() {
 
       <Label>Caption font</Label>
       <FontPicker value={look.font} yours={yours} onChange={(v) => set("font", v)} />
-      <Label>Hook & accent font</Label>
+      <Label>Hook font</Label>
       <FontPicker value={look.displayFont} yours={yours} onChange={(v) => set("displayFont", v)} />
+      <Label>Accent font</Label>
+      <p className="muted small">For the *starred* word in your hook and “Accent word” key words. An italic serif or a script looks great.</p>
+      <FontPicker value={look.accentFont ?? "Instrument Serif"} yours={yours} onChange={(v) => set("accentFont", v)} />
 
       <div className="divider" />
       <div className="colors-grid">

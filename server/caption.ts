@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { BrandVoice, BusinessProfile, Word } from "../src/shared/types.ts";
+import { plainHook } from "../src/shared/hookText.ts";
 import { businessContext } from "./highlights.ts";
 import { askClaudeCode } from "./claude-cli.ts";
 import { config } from "./config.ts";
@@ -20,7 +21,7 @@ export async function writeCaption(opts: { words: Word[]; hook: string; business
   const spoken = opts.words.filter((w) => !w.cut).map((w) => w.text).join(" ");
   const cta = opts.cta.trim() || opts.business.cta.trim();
   const request =
-    businessContext({ ...opts.business, cta }) + (opts.hook ? `On-screen hook: ${opts.hook}\n\n` : "") + `What they say in the reel:\n${spoken}`;
+    businessContext({ ...opts.business, cta }) + (opts.hook ? `On-screen hook: ${plainHook(opts.hook)}\n\n` : "") + `What they say in the reel:\n${spoken}`;
   if (!process.env.ANTHROPIC_API_KEY) {
     const reply = await askClaudeCode(`${SYSTEM}\n\n${request}`);
     return reply ?? templateCaption(opts.hook, spoken, cta);
@@ -51,6 +52,7 @@ export async function writeCaption(opts: { words: Word[]; hook: string; business
 // Used when no Claude API key is configured: a simple, editable starting point.
 function templateCaption(hook: string, spoken: string, cta: string) {
   const firstSentences = spoken.match(/[^.!?]+[.!?]/g)?.slice(0, 2).join(" ").trim() ?? spoken.slice(0, 200);
+  hook = plainHook(hook);
   return [hook ? hook.charAt(0).toUpperCase() + hook.slice(1) : "", "", firstSentences, "", cta || "Save this for later 💜"]
     .join("\n")
     .trim();

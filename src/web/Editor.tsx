@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { registerCustomFonts } from "../remotion/fonts";
 import { outputFrames, Reel, REEL_FPS, REEL_HEIGHT, REEL_WIDTH } from "../remotion/Reel";
 import { buildLines } from "../shared/lines";
+import { plainHook } from "../shared/hookText";
 import { reelProps } from "../shared/props";
 import { buildTimeline } from "../shared/timeline";
 import type { Asset, BrandKit, Project } from "../shared/types";
@@ -322,7 +323,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
         <header className="studio-head">
           <button className="link" onClick={onBack}>‹ My reels</button>
           <div className="studio-title">
-            <strong>{reel.hookText || project.originalName}</strong>
+            <strong>{plainHook(reel.hookText) || project.originalName}</strong>
             <span className="muted small mono">
               {project.variantLabel ? `trial reel · ${project.variantLabel} · ` : ""}
               raw {formatTime(project.durationMs)} → reel {formatTime(timeline.durationMs)}

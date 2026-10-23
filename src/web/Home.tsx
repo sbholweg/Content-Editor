@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { APP_TAGLINE } from "../shared/app";
+import { plainHook } from "../shared/hookText";
 import { IDEA_STARTERS } from "../shared/library";
 import { buildTimeline } from "../shared/timeline";
 import type { Project } from "../shared/types";
@@ -166,10 +167,10 @@ export function Home({ onOpen, onAuthError }: { onOpen: (id: string) => void; on
                       <span className={`status ${p.status === "error" ? "bad" : ""}`}>
                         {p.status === "processing" ? "Working…" : p.status === "error" ? "Problem" : p.render.status === "rendering" ? "Exporting…" : fmt(length)}
                       </span>
-                      {p.hookText ? <span className="thumb-hook">{p.hookText}</span> : null}
+                      {p.hookText ? <span className="thumb-hook">{plainHook(p.hookText)}</span> : null}
                     </div>
                     <div className="reel-meta">
-                      <strong>{p.hookText || p.words.slice(0, 6).map((w) => w.text).join(" ") || p.originalName}</strong>
+                      <strong>{plainHook(p.hookText) || p.words.slice(0, 6).map((w) => w.text).join(" ") || p.originalName}</strong>
                       <span className="muted small">
                         {new Date(p.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                         {trialCount(p.id) ? ` · ${trialCount(p.id)} trial reels` : ""}

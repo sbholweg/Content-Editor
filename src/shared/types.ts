@@ -10,7 +10,7 @@ export type Word = {
 };
 
 // How key words stand out: a colored bubble behind the word, colored text, or colored text in the display font.
-export type KeyWordStyle = "pill" | "color" | "serif";
+export type KeyWordStyle = "pill" | "color" | "serif" | "accent" | "swipe" | "underline";
 export type CaptionMode = "phrase" | "single" | "karaoke";
 export type TextEffect = "shadow" | "outline";
 export type CaptionPosition = "top" | "middle" | "bottom";
@@ -37,6 +37,12 @@ export type ReelStyle = {
   hookLayout: HookLayout;
   // How the hook appears: pops in, or types on letter by letter with a key click per letter.
   hookAnimation: "pop" | "typewriter";
+  // Words in the hook marked with *stars*: in the accent font inside a key-color block, or just colored.
+  hookAccent: "block" | "color";
+  // The brand's accent font (an italic serif or script) for *starred* hook words and "accent" key words.
+  accentFont: string;
+  // How each caption line arrives.
+  captionAnimation: "pop" | "bounce" | "slide" | "fade" | "reveal";
   // How long the hook stays on screen. 0 = the whole video.
   hookDurationMs: number;
   textColor: string;

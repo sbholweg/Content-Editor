@@ -9,6 +9,9 @@ export const DEFAULT_STYLE: ReelStyle = {
   hookPlace: null,
   hookLayout: "headline",
   hookAnimation: "pop",
+  hookAccent: "block",
+  accentFont: "Instrument Serif",
+  captionAnimation: "pop",
   hookDurationMs: 5000,
   textColor: "#FFFFFF",
   outlineColor: "#000000",
@@ -94,7 +97,7 @@ export function swatchesFor(brand: Pick<BrandKit, "palette"> | null | undefined)
 // Points new reels at the brand: its fonts and main color become the default look.
 export function styleFromBrand(brand: BrandKit, base: ReelStyle): ReelStyle {
   const primary = brand.palette.find((c) => c.role === "primary")?.hex ?? base.highlightColor;
-  return { ...base, font: brand.fonts.body, displayFont: brand.fonts.headline, highlightColor: primary };
+  return { ...base, font: brand.fonts.body, displayFont: brand.fonts.headline, accentFont: brand.fonts.accent || base.accentFont, highlightColor: primary };
 }
 
 // The brand colors slides are drawn with (falls back to the reel's colors).

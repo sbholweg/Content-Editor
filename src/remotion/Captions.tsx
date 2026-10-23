@@ -46,20 +46,35 @@ export const Captions: React.FC<{ words: Word[]; brand: ReelStyle; hookText: str
   const timeMs = (frame / fps) * 1000;
   const base = getFont(brand.font);
   const display = getFont(brand.displayFont);
+  const accent = getFont(brand.accentFont || "Instrument Serif");
 
   const single = brand.captionMode === "single";
+  const soft = brand.textEffect === "shadow";
   const perPage = single ? 1 : brand.wordsPerLine;
   const pages = useMemo(() => buildPages(words, perPage), [words, perPage]);
   const page = pages.find((p) => timeMs >= p.startMs && timeMs < p.endMs);
   if (!page || brand.captionsOn === false) return null;
 
   const pageFrame = Math.round((page.startMs / 1000) * fps);
-  const pageIn = spring({ frame: frame - pageFrame, fps, config: { damping: 14, stiffness: 180 } });
+  const animation = brand.captionAnimation ?? "pop";
+  // How each line arrives: a springy pop (default), a bounce, sliding up, fading, or word by word.
+  const pageIn = spring({
+    frame: frame - pageFrame,
+    fps,
+    config: animation === "bounce" ? { damping: 7, stiffness: 170 } : animation === "slide" ? { damping: 18, stiffness: 160 } : { damping: 14, stiffness: 180 },
+  });
+  const lineMotion =
+    animation === "bounce"
+      ? `translateY(${(1 - pageIn) * 70}px) scale(${0.8 + 0.2 * pageIn})`
+      : animation === "slide"
+        ? `translateY(${(1 - pageIn) * 50}px)`
+        : animation === "fade" || animation === "reveal"
+          ? ""
+          : `scale(${soft && !single ? 1 : 0.85 + 0.15 * pageIn})`;
   const emojiWord = page.words.find((w) => w.emoji && timeMs >= w.startMs);
   const emojiIn = emojiWord
     ? spring({ frame: frame - Math.round((emojiWord.startMs / 1000) * fps), fps, config: { damping: 9, stiffness: 160 } })
     : 0;
-  const soft = brand.textEffect === "shadow";
   const fontSize = single ? brand.fontSize * 1.35 : brand.fontSize;
   const hookVisible = hookText.trim() !== "" && (brand.hookDurationMs === 0 || timeMs < brand.hookDurationMs);
 
@@ -71,8 +86,8 @@ export const Captions: React.FC<{ words: Word[]; brand: ReelStyle; hookText: str
         left: brand.captionAlign === "right" ? "58%" : 70,
         right: brand.captionAlign === "left" ? "58%" : 70,
         top: `${captionTop(brand, hookVisible)}%`,
-        transform: `translateY(-50%) scale(${soft && !single ? 1 : 0.85 + 0.15 * pageIn})`,
-        opacity: Math.min(1, pageIn * 1.5),
+        transform: `translateY(-50%) ${lineMotion}`,
+        opacity: animation === "fade" ? Math.min(1, pageIn) : Math.min(1, pageIn * 1.5),
         display: "flex",
         flexDirection: "column",
         alignItems: brand.captionAlign === "left" ? "flex-start" : brand.captionAlign === "right" ? "flex-end" : "center",
@@ -90,7 +105,7 @@ export const Captions: React.FC<{ words: Word[]; brand: ReelStyle; hookText: str
           const active = spoken && timeMs < w.endMs + 80;
           const wordIn = spring({ frame: frame - Math.round((w.startMs / 1000) * fps), fps, config: { damping: 12, stiffness: 220 } });
           return (
-            <CaptionWord key={w.id} word={w} brand={brand} fontSize={fontSize} base={base} display={display} spoken={spoken} active={active} wordIn={spoken ? wordIn : 0} />
+            <CaptionWord key={w.id} word={w} brand={brand} fontSize={fontSize} base={base} display={display} accent={accent} spoken={spoken} active={active} wordIn={spoken ? wordIn : 0} />
           );
         })}
       </div>
@@ -104,10 +119,11 @@ const CaptionWord: React.FC<{
   fontSize: number;
   base: LoadedFont;
   display: LoadedFont;
+  accent: LoadedFont;
   spoken: boolean;
   active: boolean;
   wordIn: number;
-}> = ({ word, brand, fontSize, base, display, spoken, active, wordIn }) => {
+}> = ({ word, brand, fontSize, base, display, accent, spoken, active, wordIn }) => {
   const text = word.text.trim();
   const soft = brand.textEffect === "shadow";
   const plain: React.CSSProperties = {
@@ -121,7 +137,8 @@ const CaptionWord: React.FC<{
     textTransform: brand.uppercase ? "uppercase" : "none",
     transform: soft ? undefined : `scale(${active ? 1 + 0.08 * wordIn : 1})`,
     // With the soft shadow, upcoming words show faintly and brighten as they're spoken.
-    opacity: soft ? (spoken ? 1 : 0.55) : 1,
+    // "Word by word" hides them until they're said (each keeps its place, so nothing jumps).
+    opacity: brand.captionAnimation === "reveal" ? (spoken ? Math.min(1, wordIn * 1.4) : 0) : soft ? (spoken ? 1 : 0.55) : 1,
     whiteSpace: "nowrap",
   };
 
@@ -152,6 +169,52 @@ const CaptionWord: React.FC<{
           boxShadow: spoken ? "0 8px 24px rgba(0,0,0,0.35)" : "none",
         }}
       >
+        {text}
+      </span>
+    );
+  }
+
+  if (brand.style === "accent") {
+    // Key word in the brand's accent font (an italic serif or script), bigger, in the key color.
+    return (
+      <span
+        style={{
+          ...plain,
+          opacity: plain.opacity === 0 ? 0 : 1,
+          fontFamily: accent.fontFamily,
+          fontWeight: accent.fontWeight,
+          fontStyle: accent.fontStyle,
+          fontSize: fontSize * 1.3,
+          lineHeight: 1,
+          textTransform: "none",
+          color: spoken ? brand.highlightColor : brand.textColor,
+          transform: `translateY(${(1 - wordIn) * 8}px) rotate(${spoken ? -2 : 0}deg)`,
+        }}
+      >
+        {text}
+      </span>
+    );
+  }
+
+  if (brand.style === "swipe" || brand.style === "underline") {
+    // A highlighter swipe across the word (or an underline) that draws itself as the word is said.
+    const swipe = brand.style === "swipe";
+    return (
+      <span style={{ ...plain, position: "relative", isolation: "isolate", opacity: plain.opacity === 0 ? 0 : 1, color: swipe && spoken ? brand.highlightTextColor : plain.color, textShadow: swipe && spoken ? "none" : plain.textShadow }}>
+        <span
+          style={{
+            position: "absolute",
+            left: -fontSize * 0.12,
+            right: -fontSize * 0.12,
+            top: swipe ? "8%" : "88%",
+            bottom: swipe ? "4%" : "-6%",
+            background: brand.highlightColor,
+            borderRadius: swipe ? fontSize * 0.08 : fontSize,
+            transform: `scaleX(${spoken ? Math.min(1, wordIn * 1.2) : 0}) skewX(-8deg)`,
+            transformOrigin: "left center",
+            zIndex: -1,
+          }}
+        />
         {text}
       </span>
     );

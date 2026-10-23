@@ -1,3 +1,4 @@
+import { plainHook } from "../shared/hookText";
 import React from "react";
 import { AbsoluteFill, Audio, OffthreadVideo, Sequence, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import type { BrollReelProps } from "../shared/types";
@@ -43,7 +44,7 @@ export const BrollReel: React.FC<BrollReelProps> = ({ clips, hookText, hookSubTe
             fontFamily: display.fontFamily,
             fontWeight: display.fontWeight,
             fontStyle: display.fontStyle,
-            fontSize: hookText.length > 40 ? 92 : 112,
+            fontSize: plainHook(hookText).length > 40 ? 92 : 112,
             lineHeight: 1.02,
             letterSpacing: "-0.02em",
             color: style.hookColor,
@@ -53,7 +54,7 @@ export const BrollReel: React.FC<BrollReelProps> = ({ clips, hookText, hookSubTe
             transform: `translateY(${(1 - enter) * 24}px)`,
           }}
         >
-          {hookText}
+          {plainHook(hookText)}
         </div>
         {hookSubText ? (
           <div

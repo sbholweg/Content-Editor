@@ -6,6 +6,7 @@ import { LibraryBrowser, Modal, OverlayAdjust, Thumb } from "../Media";
 import { formatTime, useEditor } from "./context";
 import { LookGallery } from "./LookGallery";
 import { GraphicsCards } from "./GraphicsCards";
+import { plainHook } from "../../shared/hookText";
 import { CaptionsPanel, ColorPanel, FontsPanel, HookPanel } from "./panels";
 
 type Section = "captions" | "hook" | "fonts" | "color";
@@ -195,7 +196,7 @@ function VisualLine({ line, first }: { line: Line; first: boolean }) {
               <span className="item-icon">H</span>
               <span className="grow left">
                 <strong>Hook · {LAYOUT_LABEL[reel.style.hookLayout]}</strong>
-                <span className="muted small">“{reel.hookText}”</span>
+                <span className="muted small">“{plainHook(reel.hookText)}”</span>
               </span>
               <span className="muted small">change it in Style › Hook</span>
             </div>

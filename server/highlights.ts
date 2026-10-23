@@ -21,7 +21,8 @@ Highlight the words a viewer should remember: the hook, numbers, money and time 
 
 Also write the hook: a short title shown at the top of the reel for the first few seconds, so people stop scrolling.
 - 3 to 8 words, lowercase, conversational, in the speaker's own voice (e.g. "nobody's saying it, so i will").
-- Base it on what they actually say. No hashtags, no emojis, no quotation marks.`;
+- Base it on what they actually say. No hashtags, no emojis, no quotation marks.
+- Wrap the one word that carries the punch in *stars* (e.g. "nobody tells you this about *clients*"); it shows in the brand's accent style. Exactly one starred word or short phrase.`;
 
 export type EditSuggestions = { words: Word[]; hook: string };
 

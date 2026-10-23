@@ -1,3 +1,4 @@
+import { plainHook } from "./hookText";
 import { buildLines, isLineCut } from "./lines";
 import type { BrandKit, Project, Slide, SlideFormat } from "./types";
 
@@ -11,7 +12,7 @@ export function draftSlides(project: Project, brand: BrandKit, format: SlideForm
   const textOf = (l: (typeof lines)[number]) => l.words.filter((w) => !w.cut).map((w) => w.text).join(" ");
   const keyOf = (l: (typeof lines)[number]) => l.words.filter((w) => w.highlight && !w.cut).map((w) => clean(w.text));
   const id = (n: number) => `${format}-${Date.now()}-${n}`;
-  const hook = project.hookText || (lines[0] ? textOf(lines[0]) : "");
+  const hook = plainHook(project.hookText) || (lines[0] ? textOf(lines[0]) : "");
   const cta = brand.ctaKeywords[0] || brand.business.cta || "Save this for later";
   const first = lines[0]?.words.find((w) => !w.cut)?.startMs ?? 0;
 
