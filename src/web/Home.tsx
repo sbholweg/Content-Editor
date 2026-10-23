@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { APP_TAGLINE } from "../shared/app";
 import { plainHook } from "../shared/hookText";
 import { IDEA_STARTERS } from "../shared/library";
+import { GridPreview } from "./editor/FinishTab";
 import { buildTimeline } from "../shared/timeline";
 import type { Project, Recipe } from "../shared/types";
 import { api, onEngineEvents, projectFileUrl } from "./api";
@@ -49,6 +50,7 @@ export function Home({ onOpen, onAuthError }: { onOpen: (id: string) => void; on
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [recipeId, setRecipeId] = useState("");
   const [applyNote, setApplyNote] = useState("");
+  const [gridView, setGridView] = useState(false);
   const toggle = (id: string) => setSelected((s) => { const next = new Set(s); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   const applyToSelected = async () => {
     const id = recipeId || recipes[0]?.id;
@@ -191,7 +193,15 @@ export function Home({ onOpen, onAuthError }: { onOpen: (id: string) => void; on
               </button>
             ))}
             {!selecting && shown.length ? <button className="select-toggle" onClick={() => setSelecting(true)}>Select</button> : null}
+            <button className={`select-toggle ${gridView ? "on" : ""}`} onClick={() => setGridView(!gridView)}>▦ Grid</button>
           </div>
+
+          {gridView ? (
+            <div className="stack tight grid-view">
+              <p className="muted small">Your profile grid once these are posted: ready-to-post reels first, then what's already up. Save a cover in a reel's Finish tab to see it here.</p>
+              <GridPreview projects={[...reels.filter((p) => folderOf(p) === "ready"), ...reels.filter((p) => folderOf(p) === "posted")].slice(0, 12)} />
+            </div>
+          ) : null}
 
           {shown.length === 0 ? (
             <p className="empty muted">{FOLDERS.find((f) => f.id === folder)?.empty}</p>

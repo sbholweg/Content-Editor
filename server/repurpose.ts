@@ -2,7 +2,7 @@ import { plainHook } from "../src/shared/hookText.ts";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { renderStill, selectComposition } from "@remotion/renderer";
-import type { Project, SlideFormat, SlideProps } from "../src/shared/types.ts";
+import type { CoverProps, Project, SlideFormat, SlideProps } from "../src/shared/types.ts";
 import { accessToken } from "./auth.ts";
 import { config } from "./config.ts";
 import { listAssets } from "./library.ts";
@@ -65,4 +65,29 @@ export async function renderSlides(project: Project, format: SlideFormat): Promi
   await fs.mkdir(dir, { recursive: true });
   for (const n of names) await fs.copyFile(projectFile(project.id, n), path.join(dir, n));
   return names;
+}
+
+// The branded cover: the hook over the cover frame, saved as cover.png in the reel's folder and
+// copied to the outputs folder.
+export async function renderCover(project: Project): Promise<string> {
+  const settings = project.cover ?? { design: "headline" as const };
+  const ms = project.coverMs ?? project.words.find((w) => !w.cut)?.startMs ?? 500;
+  await frameAt(project.id, ms);
+  const serveUrl = await getBundle();
+  const tokenParam = accessToken ? `?t=${accessToken}` : "";
+  const local = (route: string) => `http://127.0.0.1:${config.port}${route}${tokenParam}`;
+  const assets = await listAssets();
+  const inputProps: CoverProps = {
+    background: local(`/media/${project.id}/frame-${Math.round(ms)}.jpg`),
+    title: settings.title ?? project.hookText,
+    sub: settings.sub ?? "",
+    design: settings.design,
+    style: project.style,
+    customFonts: assets.filter((a) => a.kind === "font").map((a) => ({ name: a.name, url: local(`/media/library/${a.file}`) })),
+  };
+  const browserExecutable = process.env.REMOTION_BROWSER || null;
+  const composition = await selectComposition({ serveUrl, id: "Cover", inputProps, browserExecutable });
+  const output = projectFile(project.id, "cover.png");
+  await renderStill({ serveUrl, composition, inputProps, output, imageFormat: "png", browserExecutable });
+  return output;
 }

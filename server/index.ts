@@ -31,7 +31,7 @@ import {
 } from "./storage.ts";
 import { addAsset, deleteAsset, libraryDir, listAssets, syncBrollFolder } from "./library.ts";
 import { transcribeWords } from "./transcribe.ts";
-import { frameAt, renderSlides } from "./repurpose.ts";
+import { frameAt, renderCover, renderSlides } from "./repurpose.ts";
 import { createTrialReels, NoBrollError } from "./trials.ts";
 import { BrandAnswersSchema, generateBrand } from "./brand-gen.ts";
 
@@ -295,6 +295,28 @@ app.post("/api/projects/:id/:format/render", async (req, res) => {
   }
 });
 
+// Branded cover: save the design and words, then render cover.png.
+app.post("/api/projects/:id/cover", async (req, res) => {
+  const project = await readProject(req.params.id);
+  if (!project) return res.status(404).json({ error: "Not found" });
+  const designs = ["headline", "block", "split", "plain"];
+  const body = req.body ?? {};
+  const cover = {
+    design: designs.includes(body.design) ? body.design : project.cover?.design ?? "headline",
+    title: typeof body.title === "string" ? body.title.slice(0, 160) : project.cover?.title,
+    sub: typeof body.sub === "string" ? body.sub.slice(0, 120) : project.cover?.sub,
+    madeAt: new Date().toISOString(),
+  };
+  try {
+    const updated = await updateProject(project.id, { cover });
+    await renderCover(updated);
+    res.json(updated);
+  } catch (err) {
+    console.error("Cover failed", err);
+    res.status(500).json({ error: `Couldn't make the cover: ${(err as Error).message}` });
+  }
+});
+
 app.post("/api/projects/:id/auto-highlight", async (req, res) => {
   const project = await readProject(req.params.id);
   if (!project) return res.status(404).json({ error: "Not found" });
@@ -457,7 +479,7 @@ app.get("/media/library/:file", async (req, res) => {
 // Serves the prepared video and the finished export.
 app.get("/media/:id/:file", async (req, res) => {
   const { id, file } = req.params;
-  const allowed = ["video.mp4", "video-clean.mp4", "export.mp4"].includes(file) || /^(carousel|story)-\d{2}\.png$|^frame-\d+\.jpg$/.test(file);
+  const allowed = ["video.mp4", "video-clean.mp4", "export.mp4", "cover.png"].includes(file) || /^(carousel|story)-\d{2}\.png$|^frame-\d+\.jpg$/.test(file);
   if (!(await readProject(id)) || !allowed) return res.status(404).end();
   if (file.startsWith("frame-")) await frameAt(id, Number(file.slice(6, -4))).catch(() => {});
   if (file === "export.mp4") res.attachment("reel.mp4");

@@ -102,6 +102,8 @@ export const api = {
 
   applyRecipe: (projectIds: string[], recipe: { recipeId?: string; recipe?: unknown }) =>
     request<{ applied: number; recipe: string; suggesting: boolean }>("/api/recipes/apply", { method: "POST", body: JSON.stringify({ projectIds, ...recipe }) }),
+  makeCover: (id: string, cover: { design: string; title: string; sub: string }) =>
+    request<Project>(`/api/projects/${id}/cover`, { method: "POST", body: JSON.stringify(cover) }),
   writeScript: (idea: string) => request<{ script: string }>("/api/script", { method: "POST", body: JSON.stringify({ idea }) }),
   giphyKey: () => request<{ key: string }>("/api/giphy-key"),
   addFromGiphy: (url: string, name: string) => request<Asset>("/api/library/from-giphy", { method: "POST", body: JSON.stringify({ url, name }) }),

@@ -35,7 +35,9 @@ async function copyToOutputs(id: string) {
   await fs.mkdir(config.outputsDir, { recursive: true });
   await fs.copyFile(projectFile(id, "export.mp4"), `${base}.mp4`);
   if (project.postCaption) await fs.writeFile(`${base}-caption.txt`, project.postCaption);
-  if (project.coverMs !== undefined && project.kind !== "broll") {
+  if (project.cover && (await fs.stat(projectFile(id, "cover.png")).catch(() => null))) {
+    await fs.copyFile(projectFile(id, "cover.png"), `${base}-cover.png`).catch(() => {});
+  } else if (project.coverMs !== undefined && project.kind !== "broll") {
     await fs.copyFile(await frameAt(id, project.coverMs), `${base}-cover.jpg`).catch(() => {});
   }
 }

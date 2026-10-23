@@ -19,7 +19,7 @@ const SHADOW = "0 2px 8px rgba(0,0,0,0.35), 0 6px 40px rgba(0,0,0,0.35)";
 // above it ("eyebrow") or below it ("subhead").
 // The style for *starred* hook words: the brand's accent font, in a block of the key color (or
 // just colored), so one word carries the brand's signature like on a brand board.
-function accentStyle(brand: ReelStyle, visible: boolean): React.CSSProperties {
+export function accentStyle(brand: ReelStyle, visible: boolean): React.CSSProperties {
   const accent = getFont(brand.accentFont || "Instrument Serif");
   const base: React.CSSProperties = { fontFamily: accent.fontFamily, fontWeight: accent.fontWeight, fontStyle: accent.fontStyle, fontSize: "1.06em" };
   if (brand.hookAccent === "color") return { ...base, color: brand.highlightColor };

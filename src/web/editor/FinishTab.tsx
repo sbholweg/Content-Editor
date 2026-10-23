@@ -1,46 +1,121 @@
+import { Thumbnail } from "@remotion/player";
 import React, { useState } from "react";
+import { Cover, COVER_SIZE } from "../../remotion/Cover";
 import { toOriginalMs } from "../../shared/timeline";
-import type { Project } from "../../shared/types";
+import type { CoverDesign, CoverProps, Project } from "../../shared/types";
 import { BusinessCard, PostCaptionCard } from "../sections";
 import { TrialReelsCard } from "../TrialReels";
-import { api, projectFileUrl } from "../api";
+import { api, libraryUrl, projectFileUrl } from "../api";
 import { formatTime, useEditor } from "./context";
 import { RepurposeCard } from "./Repurpose";
 
-// Pick the cover: whatever frame is showing in the preview right now.
-function CoverCard() {
-  const { project, timeline, timeMs, onAuthError, notify } = useEditor();
-  const [coverMs, setCoverMs] = useState(project.coverMs);
+const DESIGNS: { value: CoverDesign; label: string }[] = [
+  { value: "headline", label: "Headline" },
+  { value: "block", label: "Color block" },
+  { value: "split", label: "Split" },
+  { value: "plain", label: "Just the frame" },
+];
+
+// The cover image for a reel in the grid: the branded cover if there is one, otherwise the frame.
+export function coverUrl(p: Project) {
+  if (p.cover?.madeAt) return projectFileUrl(p.id, "cover.png", p.cover.madeAt);
+  const ms = p.coverMs ?? p.words.find((w) => !w.cut)?.startMs ?? 500;
+  return projectFileUrl(p.id, `frame-${Math.round(ms)}.jpg`);
+}
+
+// The branded cover: pick a frame from the preview, a design and the words, then save it as an image.
+function CoverCard({ onProject }: { onProject: (p: Project) => void }) {
+  const { project, reel, timeline, timeMs, assets, onAuthError, notify } = useEditor();
+  const [coverMs, setCoverMs] = useState(project.coverMs ?? project.words.find((w) => !w.cut)?.startMs ?? 500);
+  const [design, setDesign] = useState<CoverDesign>(project.cover?.design ?? "headline");
+  const [title, setTitle] = useState(project.cover?.title ?? reel.hookText);
+  const [sub, setSub] = useState(project.cover?.sub ?? "");
+  const [busy, setBusy] = useState(false);
+  const [grid, setGrid] = useState<Project[] | null>(null);
+  const customFonts = assets.filter((a) => a.kind === "font").map((a) => ({ name: a.name, url: libraryUrl(a.file) }));
+  const props: CoverProps = { background: projectFileUrl(project.id, `frame-${Math.round(coverMs)}.jpg`), title, sub, design, style: reel.style, customFonts };
+
+  const make = async () => {
+    setBusy(true);
+    const p = await api.makeCover(project.id, { design, title, sub }).catch((err) => {
+      onAuthError(err);
+      notify(`Couldn't make the cover: ${(err as Error).message}`);
+      return null;
+    });
+    setBusy(false);
+    if (!p) return;
+    onProject(p);
+    notify("Cover saved. It goes in your outputs folder with the reel when you export.");
+  };
+
+  const showGrid = async () => {
+    if (grid) return setGrid(null);
+    const all = await api.listProjects().catch(onAuthError);
+    if (all) setGrid([project, ...all.filter((p) => p.id !== project.id && p.status === "ready")].slice(0, 9));
+  };
+
   return (
     <section className="panel-card">
       <div className="cover-row">
-        <div className="cover-thumb">
-          {coverMs !== undefined ? <img src={projectFileUrl(project.id, `frame-${Math.round(coverMs)}.jpg`)} alt="Your cover" /> : <span className="muted small">No cover yet</span>}
+        <div className="cover-thumb branded">
+          <Thumbnail component={Cover} inputProps={props} frameToDisplay={0} durationInFrames={1} fps={30} compositionWidth={COVER_SIZE.width} compositionHeight={COVER_SIZE.height} style={{ width: "100%", height: "100%" }} />
+          <span className="grid-guide" title="What shows in your profile grid" />
         </div>
         <div className="stack tight grow">
           <h3>Cover</h3>
-          <p className="muted small">Pause the preview on a frame you like (looking at the camera, mid-expression), then save it as your cover. It lands in your outputs folder with the reel.</p>
-          <div className="row">
+          <p className="muted small">Pause the preview on a frame you like, pick a design, and save. The dashed box is what shows in your profile grid.</p>
+          <div className="row wrap">
             <button
-              className="chip accent"
+              className="chip"
               onClick={async () => {
                 const ms = Math.round(toOriginalMs(timeline.segments, timeMs, timeline.speed));
                 setCoverMs(ms);
                 await api.saveProject(project.id, { coverMs: ms }).catch(onAuthError);
-                notify("Cover saved. Download it below, or find it in your outputs folder after exporting.");
               }}
             >
               📸 Use this frame
             </button>
-            {coverMs !== undefined ? (
-              <a className="chip" href={projectFileUrl(project.id, `frame-${Math.round(coverMs)}.jpg`)} download="cover.jpg">
+            {DESIGNS.map((d) => (
+              <button key={d.value} className={`chip ${design === d.value ? "accent" : ""}`} onClick={() => setDesign(d.value)}>
+                {d.label}
+              </button>
+            ))}
+          </div>
+          {design === "plain" ? null : (
+            <>
+              <input value={title} placeholder="Words on the cover" onChange={(e) => setTitle(e.target.value)} aria-label="Cover words" />
+              <input value={sub} placeholder="Small line (optional), e.g. part 2" onChange={(e) => setSub(e.target.value)} aria-label="Cover small line" />
+              <p className="muted small">Put *stars* around a word to give it your accent style.</p>
+            </>
+          )}
+          <div className="row wrap">
+            <button className="btn primary small-btn" disabled={busy} onClick={make}>
+              {busy ? "Making…" : "Save cover"}
+            </button>
+            {project.cover?.madeAt ? (
+              <a className="chip" href={coverUrl(project)} download="cover.png">
                 Download cover
               </a>
             ) : null}
+            <button className="chip" onClick={showGrid}>{grid ? "Hide grid" : "▦ See it in my grid"}</button>
           </div>
         </div>
       </div>
+      {grid ? <GridPreview projects={grid} highlight={project.id} /> : null}
     </section>
+  );
+}
+
+// A profile grid mock-up: three across, each cover cropped to the middle 3:4 like the grid shows it.
+export function GridPreview({ projects, highlight }: { projects: Project[]; highlight?: string }) {
+  return (
+    <div className="grid-preview">
+      {projects.map((p) => (
+        <div key={p.id} className={`grid-tile ${p.id === highlight ? "on" : ""}`}>
+          <img src={coverUrl(p)} alt="" loading="lazy" onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -62,7 +137,7 @@ export function FinishTab({ exportControls, onProject }: { exportControls: React
 
       <EndCardPanel />
 
-      <CoverCard />
+      <CoverCard onProject={onProject} />
 
       <section className="panel-card">
         <div className="row">

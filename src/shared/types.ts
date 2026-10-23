@@ -239,6 +239,17 @@ export type SlideProps = {
   customFonts: { name: string; url: string }[];
 };
 
+export type CoverDesign = "headline" | "block" | "split" | "plain";
+export type CoverSettings = { design: CoverDesign; title?: string; sub?: string; madeAt?: string };
+export type CoverProps = {
+  background: string;
+  title: string;
+  sub: string;
+  design: CoverDesign;
+  style: ReelStyle;
+  customFonts: { name: string; url: string }[];
+};
+
 export type ProjectStatus = "uploaded" | "processing" | "ready" | "error";
 
 export type RenderState = {
@@ -293,6 +304,8 @@ export type Project = {
   render: RenderState;
   // The moment of the original video used as the cover image.
   coverMs?: number;
+  // The branded cover: the hook (or other words) over the cover frame, saved as cover.png.
+  cover?: CoverSettings;
   // Marked by the creator once it's been posted (moves it to the Posted folder).
   posted?: boolean;
   // Average color of the video (measured once), used by color grading.
