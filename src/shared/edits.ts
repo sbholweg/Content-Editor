@@ -69,18 +69,22 @@ export const ReelEdits = z
         toWord: z.number().int().nonnegative(),
         placement: z.enum(["top", "middle", "bottom", "full"]).optional(),
         size: z.number().min(0.3).max(0.95).optional(),
+        frame: z.enum(["card", "paper", "phone", "browser", "none"]).optional(),
         x: z.number().min(0).max(100).optional().describe("center, % across the frame"),
         y: z.number().min(0).max(100).optional().describe("center, % down the frame"),
       }),
     ),
+    frameMedia: z.record(z.string(), z.enum(["card", "paper", "phone", "browser", "none"])).describe("overlay id -> screenshot frame"),
     moveMedia: z
       .record(z.string(), z.object({ x: z.number().min(0).max(100), y: z.number().min(0).max(100) }))
       .describe("overlay id -> new center, % of the frame"),
     removeMedia: z.array(z.string()).describe("overlay ids"),
     addGraphics: z.array(
       z.object({
-        kind: z.enum(["sticker", "stat", "cta"]),
-        text: z.string().min(1).max(40),
+        kind: z.enum(["sticker", "stat", "cta", "circle", "arrow", "underline"]),
+        text: z.string().max(40).describe("empty for circle/arrow/underline"),
+        color: z.string().optional().describe("marks: hex color, default the key color"),
+        size: z.number().min(0.2).max(0.95).optional(),
         sub: z.string().max(40).optional(),
         fromWord: z.number().int().nonnegative(),
         toWord: z.number().int().nonnegative(),
@@ -167,6 +171,7 @@ export function applyEdits(project: Project, edits: ReelEdits, brand: BrandKit, 
         endWordId: at(to).id,
         placement: m.placement ?? (asset.kind === "video" ? "full" : "middle"),
         size: m.size ?? 0.6,
+        ...(m.frame ? { frame: m.frame } : {}),
         ...(m.x !== undefined && m.y !== undefined ? { x: m.x, y: m.y } : {}),
       },
     ];
@@ -178,11 +183,11 @@ export function applyEdits(project: Project, edits: ReelEdits, brand: BrandKit, 
       {
         id: `ov-${Date.now()}-${overlays.length}`,
         assetId: "",
-        graphic: { kind: g.kind, text: g.text, sub: g.sub },
+        graphic: { kind: g.kind, text: g.text, sub: g.sub, color: g.color },
         startWordId: at(from).id,
         endWordId: at(to).id,
         placement: "middle",
-        size: 0.6,
+        size: g.size ?? 0.6,
         ...(g.x !== undefined && g.y !== undefined ? { x: g.x, y: g.y } : {}),
       },
     ];
@@ -191,6 +196,7 @@ export function applyEdits(project: Project, edits: ReelEdits, brand: BrandKit, 
     const keep = edits.keepSuggestions;
     overlays = overlays.map((o) => (o.suggested && (keep === "all" || keep.includes(o.id)) ? { ...o, suggested: false } : o));
   }
+  for (const [id, frame] of Object.entries(edits.frameMedia ?? {})) overlays = overlays.map((o) => (o.id === id ? { ...o, frame } : o));
   for (const [id, place] of Object.entries(edits.moveMedia ?? {})) {
     if (!overlays.some((o) => o.id === id)) throw new Error(`No media "${id}" on this reel. Use the ov-… ids from \`show\`.`);
     overlays = overlays.map((o) => (o.id === id ? { ...o, ...place } : o));

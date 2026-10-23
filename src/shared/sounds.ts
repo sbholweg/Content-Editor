@@ -12,6 +12,7 @@ export const BUILTIN_SOUNDS = [
   { id: "sfx-chat-bubble", name: "Notification (chat)", file: "chat-bubble.mp3", group: "Stickers & emojis", tags: "chat message dm bubble notification" },
   { id: "sfx-shutter-2", name: "Camera shutter 2", file: "shutter-2.mp3", group: "Screenshots & photos", tags: "photo snap screenshot camera" },
   { id: "sfx-shutter", name: "Camera shutter", file: "shutter.mp3", group: "Screenshots & photos", tags: "photo snap screenshot camera" },
+  { id: "sfx-marker", name: "Marker scribble", file: "marker.mp3", group: "Screenshots & photos", tags: "marker pen circle draw underline arrow" },
   { id: "sfx-item-pickup", name: "Item pickup (gaming)", file: "item-pickup.mp3", group: "Screenshots & photos", tags: "game pickup review receipt dm" },
   { id: "sfx-cha-ching", name: "Cash register", file: "cha-ching.mp3", group: "Money moments", tags: "money cash register sale cha-ching" },
   { id: "sfx-coin-collect", name: "Coin collect (gaming)", file: "coin-collect.mp3", group: "Money moments", tags: "coin game money income" },

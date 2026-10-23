@@ -62,11 +62,26 @@ const OverlayItem: React.FC<{ overlay: ResolvedOverlay; length: number; brand: R
           transform: `translate(-50%, -50%) scale(${scale}) rotate(${(1 - enter) * -8}deg)`,
         }}
       >
-        <Graphic graphic={overlay.graphic} brand={brand} />
+        <Graphic graphic={overlay.graphic} brand={brand} width={width} />
       </div>
     );
   }
-  const box: React.CSSProperties = { width, height, borderRadius: 28, overflow: "hidden", boxShadow: "0 18px 50px rgba(0,0,0,0.35)" };
+  const frameStyle = overlay.frame ?? "card";
+  const radius = frameStyle === "none" || frameStyle === "paper" ? 0 : frameStyle === "phone" ? 34 : frameStyle === "browser" ? 0 : 28;
+  const box: React.CSSProperties = {
+    width, height, borderRadius: radius, overflow: "hidden", display: "block",
+    boxShadow: frameStyle === "card" ? "0 18px 50px rgba(0,0,0,0.35)" : undefined,
+  };
+  const media =
+    overlay.kind === "gif" ? (
+      <div style={box}>
+        <Gif src={overlay.src} width={width} height={height} fit={frameStyle === "none" ? "contain" : "cover"} />
+      </div>
+    ) : overlay.kind === "video" ? (
+      <OffthreadVideo src={overlay.src} muted onError={ignoreMediaError} style={{ ...box, objectFit: "cover" }} />
+    ) : (
+      <Img src={overlay.src} style={{ ...box, objectFit: frameStyle === "none" ? "contain" : "cover" }} />
+    );
 
   return (
     <div
@@ -74,18 +89,39 @@ const OverlayItem: React.FC<{ overlay: ResolvedOverlay; length: number; brand: R
         position: "absolute",
         left: `${overlay.x ?? 50}%`,
         top: `${overlay.y ?? PLACEMENT_TOP[overlay.placement]}%`,
-        transform: `translate(-50%, -50%) scale(${scale}) rotate(${(1 - enter) * -6}deg)`,
+        transform: `translate(-50%, -50%) scale(${scale}) rotate(${(1 - enter) * -6 + (frameStyle === "paper" ? -3 : 0)}deg)`,
       }}
     >
-      {overlay.kind === "gif" ? (
-        <div style={box}>
-          <Gif src={overlay.src} width={width} height={height} fit="cover" />
-        </div>
-      ) : overlay.kind === "video" ? (
-        <OffthreadVideo src={overlay.src} muted onError={ignoreMediaError} style={{ ...box, objectFit: "cover" }} />
-      ) : (
-        <Img src={overlay.src} style={{ ...box, objectFit: "cover" }} />
-      )}
+      <Framed frame={frameStyle}>{media}</Framed>
     </div>
   );
+};
+
+// Screenshot frames: a tilted paper card with a hard shadow, a phone, or a browser window.
+const Framed: React.FC<{ frame: NonNullable<ResolvedOverlay["frame"]>; children: React.ReactNode }> = ({ frame, children }) => {
+  if (frame === "paper") {
+    return <div style={{ background: "#fff", padding: 18, boxShadow: "14px 14px 0 #111014", border: "4px solid #111014" }}>{children}</div>;
+  }
+  if (frame === "phone") {
+    return (
+      <div style={{ position: "relative", background: "#111014", padding: "26px 16px", borderRadius: 54, boxShadow: "0 24px 60px rgba(0,0,0,0.45)" }}>
+        <div style={{ position: "absolute", top: 9, left: "50%", transform: "translateX(-50%)", width: 110, height: 10, borderRadius: 6, background: "#2c2a33" }} />
+        {children}
+      </div>
+    );
+  }
+  if (frame === "browser") {
+    return (
+      <div style={{ background: "#f3f1ef", borderRadius: 22, overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.4)" }}>
+        <div style={{ height: 50, display: "flex", alignItems: "center", gap: 10, padding: "0 20px" }}>
+          {["#ff5f57", "#febc2e", "#28c840"].map((c) => (
+            <span key={c} style={{ width: 16, height: 16, borderRadius: 8, background: c }} />
+          ))}
+          <span style={{ flex: 1, height: 22, marginLeft: 14, borderRadius: 11, background: "#e3dfdb" }} />
+        </div>
+        {children}
+      </div>
+    );
+  }
+  return <>{children}</>;
 };

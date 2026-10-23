@@ -154,6 +154,9 @@ export type Overlay = {
   // Where it was dragged to (its center, as % of the frame). Overrides placement when set.
   x?: number;
   y?: number;
+  // How an image or GIF is framed: a rounded card (default), tilted paper, a phone, a browser
+  // window, or nothing (for see-through stickers).
+  frame?: "card" | "paper" | "phone" | "browser" | "none";
   // A graphic drawn in the brand's style instead of a library item (assetId is then "").
   graphic?: ReelGraphic;
   // Suggested by Claude and waiting for Keep / Change / Drop (it still shows in the preview).
@@ -166,7 +169,9 @@ export type Overlay = {
 
 // sticker: a tilted tag ("UNPOPULAR OPINION"). stat: a big number that counts up ("$800+")
 // with a small label. cta: an Instagram-style "Comment EDIT" bubble.
-export type ReelGraphic = { kind: "sticker" | "stat" | "cta"; text: string; sub?: string };
+// circle / arrow / underline: a hand-drawn mark that draws itself on (over a screenshot, say);
+// overlay.size sets its width, color defaults to the key color.
+export type ReelGraphic = { kind: "sticker" | "stat" | "cta" | "circle" | "arrow" | "underline"; text: string; sub?: string; color?: string };
 
 // A sound effect that plays when a word is spoken. soundId is a built-in sound or a library item.
 // A change the creator asked for at a moment in the reel (atMs is in finished-reel time).

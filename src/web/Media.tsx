@@ -176,6 +176,22 @@ export function OverlayAdjust({
         options={PLACEMENTS}
       />
       {overlay.placement !== "full" ? (
+        <>
+          <Label>Frame</Label>
+          <Options
+            value={overlay.frame ?? "card"}
+            onChange={(v) => onChange({ frame: v })}
+            options={[
+              { value: "card", label: "Rounded", note: "soft shadow" },
+              { value: "paper", label: "Paper", note: "tilted, bold shadow" },
+              { value: "phone", label: "Phone", note: "for app screenshots" },
+              { value: "browser", label: "Browser", note: "for web pages" },
+              { value: "none", label: "No frame", note: "see-through stickers" },
+            ]}
+          />
+        </>
+      ) : null}
+      {overlay.placement !== "full" ? (
         <Slider label="Size" value={Math.round(overlay.size * 100)} min={30} max={95} onChange={(v) => onChange({ size: v / 100 })} />
       ) : null}
       <Label>When it's on screen</Label>

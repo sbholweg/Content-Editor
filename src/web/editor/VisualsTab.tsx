@@ -219,7 +219,7 @@ function VisualLine({ line, first }: { line: Line; first: boolean }) {
                 <div key={o.id} className="item">
                   <span className="item-icon">✦</span>
                   <span className="grow left">
-                    <strong>Graphic: “{o.graphic.text}”{o.suggested ? " · suggested" : ""}</strong>
+                    <strong>Graphic: “{o.graphic.text || o.graphic.kind}”{o.suggested ? " · suggested" : ""}</strong>
                     <span className="muted small">change it in Graphics above</span>
                   </span>
                 </div>

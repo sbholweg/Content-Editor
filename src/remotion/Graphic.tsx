@@ -13,13 +13,37 @@ export function splitNumber(text: string) {
 }
 
 // Graphics drawn in the creator's brand: their highlight color, fonts and a hard ink shadow.
-export const Graphic: React.FC<{ graphic: ReelGraphic; brand: ReelStyle }> = ({ graphic, brand }) => {
+// Hand-drawn marks, drawn on over about half a second (paths are a little wobbly on purpose).
+const MARKS = {
+  circle: { box: "0 0 220 120", d: "M28 64 C24 28 120 10 178 26 C214 36 214 86 160 102 C104 118 30 106 20 72 C14 52 40 30 70 24" },
+  arrow: { box: "0 0 220 120", d: "M18 96 C70 92 120 70 168 30 M140 28 L170 26 L166 56" },
+  underline: { box: "0 0 220 40", d: "M10 26 C60 16 120 30 210 18" },
+} as const;
+
+const Mark: React.FC<{ kind: keyof typeof MARKS; color: string; width: number }> = ({ kind, color, width }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const drawn = interpolate(frame, [0, Math.round(fps * 0.5)], [0, 1], { extrapolateRight: "clamp", easing: (t) => 1 - Math.pow(1 - t, 2) });
+  const m = MARKS[kind];
+  const [, , w, h] = m.box.split(" ").map(Number);
+  return (
+    <svg viewBox={m.box} width={width} height={(width * h) / w} style={{ overflow: "visible", filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.35))" }}>
+      <path d={m.d} fill="none" stroke={color} strokeWidth={kind === "underline" ? 9 : 7} strokeLinecap="round" strokeLinejoin="round" pathLength={1} strokeDasharray={1} strokeDashoffset={1 - drawn} />
+    </svg>
+  );
+};
+
+export const Graphic: React.FC<{ graphic: ReelGraphic; brand: ReelStyle; width?: number }> = ({ graphic, brand, width = 600 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const display = getFont(brand.displayFont);
   const body = getFont(brand.font);
   const accent = brand.highlightColor;
   const onAccent = brand.highlightTextColor;
+
+  if (graphic.kind === "circle" || graphic.kind === "arrow" || graphic.kind === "underline") {
+    return <Mark kind={graphic.kind} color={graphic.color || brand.highlightColor} width={width} />;
+  }
 
   if (graphic.kind === "sticker") {
     return (
@@ -84,4 +108,5 @@ export const Graphic: React.FC<{ graphic: ReelGraphic; brand: ReelStyle }> = ({ 
 // Where each kind sits by default (center, % down the frame): above the head or on the chest, so it
 // never covers the face (talking heads sit around 30-60% down), and clear of the captions (72%)
 // and Instagram's buttons.
-export const GRAPHIC_Y: Record<ReelGraphic["kind"], number> = { sticker: 19, stat: 21, cta: 62 };
+export const GRAPHIC_Y: Record<ReelGraphic["kind"], number> = { sticker: 19, stat: 21, cta: 62, circle: 45, arrow: 45, underline: 50 };
+export const isMark = (kind: ReelGraphic["kind"]) => kind === "circle" || kind === "arrow" || kind === "underline";

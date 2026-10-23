@@ -2,15 +2,18 @@ import React, { useState } from "react";
 import type { Overlay, ReelGraphic } from "../../shared/types";
 import { api, libraryUrl } from "../api";
 import { GiphySearch } from "../Giphy";
-import { Options } from "../ui";
+import { isMark } from "../../remotion/Graphic";
+import { Options, Slider } from "../ui";
 import { formatTime, useEditor } from "./context";
 
-const KIND_LABEL: Record<ReelGraphic["kind"], string> = { sticker: "Sticker", stat: "Counting number", cta: "Comment bubble" };
+const KIND_LABEL: Record<ReelGraphic["kind"], string> = {
+  sticker: "Sticker", stat: "Counting number", cta: "Comment bubble", circle: "Circle", arrow: "Arrow", underline: "Underline",
+};
 
 // Claude suggests graphics; each one is a card you Keep, Change or Drop. Suggestions already show
 // in the preview, so you can judge them in place.
 export function GraphicsCards() {
-  const { project, reel, update, assets, setAssets, outputTimes, seekToWord, notify, onAuthError } = useEditor();
+  const { project, reel, update, assets, setAssets, outputTimes, seekToWord, notify, onAuthError, timeMs } = useEditor();
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const index = new Map(reel.words.map((w, i) => [w.id, i]));
@@ -27,6 +30,21 @@ export function GraphicsCards() {
     const next = Math.min(reel.words.length - 1, Math.max(0, (edge === "start" ? s : e) + by));
     if (edge === "start" && next <= e) set(o.id, { startWordId: reel.words[next].id });
     if (edge === "end" && next >= s) set(o.id, { endWordId: reel.words[next].id });
+  };
+
+  // Adds a hand-drawn mark at the paused moment, on screen for about six words.
+  const addMark = (kind: "circle" | "arrow" | "underline") => {
+    const kept = reel.words.filter((w) => !w.cut && outputTimes.has(w.id));
+    if (!kept.length) return;
+    const startIndex = Math.max(0, kept.findIndex((w) => (outputTimes.get(w.id)?.endMs ?? 0) >= timeMs));
+    const start = kept[startIndex];
+    const end = kept[Math.min(kept.length - 1, startIndex + 6)];
+    const id = `ov-${Date.now()}`;
+    update({
+      overlays: [...reel.overlays, { id, assetId: "", graphic: { kind, text: "" }, startWordId: start.id, endWordId: end.id, placement: "middle", size: kind === "underline" ? 0.5 : 0.45 }],
+    });
+    setEditing(id);
+    notify(`${KIND_LABEL[kind]} added at ${formatTime(outputTimes.get(start.id)?.startMs ?? 0)}. Tap “✥ Move” above the preview to put it exactly where you want.`);
   };
 
   const suggest = async () => {
@@ -57,6 +75,12 @@ export function GraphicsCards() {
           {busy ? "Watching your reel…" : items.length ? "✨ Suggest again" : "✨ Suggest graphics"}
         </button>
       </header>
+      <div className="row">
+        <span className="muted small grow">Draw on the paused moment:</span>
+        <button className="chip" onClick={() => addMark("circle")}>◯ Circle</button>
+        <button className="chip" onClick={() => addMark("arrow")}>↗ Arrow</button>
+        <button className="chip" onClick={() => addMark("underline")}>＿ Underline</button>
+      </div>
       {pending > 1 ? (
         <div className="row">
           <span className="muted small grow">{pending} suggestions waiting</span>
@@ -104,7 +128,26 @@ export function GraphicsCards() {
                   </div>
                   {editing === o.id ? (
                     <div className="adjust">
-                      {o.graphic ? (
+                      {o.graphic && isMark(o.graphic.kind) ? (
+                        <>
+                          <Options
+                            value={o.graphic.kind}
+                            onChange={(kind) => set(o.id, { graphic: { ...o.graphic!, kind } })}
+                            options={(["circle", "arrow", "underline"] as const).map((k) => ({ value: k, label: KIND_LABEL[k] }))}
+                          />
+                          <Options
+                            value={o.graphic.color ?? ""}
+                            onChange={(color) => set(o.id, { graphic: { ...o.graphic!, color: color || undefined } })}
+                            options={[
+                              { value: "", label: "Brand color" },
+                              { value: "#FF3B30", label: "Red" },
+                              { value: "#FFFFFF", label: "White" },
+                              { value: "#111014", label: "Black" },
+                            ]}
+                          />
+                          <Slider label="Size" value={Math.round(o.size * 100)} min={20} max={95} onChange={(v) => set(o.id, { size: v / 100 })} />
+                        </>
+                      ) : o.graphic ? (
                         <>
                           <Options
                             value={o.graphic.kind}
@@ -148,6 +191,14 @@ export function GraphicsCards() {
 
 // A small stand-in for each graphic on its card.
 function MiniGraphic({ graphic }: { graphic: ReelGraphic }) {
+  if (isMark(graphic.kind)) {
+    const d = graphic.kind === "circle" ? "M14 32 C12 14 60 5 89 13 C107 18 107 43 80 51 C52 59 15 53 10 36" : graphic.kind === "arrow" ? "M9 48 C35 46 60 35 84 15 M70 14 L85 13 L83 28" : "M5 40 C30 34 60 42 105 32";
+    return (
+      <svg viewBox="0 0 110 60" width="90" aria-hidden>
+        <path d={d} fill="none" stroke={graphic.color || "var(--violet)"} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
   if (graphic.kind === "sticker") return <span className="mini-sticker">{graphic.text}</span>;
   if (graphic.kind === "stat")
     return (
