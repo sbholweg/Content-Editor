@@ -3,14 +3,42 @@
   "tagline": "the rebellious entrepreneur",
   "setUp": true,
   "palette": [
-    { "hex": "#FBF4EF", "name": "Shell", "role": "background" },
-    { "hex": "#111014", "name": "Ink", "role": "text" },
-    { "hex": "#B14EFF", "name": "Shock Violet", "role": "primary" },
-    { "hex": "#C1FF72", "name": "Volt Lime", "role": "accent" }
+    {
+      "hex": "#FBF4EF",
+      "name": "Shell",
+      "role": "background"
+    },
+    {
+      "hex": "#111014",
+      "name": "Ink",
+      "role": "text"
+    },
+    {
+      "hex": "#B14EFF",
+      "name": "Shock Violet",
+      "role": "primary"
+    },
+    {
+      "hex": "#C1FF72",
+      "name": "Volt Lime",
+      "role": "accent"
+    }
   ],
-  "fonts": { "headline": "Anton", "body": "DM Sans", "accent": "Instrument Serif" },
+  "fonts": {
+    "headline": "Anton",
+    "body": "DM Sans",
+    "accent": "Instrument Serif"
+  },
   "voice": {
-    "tone": ["bold", "colorful", "out loud", "unapologetic", "rebellious", "confident", "encouraging"]
+    "tone": [
+      "bold",
+      "colorful",
+      "out loud",
+      "unapologetic",
+      "rebellious",
+      "confident",
+      "encouraging"
+    ]
   },
   "story": "Purple Punk: cream and black like a zine, with shock violet as the star and lime as a tiny pop. Big Anton headlines, one italic serif word in a violet block, sticker tags with hard shadows. Violet sits behind black text; lime is only for highlighter swipes, stickers and small accents.",
   "defaultStyle": {
@@ -30,7 +58,8 @@
     "wordsPerLine": 3,
     "uppercase": false,
     "fontSize": 66,
-    "zoomJumps": true
+    "zoomJumps": true,
+    "speed": 1.2
   },
   "addLook": {
     "name": "Purple Punk",
@@ -44,7 +73,8 @@
       "captionMode": "phrase",
       "wordsPerLine": 3,
       "fontSize": 66,
-      "zoomJumps": true
+      "zoomJumps": true,
+      "speed": 1.2
     }
   }
 }

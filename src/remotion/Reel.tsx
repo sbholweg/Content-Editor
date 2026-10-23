@@ -16,13 +16,14 @@ export const REEL_HEIGHT = 1920;
 const toFrames = (ms: number) => Math.round((ms / 1000) * REEL_FPS);
 
 // Length of the finished reel after cuts.
-export const outputFrames = (props: Pick<ReelProps, "words" | "durationMs" | "removePauses" | "silences">) =>
-  Math.max(1, toFrames(buildTimeline(props.words, props.durationMs, props.removePauses, props.silences).durationMs));
+export const outputFrames = (props: Pick<ReelProps, "words" | "durationMs" | "removePauses" | "silences" | "brand">) =>
+  Math.max(1, toFrames(buildTimeline(props.words, props.durationMs, props.removePauses, props.silences, props.brand.speed).durationMs));
 
 export const Reel: React.FC<ReelProps> = (props) => {
   const { videoSrc, hookText, hookSubText, words, brand, durationMs, removePauses, silences, overlays, sounds, music, customFonts, logoSrc } = props;
   registerCustomFonts(customFonts ?? []);
-  const timeline = useMemo(() => buildTimeline(words, durationMs, removePauses, silences), [words, durationMs, removePauses, silences]);
+  const speed = brand.speed || 1;
+  const timeline = useMemo(() => buildTimeline(words, durationMs, removePauses, silences, speed), [words, durationMs, removePauses, silences, speed]);
   const frame = useCurrentFrame();
   const lineStarts = useMemo(() => buildLines(timeline.words).map((l) => l.words[0].startMs), [timeline]);
   // Zoom jumps: every other line is punched in a little, switching right as the line starts.
@@ -30,11 +31,12 @@ export const Reel: React.FC<ReelProps> = (props) => {
   const zoom = brand.zoomJumps && lineIndex % 2 === 1 ? 1.14 : 1;
   const placed = useMemo(() => overlayTimes(overlays ?? [], words, timeline.words), [overlays, words, timeline]);
 
-  // Each kept piece of the original video plays back-to-back.
+  // Each kept piece of the original video plays back-to-back, sped up if the look says so.
+  // start is in original-video frames; length is in finished-reel frames.
   let from = 0;
   const pieces = timeline.segments.map((s) => {
     const start = toFrames(s.startMs);
-    const length = Math.max(1, toFrames(s.endMs) - start);
+    const length = Math.max(1, Math.round((toFrames(s.endMs) - start) / speed));
     const piece = { from, start, length };
     from += length;
     return piece;
@@ -49,7 +51,7 @@ export const Reel: React.FC<ReelProps> = (props) => {
                 <OffthreadVideo
                   src={videoSrc}
                   trimBefore={p.start}
-                  durationInFrames={p.length}
+                  playbackRate={speed}
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               </Sequence>

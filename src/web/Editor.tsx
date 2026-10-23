@@ -174,8 +174,8 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   }, [assets]);
 
   const timeline = useMemo(
-    () => buildTimeline(reel?.words ?? [], project?.durationMs ?? 0, reel?.removePauses ?? false, project?.silences),
-    [reel?.words, project?.durationMs, reel?.removePauses, project?.silences],
+    () => buildTimeline(reel?.words ?? [], project?.durationMs ?? 0, reel?.removePauses ?? false, project?.silences, reel?.style.speed),
+    [reel?.words, project?.durationMs, reel?.removePauses, project?.silences, reel?.style.speed],
   );
   const outputTimes = useMemo(() => new Map(timeline.words.map((w) => [w.id, w])), [timeline]);
   const lines = useMemo(() => buildLines(reel?.words ?? []), [reel?.words]);
@@ -329,7 +329,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
               <CutTab
                 onTightened={(p) => {
                   setProject(p);
-                  notify(`Tightened: now ${formatTime(buildTimeline(p.words, p.durationMs, true, p.silences).durationMs)} long. Cut lines are at the bottom.`);
+                  notify(`Tightened: now ${formatTime(buildTimeline(p.words, p.durationMs, true, p.silences, p.style.speed).durationMs)} long. Cut lines are at the bottom.`);
                 }}
               />
             ) : null}

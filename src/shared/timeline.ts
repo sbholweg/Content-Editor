@@ -2,24 +2,29 @@ import type { Word } from "./types";
 
 export type Segment = { startMs: number; endMs: number };
 
-// Tuned for fast-paced talking reels: any gap longer than a breath is trimmed to a short beat.
+// Tuned to how creators actually cut talking reels: long pauses go, but a natural beat of about a
+// third of a second stays between sentences so it never sounds robotic. (Measured from a creator's
+// own before/after: the pauses left in her finished reel were ~0.3-0.5s.)
 const CUT_PAD_MS = 50;
-const PAUSE_THRESHOLD_MS = 220;
-const PAUSE_KEEP_MS = 80;
+const PAUSE_THRESHOLD_MS = 450;
+const PAUSE_KEEP_MS = 170;
 const EDGE_KEEP_MS = 100;
 // Quiet stretches found in the audio itself (more accurate than gaps between transcribed words,
 // whose timings often run into the silence).
-const SILENCE_MIN_MS = 260;
-const SILENCE_KEEP_MS = 70;
+const SILENCE_MIN_MS = 450;
+const SILENCE_KEEP_MS = 170;
 
 // Works out which parts of the original video to keep, given the words that were cut
 // and whether long pauses should be removed. Both the preview and the export use this.
-export function buildTimeline(words: Word[], durationMs: number, removePauses: boolean, silences: Segment[] = []) {
+// speed > 1 plays the kept video faster (1.2 is a popular talking-reel speed); segments stay in
+// original-video time, while words and duration are in finished-reel time.
+export function buildTimeline(words: Word[], durationMs: number, removePauses: boolean, silences: Segment[] = [], speed = 1) {
+  const rate = speed > 0 ? speed : 1;
   const kept = words.filter((w) => !w.cut);
   const removed: Segment[] = [];
 
   if (kept.length === 0) {
-    return { segments: [{ startMs: 0, endMs: durationMs }], words: [] as Word[], durationMs };
+    return { segments: [{ startMs: 0, endMs: durationMs }], words: [] as Word[], durationMs: durationMs / rate, speed: rate };
   }
 
   // Remove each run of cut words together with the gap around it.
@@ -72,20 +77,21 @@ export function buildTimeline(words: Word[], durationMs: number, removePauses: b
   const toOutput = (ms: number) => {
     let offset = 0;
     for (const s of segments) {
-      if (ms < s.startMs) return offset;
-      if (ms <= s.endMs) return offset + (ms - s.startMs);
+      if (ms < s.startMs) return offset / rate;
+      if (ms <= s.endMs) return (offset + (ms - s.startMs)) / rate;
       offset += s.endMs - s.startMs;
     }
-    return offset;
+    return offset / rate;
   };
   const outWords = kept.map((w) => ({ ...w, startMs: toOutput(w.startMs), endMs: toOutput(w.endMs) }));
   const outDuration = segments.reduce((sum, s) => sum + (s.endMs - s.startMs), 0);
 
-  return { segments, words: outWords, durationMs: Math.max(outDuration, 100) };
+  return { segments, words: outWords, durationMs: Math.max(outDuration / rate, 100), speed: rate };
 }
 
 // The moment in the original video that a time in the cut reel comes from.
-export function toOriginalMs(segments: Segment[], outputMs: number) {
+export function toOriginalMs(segments: Segment[], outputMs: number, speed = 1) {
+  outputMs *= speed;
   let offset = 0;
   for (const s of segments) {
     const len = s.endMs - s.startMs;

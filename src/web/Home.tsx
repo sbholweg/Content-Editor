@@ -155,7 +155,7 @@ export function Home({ onOpen, onAuthError }: { onOpen: (id: string) => void; on
           ) : (
             <div className="reel-grid">
               {shown.map((p) => {
-                const length = buildTimeline(p.words, p.durationMs, p.removePauses, p.silences).durationMs;
+                const length = buildTimeline(p.words, p.durationMs, p.removePauses, p.silences, p.style.speed).durationMs;
                 const firstWord = p.words.find((w) => !w.cut);
                 return (
                   <button key={p.id} className="reel-card" onClick={() => onOpen(p.id)}>

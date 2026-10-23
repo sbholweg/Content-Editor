@@ -50,6 +50,8 @@ export type ReelStyle = {
   fontSize: number;
   // Punch in and out between lines (hides cuts, keeps it moving).
   zoomJumps: boolean;
+  // Playback speed of the talking (1 = normal; 1.2 is a popular, energetic talking-reel speed).
+  speed: number;
   // Captions centered, or beside the speaker's head (left or right of frame).
   captionAlign: "center" | "left" | "right";
   // Captions can be switched off entirely (e.g. when only the hook should show).

@@ -24,7 +24,7 @@ function CoverCard() {
             <button
               className="chip accent"
               onClick={async () => {
-                const ms = Math.round(toOriginalMs(timeline.segments, timeMs));
+                const ms = Math.round(toOriginalMs(timeline.segments, timeMs, timeline.speed));
                 setCoverMs(ms);
                 await api.saveProject(project.id, { coverMs: ms }).catch(onAuthError);
                 notify("Cover saved. Download it below, or find it in your outputs folder after exporting.");

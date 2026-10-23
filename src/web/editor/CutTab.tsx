@@ -82,6 +82,20 @@ export function CutTab({ onTightened }: { onTightened: (p: Project) => void }) {
         </button>
       </div>
 
+      <div className="row speed-row">
+        <span className="small grow"><strong>Talking speed</strong> <span className="muted">· 1.2× keeps it snappy without sounding chipmunky</span></span>
+        {[1, 1.1, 1.2, 1.25].map((v) => (
+          <button
+            key={v}
+            className={`chip ${(reel.style.speed || 1) === v ? "accent" : ""}`}
+            onClick={() => update({ style: { ...reel.style, speed: v } })}
+            aria-pressed={(reel.style.speed || 1) === v}
+          >
+            {v}×
+          </button>
+        ))}
+      </div>
+
       <div className="row">
         <button className={`chip ${reel.removePauses ? "accent" : ""}`} onClick={() => update({ removePauses: !reel.removePauses })}>
           {reel.removePauses ? "✓ Pauses removed" : "Remove pauses"}

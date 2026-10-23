@@ -71,7 +71,7 @@ async function waitFor(id: string, done: (p: Project) => boolean, label: string)
 }
 
 function describe(p: Project, assets: Asset[]) {
-  const timeline = buildTimeline(p.words, p.durationMs, p.removePauses, p.silences);
+  const timeline = buildTimeline(p.words, p.durationMs, p.removePauses, p.silences, p.style.speed);
   const s = p.style;
   const lines = [
     `Reel ${p.id}${p.variantLabel ? ` (trial reel: ${p.variantLabel})` : ""}`,
@@ -177,7 +177,7 @@ const commands: Record<string, (args: string[]) => Promise<void>> = {
     const projects = await call<Project[]>("GET", "/api/projects");
     if (!projects.length) return console.log("No reels yet.");
     for (const p of projects) {
-      const len = fmt(buildTimeline(p.words, p.durationMs, p.removePauses, p.silences).durationMs);
+      const len = fmt(buildTimeline(p.words, p.durationMs, p.removePauses, p.silences, p.style.speed).durationMs);
       console.log(`${p.id.slice(0, 8)}  ${p.createdAt.slice(0, 16).replace("T", " ")}  ${len}  ${p.status}/${p.render.status}  ${p.variantLabel ? `[trial: ${p.variantLabel}] ` : ""}${p.hookText || p.originalName}`);
     }
   },
@@ -224,8 +224,8 @@ const commands: Record<string, (args: string[]) => Promise<void>> = {
     const id = await resolveId(args[0]);
     const before = await call<Project>("GET", `/api/projects/${id}`);
     const p = await call<Project>("POST", `/api/projects/${id}/tighten`);
-    const was = fmt(buildTimeline(before.words, before.durationMs, before.removePauses, before.silences).durationMs);
-    console.log(`✓ Tightened: ${was} → ${fmt(buildTimeline(p.words, p.durationMs, p.removePauses, p.silences).durationMs)}. Check the cut lines in \`show\`.`);
+    const was = fmt(buildTimeline(before.words, before.durationMs, before.removePauses, before.silences, before.style.speed).durationMs);
+    console.log(`✓ Tightened: ${was} → ${fmt(buildTimeline(p.words, p.durationMs, p.removePauses, p.silences, p.style.speed).durationMs)}. Check the cut lines in \`show\`.`);
   },
 
   async export(args) {
