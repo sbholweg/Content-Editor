@@ -185,6 +185,10 @@ app.patch("/api/projects/:id", async (req, res) => {
   if (req.body && "music" in req.body) patch.music = req.body.music as MusicBed | null;
   if (typeof req.body?.soundsEnabled === "boolean") patch.soundsEnabled = req.body.soundsEnabled;
   if (typeof req.body?.posted === "boolean") patch.posted = req.body.posted;
+  if (req.body?.endCard && typeof req.body.endCard === "object") {
+    const e = req.body.endCard;
+    patch.endCard = { on: Boolean(e.on), text: String(e.text ?? "").slice(0, 60), sub: String(e.sub ?? "").slice(0, 80) };
+  }
   if (Array.isArray(req.body?.notes)) {
     patch.notes = (req.body.notes as ReelNote[])
       .filter((n) => n && typeof n.text === "string" && typeof n.atMs === "number")

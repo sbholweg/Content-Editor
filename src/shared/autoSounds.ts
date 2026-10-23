@@ -28,6 +28,7 @@ export function autoSounds(reel: Pick<Project, "words" | "overlays" | "sounds" |
   for (const o of reel.overlays) {
     const kind = assets.find((a) => a.id === o.assetId)?.kind;
     if (o.graphic && ["circle", "arrow", "underline"].includes(o.graphic.kind)) add(o.startWordId, "sfx-marker", 0.7);
+    else if (o.graphic?.kind === "element") add(o.startWordId, "sfx-pop-cartoon", 0.6);
     else if (o.placement === "full") add(o.startWordId, "sfx-swoosh-in", 0.6);
     else if (kind === "image") add(o.startWordId, "sfx-shutter-2", 0.8);
     else add(o.startWordId, "sfx-pop-cartoon", 0.7);

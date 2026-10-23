@@ -3,7 +3,7 @@ import type { Asset, BrollReelProps, Project, ReelProps } from "./types";
 
 type ReelFields = Pick<
   Project,
-  "hookText" | "hookSubText" | "words" | "style" | "durationMs" | "removePauses" | "overlays" | "sounds" | "music" | "soundsEnabled" | "silences" | "colorStats"
+  "hookText" | "hookSubText" | "words" | "style" | "durationMs" | "removePauses" | "overlays" | "sounds" | "music" | "soundsEnabled" | "silences" | "colorStats" | "endCard"
 >;
 
 // Turns a reel plus the creator's library into everything the video needs to draw and play.
@@ -51,6 +51,8 @@ export function reelProps(
     })(),
     customFonts: assets.filter((a) => a.kind === "font").map((a) => ({ name: a.name, url: urls.library(a.file) })),
     colorStats: reel.colorStats,
+    endCard: reel.endCard?.on && reel.endCard.text.trim() ? reel.endCard : undefined,
+    endCardSound: reel.soundsEnabled ? urls.sfx("pop-cartoon.mp3") : undefined,
     typingSounds: reel.soundsEnabled ? ["key-1.mp3", "key-2.mp3", "key-3.mp3"].map(urls.sfx) : [],
     logoSrc: (() => {
       const logo = byId.get(logoAssetId);

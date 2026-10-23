@@ -57,7 +57,7 @@ const OverlayItem: React.FC<{ overlay: ResolvedOverlay; length: number; brand: R
       <div
         style={{
           position: "absolute",
-          left: `${overlay.x ?? 50}%`,
+          left: `${overlay.x ?? (overlay.graphic.kind === "element" ? 80 : 50)}%`,
           top: `${overlay.y ?? GRAPHIC_Y[overlay.graphic.kind]}%`,
           transform: `translate(-50%, -50%) scale(${scale}) rotate(${(1 - enter) * -8}deg)`,
         }}

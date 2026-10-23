@@ -60,6 +60,8 @@ export function FinishTab({ exportControls, onProject }: { exportControls: React
         {project.render.status === "error" ? <p className="error small">Export failed: {project.render.error}</p> : null}
       </section>
 
+      <EndCardPanel />
+
       <CoverCard />
 
       <section className="panel-card">
@@ -103,5 +105,41 @@ export function FinishTab({ exportControls, onProject }: { exportControls: React
 
       <BusinessCard brand={brand} onBrand={updateBrand} />
     </>
+  );
+}
+
+// A short branded card after your last word, with your call to action (adds about 2 seconds).
+function EndCardPanel() {
+  const { reel, update, brand } = useEditor();
+  const card = reel.endCard ?? { on: false, text: "", sub: "" };
+  const set = (patch: Partial<typeof card>) => update({ endCard: { ...card, ...patch } });
+  const suggestions = [...brand.ctaKeywords, brand.business.cta].filter((c, i, all) => c && all.indexOf(c) === i).slice(0, 4);
+  return (
+    <section className="panel-card">
+      <div className="row">
+        <div className="grow">
+          <h3>End card</h3>
+          <p className="muted small">A 2-second card in your brand after your last word, with your call to action.</p>
+        </div>
+        <button className={`chip ${card.on ? "accent" : ""}`} onClick={() => set({ on: !card.on, text: card.text || suggestions[0] || "" })} aria-pressed={card.on}>
+          {card.on ? "✓ On" : "Add end card"}
+        </button>
+      </div>
+      {card.on ? (
+        <>
+          <input value={card.text} maxLength={60} placeholder='Big line, e.g. Comment "EDIT"' onChange={(e) => set({ text: e.target.value })} aria-label="End card big line" />
+          <input value={card.sub} maxLength={80} placeholder="Small line (optional), e.g. and I'll send you the guide" onChange={(e) => set({ sub: e.target.value })} aria-label="End card small line" />
+          {suggestions.length ? (
+            <div className="row">
+              <span className="muted small">Your calls to action:</span>
+              {suggestions.map((c) => (
+                <button key={c} className="chip" onClick={() => set({ text: c.slice(0, 60) })}>{c.length > 30 ? `${c.slice(0, 30)}…` : c}</button>
+              ))}
+            </div>
+          ) : null}
+          {!card.text.trim() ? <p className="muted small">Add a big line to show the card.</p> : null}
+        </>
+      ) : null}
+    </section>
   );
 }

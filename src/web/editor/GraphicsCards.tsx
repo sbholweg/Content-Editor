@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import type { Overlay, ReelGraphic } from "../../shared/types";
 import { api, libraryUrl } from "../api";
 import { GiphySearch } from "../Giphy";
-import { isMark } from "../../remotion/Graphic";
+import { ELEMENTS, isMark } from "../../remotion/Graphic";
 import { Options, Slider } from "../ui";
 import { formatTime, useEditor } from "./context";
 
 const KIND_LABEL: Record<ReelGraphic["kind"], string> = {
-  sticker: "Sticker", stat: "Counting number", cta: "Comment bubble", circle: "Circle", arrow: "Arrow", underline: "Underline",
+  sticker: "Sticker", stat: "Counting number", cta: "Comment bubble", circle: "Circle", arrow: "Arrow", underline: "Underline", element: "Brand sticker",
 };
 
 // Claude suggests graphics; each one is a card you Keep, Change or Drop. Suggestions already show
@@ -33,7 +33,7 @@ export function GraphicsCards() {
   };
 
   // Adds a hand-drawn mark at the paused moment, on screen for about six words.
-  const addMark = (kind: "circle" | "arrow" | "underline") => {
+  const addMark = (kind: "circle" | "arrow" | "underline" | "element", shape = "") => {
     const kept = reel.words.filter((w) => !w.cut && outputTimes.has(w.id));
     if (!kept.length) return;
     const startIndex = Math.max(0, kept.findIndex((w) => (outputTimes.get(w.id)?.endMs ?? 0) >= timeMs));
@@ -41,7 +41,10 @@ export function GraphicsCards() {
     const end = kept[Math.min(kept.length - 1, startIndex + 6)];
     const id = `ov-${Date.now()}`;
     update({
-      overlays: [...reel.overlays, { id, assetId: "", graphic: { kind, text: "" }, startWordId: start.id, endWordId: end.id, placement: "middle", size: kind === "underline" ? 0.5 : 0.45 }],
+      overlays: [
+        ...reel.overlays,
+        { id, assetId: "", graphic: { kind, text: shape }, startWordId: start.id, endWordId: end.id, placement: "middle", size: kind === "element" ? 0.16 : kind === "underline" ? 0.5 : 0.45 },
+      ],
     });
     setEditing(id);
     notify(`${KIND_LABEL[kind]} added at ${formatTime(outputTimes.get(start.id)?.startMs ?? 0)}. Tap “✥ Move” above the preview to put it exactly where you want.`);
@@ -81,6 +84,13 @@ export function GraphicsCards() {
         <button className="chip" onClick={() => addMark("arrow")}>↗ Arrow</button>
         <button className="chip" onClick={() => addMark("underline")}>＿ Underline</button>
       </div>
+      <div className="row">
+        <span className="muted small grow">Brand stickers:</span>
+        {Object.entries(ELEMENTS).map(([name, el]) => (
+          <button key={name} className="chip" onClick={() => addMark("element", name)}>{el.label}</button>
+        ))}
+      </div>
+      <p className="muted small">Have your own stickers or logo marks? Add them as PNGs through any “Add image” button and pick “No frame”.</p>
       {pending > 1 ? (
         <div className="row">
           <span className="muted small grow">{pending} suggestions waiting</span>
@@ -128,7 +138,26 @@ export function GraphicsCards() {
                   </div>
                   {editing === o.id ? (
                     <div className="adjust">
-                      {o.graphic && isMark(o.graphic.kind) ? (
+                      {o.graphic?.kind === "element" ? (
+                        <>
+                          <Options
+                            value={o.graphic.text}
+                            onChange={(text) => set(o.id, { graphic: { ...o.graphic!, text } })}
+                            options={Object.entries(ELEMENTS).map(([name, el]) => ({ value: name, label: el.label }))}
+                          />
+                          <Options
+                            value={o.graphic.color ?? ""}
+                            onChange={(color) => set(o.id, { graphic: { ...o.graphic!, color: color || undefined } })}
+                            options={[
+                              { value: "", label: "Brand color" },
+                              { value: "#C1FF72", label: "Lime" },
+                              { value: "#FFFFFF", label: "White" },
+                              { value: "#111014", label: "Black" },
+                            ]}
+                          />
+                          <Slider label="Size" value={Math.round(o.size * 100)} min={8} max={50} onChange={(v) => set(o.id, { size: v / 100 })} />
+                        </>
+                      ) : o.graphic && isMark(o.graphic.kind) ? (
                         <>
                           <Options
                             value={o.graphic.kind}
@@ -191,6 +220,14 @@ export function GraphicsCards() {
 
 // A small stand-in for each graphic on its card.
 function MiniGraphic({ graphic }: { graphic: ReelGraphic }) {
+  if (graphic.kind === "element") {
+    const el = ELEMENTS[graphic.text] ?? ELEMENTS.sparkle;
+    return (
+      <svg viewBox={el.box} height="56" aria-hidden style={{ overflow: "visible" }}>
+        <path d={el.d} fill={graphic.color || "var(--violet)"} stroke="#111014" strokeWidth={Number(el.box.split(" ")[2]) / 30} />
+      </svg>
+    );
+  }
   if (isMark(graphic.kind)) {
     const d = graphic.kind === "circle" ? "M14 32 C12 14 60 5 89 13 C107 18 107 43 80 51 C52 59 15 53 10 36" : graphic.kind === "arrow" ? "M9 48 C35 46 60 35 84 15 M70 14 L85 13 L83 28" : "M5 40 C30 34 60 42 105 32";
     return (

@@ -1,6 +1,6 @@
 import React, { useId, useMemo } from "react";
 import { gradeMatrix } from "../shared/grade";
-import { AbsoluteFill, Img, OffthreadVideo, Sequence, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Audio, Img, OffthreadVideo, Sequence, useCurrentFrame } from "remotion";
 import { buildLines } from "../shared/lines";
 import { overlayTimes } from "../shared/overlays";
 import { buildTimeline } from "../shared/timeline";
@@ -8,6 +8,7 @@ import type { ReelProps } from "../shared/types";
 import { Captions } from "./Captions";
 import { Hook } from "./Hook";
 import { registerCustomFonts } from "./fonts";
+import { END_CARD_MS, EndCardView } from "./Graphic";
 import { Overlays } from "./Overlays";
 import { Sounds } from "./Sounds";
 
@@ -17,8 +18,8 @@ export const REEL_HEIGHT = 1920;
 const toFrames = (ms: number) => Math.round((ms / 1000) * REEL_FPS);
 
 // Length of the finished reel after cuts.
-export const outputFrames = (props: Pick<ReelProps, "words" | "durationMs" | "removePauses" | "silences" | "brand">) =>
-  Math.max(1, toFrames(buildTimeline(props.words, props.durationMs, props.removePauses, props.silences, props.brand.speed).durationMs));
+export const outputFrames = (props: Pick<ReelProps, "words" | "durationMs" | "removePauses" | "silences" | "brand" | "endCard">) =>
+  Math.max(1, toFrames(buildTimeline(props.words, props.durationMs, props.removePauses, props.silences, props.brand.speed).durationMs + (props.endCard ? END_CARD_MS : 0)));
 
 export const Reel: React.FC<ReelProps> = (props) => {
   const { videoSrc, hookText, hookSubText, words, brand, durationMs, removePauses, silences, overlays, sounds, music, customFonts, logoSrc } = props;
@@ -73,6 +74,12 @@ export const Reel: React.FC<ReelProps> = (props) => {
       <Sounds sounds={sounds ?? []} music={music ?? null} words={timeline.words} />
       <Hook text={hookText} subText={hookSubText ?? ""} brand={brand} typingSounds={props.typingSounds} />
       <Captions words={timeline.words} brand={brand} hookText={hookText} />
+      {props.endCard ? (
+        <Sequence from={toFrames(timeline.durationMs)} durationInFrames={toFrames(END_CARD_MS)}>
+          <EndCardView text={props.endCard.text} sub={props.endCard.sub} brand={brand} logoSrc={logoSrc || undefined} />
+          {props.endCardSound ? <Audio src={props.endCardSound} volume={0.25} /> : null}
+        </Sequence>
+      ) : null}
       {logoSrc && brand.logo && brand.logo !== "off" ? (
         <Img
           src={logoSrc}

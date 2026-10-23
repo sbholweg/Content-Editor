@@ -102,7 +102,7 @@ export function MoveLayer() {
           <button
             key={o.id}
             className="move-handle media"
-            style={{ left: `${o.x ?? 50}%`, top: `${o.y ?? (o.graphic ? GRAPHIC_Y[o.graphic.kind] : PLACEMENT_Y[o.placement as keyof typeof PLACEMENT_Y])}%` }}
+            style={{ left: `${o.x ?? (o.graphic?.kind === "element" ? 80 : 50)}%`, top: `${o.y ?? (o.graphic ? GRAPHIC_Y[o.graphic.kind] : PLACEMENT_Y[o.placement as keyof typeof PLACEMENT_Y])}%` }}
             onPointerDown={drag((x, y) => moveOverlay(o.id, x, y))}
             aria-label={`Drag to move this ${name.toLowerCase()}`}
           >

@@ -116,6 +116,9 @@ export type ReelProps = {
   logoSrc: string;
   // Average color of the video, used by color grading.
   colorStats?: { r: number; g: number; b: number; luma: number; white?: { r: number; g: number; b: number } };
+  endCard?: EndCard;
+  // The pop as the end card lands (empty when sound effects are off).
+  endCardSound?: string;
   // Key-click sounds for the typewriter hook (empty when sound effects are off).
   typingSounds?: string[];
 };
@@ -171,7 +174,11 @@ export type Overlay = {
 // with a small label. cta: an Instagram-style "Comment EDIT" bubble.
 // circle / arrow / underline: a hand-drawn mark that draws itself on (over a screenshot, say);
 // overlay.size sets its width, color defaults to the key color.
-export type ReelGraphic = { kind: "sticker" | "stat" | "cta" | "circle" | "arrow" | "underline"; text: string; sub?: string; color?: string };
+// element: a brand shape (text holds its name: bolt, starburst, sparkle, heart, star).
+export type ReelGraphic = { kind: "sticker" | "stat" | "cta" | "circle" | "arrow" | "underline" | "element"; text: string; sub?: string; color?: string };
+
+// A short branded card after the last word, with the call to action.
+export type EndCard = { on: boolean; text: string; sub: string };
 
 // A sound effect that plays when a word is spoken. soundId is a built-in sound or a library item.
 // A change the creator asked for at a moment in the reel (atMs is in finished-reel time).
@@ -273,6 +280,8 @@ export type Project = {
   posted?: boolean;
   // Average color of the video (measured once), used by color grading.
   colorStats?: { r: number; g: number; b: number; luma: number; white?: { r: number; g: number; b: number } };
+  // Branded closing card with the call to action.
+  endCard?: EndCard;
   // "Notes on the draft": what to change at a moment of the finished reel, for Claude to apply.
   notes?: ReelNote[];
   // Set on trial reel versions: the reel they were made from and which angle they use.

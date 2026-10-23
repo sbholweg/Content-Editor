@@ -81,8 +81,8 @@ export const ReelEdits = z
     removeMedia: z.array(z.string()).describe("overlay ids"),
     addGraphics: z.array(
       z.object({
-        kind: z.enum(["sticker", "stat", "cta", "circle", "arrow", "underline"]),
-        text: z.string().max(40).describe("empty for circle/arrow/underline"),
+        kind: z.enum(["sticker", "stat", "cta", "circle", "arrow", "underline", "element"]),
+        text: z.string().max(40).describe("empty for circle/arrow/underline; element: bolt, starburst, sparkle, heart or star"),
         color: z.string().optional().describe("marks: hex color, default the key color"),
         size: z.number().min(0.2).max(0.95).optional(),
         sub: z.string().max(40).optional(),
@@ -102,6 +102,7 @@ export const ReelEdits = z
     ),
     removeSounds: z.array(z.string()).describe('sound cue ids, or "all"'),
     soundsEnabled: z.boolean(),
+    endCard: z.object({ on: z.boolean(), text: z.string().max(60), sub: z.string().max(80) }).describe("branded closing card with the call to action"),
     clearNotes: z.boolean().describe("true once you've applied the creator's notes on the draft"),
     autoSounds: z.boolean().describe("true adds sound effects by moment: clicks on key words, pops on stickers/emojis, shutters on screenshots, cash register on money talk"),
     music: z
@@ -206,6 +207,7 @@ export function applyEdits(project: Project, edits: ReelEdits, brand: BrandKit, 
   if (edits.hookSubText !== undefined) changes.hookSubText = edits.hookSubText;
   if (edits.soundsEnabled !== undefined) changes.soundsEnabled = edits.soundsEnabled;
   if (edits.clearNotes) changes.notes = [];
+  if (edits.endCard) changes.endCard = edits.endCard;
 
   const findSound = (name: string) => {
     const key = name.trim().toLowerCase();
