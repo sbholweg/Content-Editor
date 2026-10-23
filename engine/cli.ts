@@ -253,6 +253,15 @@ const commands: Record<string, (args: string[]) => Promise<void>> = {
     console.log(describe(p, await call<Asset[]>("GET", "/api/library")));
   },
 
+  // Branded cover: cover [id|latest] [headline|block|split|plain] ["words"] ["small line"]
+  async cover(args) {
+    const id = await resolveId(args[0]);
+    const [design, title, sub] = args.slice(1);
+    const p = await call<Project>("POST", `/api/projects/${id}/cover`, { design, title, sub });
+    console.log(`✓ Cover saved (${p.cover?.design} design: "${p.cover?.title ?? p.hookText}"). It's in the Finish tab, and goes to the outputs folder with the reel on export.`);
+    console.log("To change the frame, pause the editor preview on a moment and tap “📸 Use this frame”, then save the cover again.");
+  },
+
   // The link to open the editor on a phone on the same Wi-Fi.
   async phone() {
     const { links } = await call<{ links: string[] }>("GET", "/api/phone-link");
@@ -390,6 +399,7 @@ const HELP = `Engine commands (npm run engine -- <command>):
   show [id|latest]           show a reel: words with numbers, hook, look, media, caption
   recipe "<name>" [ids|to-edit]  apply a saved recipe to reels (default: everything in To edit)
   suggest [id|latest]        Claude suggests graphics (stickers, counting numbers, comment bubbles, GIFs)
+  cover [id] [design] ["words"] ["small line"]  branded cover image (headline|block|split|plain); *word* = accent
   phone                      the link to open the editor on your phone (same Wi-Fi)
   tighten [id|latest]        cut pauses, ums, repeats and restarted sentences
   apply [id|latest] <json>   change a reel (JSON text, a .json file, or - for stdin)

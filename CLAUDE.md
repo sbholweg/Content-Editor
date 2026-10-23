@@ -22,7 +22,7 @@ a QR code (or `npm run engine -- phone` prints the link). "Save to Photos" saves
 - `import [--do-it-all]`: import everything in the inbox and transcribe it
 - `list` / `show [id|latest]`: see reels; `show` prints every word with a number like `[12]`
 - `apply [id|latest] edits.json`: change a reel (see the change-reel skill for the format)
-- `tighten`, `caption`, `export`, `trials`, `carousel`, `stories`, `plan`, `looks`, `brand`, `library`, `frames`:
+- `tighten`, `caption`, `cover`, `export`, `trials`, `carousel`, `stories`, `plan`, `looks`, `brand`, `library`, `frames`:
   see `npm run engine` for help
 
 To change a reel: write the JSON to `edits.json` in this folder with your file-writing tool,

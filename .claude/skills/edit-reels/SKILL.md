@@ -31,8 +31,11 @@ description: Turn raw clips into finished, on-brand reels. Use when the person s
      At most 2 emojis. Never invent results or numbers.
 4. Tell them the reel is ready to look at: give the editor link from `show`, and summarize what
    you did in 2-3 lines (what you cut, the hook). Ask if they want changes.
-5. Export when they're happy, or right away if they asked for it post-ready / hands off:
+5. Before exporting, make a branded cover: `npm run engine -- cover <id> headline` (uses the hook;
+   pass short cover words in quotes if the hook is long, `*word*` for the accent). Designs:
+   headline, block, split, plain. They can pick a better frame in the Finish tab.
+6. Export when they're happy, or right away if they asked for it post-ready / hands off:
    `npm run engine -- export <id>`. Tell them it's in the outputs folder, with the caption file.
-6. Offer trial reels: `npm run engine -- trials <id>` makes 3 versions with different hooks.
+7. Offer trial reels: `npm run engine -- trials <id>` makes 3 versions with different hooks.
 
 Several clips: do them one after another, then give one short summary list at the end.
