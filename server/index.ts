@@ -18,7 +18,7 @@ import { subscribe } from "./events.ts";
 import { planEdit } from "./highlights.ts";
 import { smartCut } from "./smartcut.ts";
 import { phoneLinks } from "./phone.ts";
-import { detectSilences, extractAudio, normalizeVideo, probe } from "./media.ts";
+import { colorStats, detectSilences, extractAudio, normalizeVideo, probe } from "./media.ts";
 import { queueRender } from "./render.ts";
 import { ensureWhisper } from "./setup-whisper.ts";
 import {
@@ -130,7 +130,8 @@ async function processProject(id: string, original: string, autopilot: boolean) 
     const audio = projectFile(id, "audio.wav");
     await normalizeVideo(original, video);
     const info = await probe(video);
-    await updateProject(id, { ...info, step: "Listening to your video" });
+    const color = await colorStats(video).catch(() => undefined);
+    await updateProject(id, { ...info, colorStats: color, step: "Listening to your video" });
     await extractAudio(video, audio);
     const silences = await detectSilences(audio).catch(() => []);
     const words = await transcribeWords(audio);
@@ -216,6 +217,15 @@ app.post("/api/projects/:id/apply", async (req, res) => {
 app.get("/api/events", subscribe);
 
 // Which writer the ✨ buttons use: an API key, the person's Claude Code, or simple rules.
+// Measures a reel's average color for grading (reels made before grading existed don't have it).
+app.post("/api/projects/:id/color-stats", async (req, res) => {
+  const project = await readProject(req.params.id);
+  if (!project) return res.status(404).json({ error: "Not found" });
+  if (project.colorStats) return res.json(project);
+  const stats = await colorStats(projectFile(project.id, "video.mp4"));
+  res.json(await updateProject(project.id, { colorStats: stats }));
+});
+
 app.get("/api/ai-status", (_req, res) => res.json({ source: claudeSource() }));
 
 // Links a phone on the same Wi-Fi can use to open the editor. The token lets the QR code log

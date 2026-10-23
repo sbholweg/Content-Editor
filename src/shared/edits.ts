@@ -51,6 +51,7 @@ export const ReelEdits = z
         fontSize: z.number().min(30).max(140),
         zoomJumps: z.boolean(),
         speed: z.number().min(1).max(1.5).describe("talking speed; 1.2 is the creator's usual"),
+        grade: z.enum(["off", "auto", "bright", "warm", "soft"]).describe("color grading"),
         captionAlign: z.enum(["center", "left", "right"]),
         captionsOn: z.boolean(),
         logo: z.enum(["off", "top-left", "top-right", "bottom-right"]),

@@ -1,4 +1,5 @@
-import React, { useMemo } from "react";
+import React, { useId, useMemo } from "react";
+import { gradeMatrix } from "../shared/grade";
 import { AbsoluteFill, Img, OffthreadVideo, Sequence, useCurrentFrame } from "remotion";
 import { buildLines } from "../shared/lines";
 import { overlayTimes } from "../shared/overlays";
@@ -30,6 +31,9 @@ export const Reel: React.FC<ReelProps> = (props) => {
   const lineIndex = lineStarts.filter((ms) => ms <= (frame / REEL_FPS) * 1000).length - 1;
   const zoom = brand.zoomJumps && lineIndex % 2 === 1 ? 1.14 : 1;
   const placed = useMemo(() => overlayTimes(overlays ?? [], words, timeline.words), [overlays, words, timeline]);
+  // Color grading is an SVG color matrix on the video layer only (captions and graphics keep their colors).
+  const grade = gradeMatrix(brand.grade, props.colorStats);
+  const gradeId = `grade${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
 
   // Each kept piece of the original video plays back-to-back, sped up if the look says so.
   // start is in original-video frames; length is in finished-reel frames.
@@ -44,7 +48,14 @@ export const Reel: React.FC<ReelProps> = (props) => {
 
   return (
     <AbsoluteFill style={{ backgroundColor: "black" }}>
-      <AbsoluteFill style={{ transform: `scale(${zoom})`, transformOrigin: "50% 38%" }}>
+      {grade ? (
+        <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden>
+          <filter id={gradeId} colorInterpolationFilters="sRGB">
+            <feColorMatrix type="matrix" values={grade} />
+          </filter>
+        </svg>
+      ) : null}
+      <AbsoluteFill style={{ transform: `scale(${zoom})`, transformOrigin: "50% 38%", filter: grade ? `url(#${gradeId})` : undefined }}>
         {videoSrc
           ? pieces.map((p) => (
               <Sequence key={`${p.start}-${p.length}`} from={p.from} durationInFrames={p.length} premountFor={REEL_FPS}>

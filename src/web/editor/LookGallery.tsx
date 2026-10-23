@@ -5,7 +5,15 @@ import { STARTER_LOOKS } from "../../shared/looks";
 import type { ReelProps, ReelStyle } from "../../shared/types";
 import { useEditor } from "./context";
 
-const same = (a: ReelStyle, b: ReelStyle) => JSON.stringify(a) === JSON.stringify(b);
+// Looks don't carry this reel's own color grade or where you dragged the hook, unless the look has
+// its own grade; those stay as you set them when you switch looks.
+const reelOnly = (s: ReelStyle) => ({ ...s, hookPlace: null, grade: "off" as const });
+const same = (a: ReelStyle, b: ReelStyle) => JSON.stringify(reelOnly(a)) === JSON.stringify(reelOnly(b));
+const withLook = (current: ReelStyle, look: ReelStyle): ReelStyle => ({
+  ...look,
+  hookPlace: current.hookPlace,
+  grade: look.grade && look.grade !== "off" ? look.grade : current.grade,
+});
 
 // Every look as a little preview of this reel, so you pick by seeing, not by name.
 export function LookGallery({ previewProps }: { previewProps: ReelProps }) {
@@ -26,10 +34,10 @@ export function LookGallery({ previewProps }: { previewProps: ReelProps }) {
       <div className="look-gallery">
         {looks.map((l) => (
           <div key={l.id} className={`look-tile ${same(reel.style, l.style) ? "on" : ""}`}>
-            <button className="look-pick" onClick={() => update({ style: l.style })}>
+            <button className="look-pick" onClick={() => update({ style: withLook(reel.style, l.style) })}>
               <Thumbnail
                 component={Reel}
-                inputProps={{ ...previewProps, brand: l.style }}
+                inputProps={{ ...previewProps, brand: withLook(reel.style, l.style) }}
                 frameToDisplay={Math.max(0, frame)}
                 durationInFrames={outputFrames(previewProps)}
                 fps={REEL_FPS}

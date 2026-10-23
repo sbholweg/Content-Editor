@@ -3,8 +3,10 @@ import React, { useRef, useState } from "react";
 import { outputFrames, Reel, REEL_FPS, REEL_HEIGHT, REEL_WIDTH } from "../../remotion/Reel";
 import { swatchesFor } from "../../shared/brand";
 import { FONT_GROUPS } from "../../shared/fonts";
+import { GRADES } from "../../shared/grade";
 import { HOOK_LIBRARY } from "../../shared/library";
 import type { HookLayout, ReelProps, ReelStyle } from "../../shared/types";
+import { api } from "../api";
 import { useUpload } from "../Media";
 import { FontOptions, Label, Options, Slider, Swatches } from "../ui";
 import { useEditor } from "./context";
@@ -290,6 +292,57 @@ export function FontsPanel() {
           </div>
         ) : null}
       </div>
+    </div>
+  );
+}
+
+// Color grading: pick a look and compare Original with Graded at the current moment.
+export function ColorPanel({ previewProps }: { previewProps: ReelProps }) {
+  const { project, reel, update, timeMs, onAuthError, notify } = useEditor();
+  const [stats, setStats] = useState(project.colorStats);
+  const grade = reel.style.grade ?? "off";
+  const frame = Math.min(outputFrames(previewProps) - 1, Math.max(0, Math.round((timeMs / 1000) * REEL_FPS)));
+
+  const choose = async (value: ReelStyle["grade"]) => {
+    update({ style: { ...reel.style, grade: value } });
+    if (value !== "off" && !stats) {
+      // Older reels: measure this video's light and color the first time.
+      try {
+        setStats((await api.colorStats(project.id)).colorStats);
+      } catch (err) {
+        onAuthError(err);
+        notify("Couldn't measure this video's color, so the look is applied without the auto-fix.");
+      }
+    }
+  };
+  const props = { ...previewProps, colorStats: stats };
+  const thumb = (style: ReelStyle) => (
+    <Thumbnail
+      component={Reel}
+      inputProps={{ ...props, brand: { ...style, captionsOn: false }, hookText: "" }}
+      frameToDisplay={frame}
+      durationInFrames={outputFrames(previewProps)}
+      fps={REEL_FPS}
+      compositionWidth={REEL_WIDTH}
+      compositionHeight={REEL_HEIGHT}
+      style={{ width: "100%", aspectRatio: "9 / 16", borderRadius: 12, overflow: "hidden" }}
+    />
+  );
+
+  return (
+    <div className="panel-body">
+      <Options value={grade} onChange={choose} options={GRADES.map((g) => ({ value: g.value, label: g.label, note: g.note }))} />
+      <div className="grade-compare">
+        <figure>
+          {thumb({ ...reel.style, grade: "off" })}
+          <figcaption>Original</figcaption>
+        </figure>
+        <figure>
+          {thumb(reel.style)}
+          <figcaption>{grade === "off" ? "Pick a look above" : `Graded · ${GRADES.find((g) => g.value === grade)?.label}`}</figcaption>
+        </figure>
+      </div>
+      <p className="muted small">Shows the moment the preview is paused on. Every look also fixes this video's own light and color cast first, so your reels match even when the lighting changes.</p>
     </div>
   );
 }

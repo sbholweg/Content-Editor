@@ -1,3 +1,4 @@
+import type { ColorStats } from "../src/shared/grade.ts";
 import { spawn } from "node:child_process";
 
 export function run(cmd: string, args: string[]): Promise<string> {
@@ -128,4 +129,38 @@ export function findPauses(db: number[]): { startMs: number; endMs: number }[] {
     i = j;
   }
   return out;
+}
+
+// Average color and brightness of a video, from a frame every few seconds (used by color grading).
+export async function colorStats(input: string): Promise<ColorStats> {
+  const pixels = await new Promise<Buffer>((resolve, reject) => {
+    const child = spawn("ffmpeg", ["-v", "error", "-i", input, "-vf", "fps=1/3,scale=48:-2", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"]);
+    const chunks: Buffer[] = [];
+    child.stdout.on("data", (d: Buffer) => chunks.push(d));
+    child.on("error", reject);
+    child.on("close", () => resolve(Buffer.concat(chunks)));
+  });
+  let r = 0, g = 0, b = 0;
+  const n = Math.floor(pixels.length / 3);
+  const bright: { y: number; i: number }[] = [];
+  for (let i = 0; i < n; i++) {
+    const [pr, pg, pb] = [pixels[i * 3], pixels[i * 3 + 1], pixels[i * 3 + 2]];
+    r += pr;
+    g += pg;
+    b += pb;
+    // Clipped highlights carry no color information.
+    if (Math.max(pr, pg, pb) < 250) bright.push({ y: 0.2126 * pr + 0.7152 * pg + 0.0722 * pb, i });
+  }
+  if (!n) return { r: 128, g: 128, b: 128, luma: 128 };
+  [r, g, b] = [r / n, g / n, b / n];
+  // The brightest tenth of the picture (white walls, doors, windows) should be neutral; their
+  // tint is the camera's color cast. (Averaging everything instead would treat a red shirt as a cast.)
+  bright.sort((a, b2) => b2.y - a.y);
+  const top = bright.slice(0, Math.max(1, Math.floor(bright.length * 0.1)));
+  const white = [0, 1, 2].map((c) => top.reduce((sum, p) => sum + pixels[p.i * 3 + c], 0) / top.length);
+  const round = (v: number) => Math.round(v * 10) / 10;
+  return {
+    r: round(r), g: round(g), b: round(b), luma: round(0.2126 * r + 0.7152 * g + 0.0722 * b),
+    white: { r: round(white[0]), g: round(white[1]), b: round(white[2]) },
+  };
 }

@@ -187,13 +187,13 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   const inputProps = useMemo(
     () =>
       project && reel
-        ? reelProps({ ...reel, durationMs: project.durationMs, silences: project.silences }, assets, {
+        ? reelProps({ ...reel, durationMs: project.durationMs, silences: project.silences, colorStats: project.colorStats }, assets, {
             video: mediaUrl(id, "video.mp4"),
             library: libraryUrl,
             sfx: (file) => `/sfx/${file}`,
           }, brand?.logoAssetId)
         : null,
-    [project?.durationMs, project?.silences, reel, assets, id, brand?.logoAssetId],
+    [project?.durationMs, project?.silences, project?.colorStats, reel, assets, id, brand?.logoAssetId],
   );
 
   useEffect(() => {

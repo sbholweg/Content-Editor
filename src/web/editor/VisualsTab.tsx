@@ -5,9 +5,9 @@ import { api } from "../api";
 import { LibraryBrowser, Modal, OverlayAdjust, Thumb } from "../Media";
 import { formatTime, useEditor } from "./context";
 import { LookGallery } from "./LookGallery";
-import { CaptionsPanel, FontsPanel, HookPanel } from "./panels";
+import { CaptionsPanel, FontsPanel, HookPanel, ColorPanel } from "./panels";
 
-type Section = "captions" | "hook" | "fonts";
+type Section = "captions" | "hook" | "fonts" | "color";
 
 const EMOJIS = ["🔥", "💰", "✨", "💡", "🚀", "💜", "😂", "👀", "✅", "❌", "⏰", "📈", "🙌", "💸", "🎯"];
 const LAYOUT_LABEL = { headline: "Headline", eyebrow: "Eyebrow + headline", subhead: "Headline + subhead" };
@@ -42,6 +42,7 @@ function StyleView({ previewProps }: { previewProps: ReelProps }) {
     { id: "captions", title: "Captions", hint: "style, placement, size, zoom jumps", body: <CaptionsPanel /> },
     { id: "hook", title: "Hook", hint: "the title, its style and position", body: <HookPanel previewProps={previewProps} /> },
     { id: "fonts", title: "Fonts & colors", hint: "your fonts, upload your own, colors", body: <FontsPanel /> },
+    { id: "color", title: "Color grading", hint: "auto-fix the light, or a look · before & after", body: <ColorPanel previewProps={previewProps} /> },
   ];
   return (
     <>
