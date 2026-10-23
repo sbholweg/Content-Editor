@@ -144,7 +144,17 @@ export type Overlay = {
   // Where it was dragged to (its center, as % of the frame). Overrides placement when set.
   x?: number;
   y?: number;
+  // A graphic drawn in the brand's style instead of a library item (assetId is then "").
+  graphic?: ReelGraphic;
+  // Suggested by Claude and waiting for Keep / Change / Drop (it still shows in the preview).
+  suggested?: boolean;
+  // Why Claude suggested it, shown on its card.
+  why?: string;
 };
+
+// sticker: a tilted tag ("UNPOPULAR OPINION"). stat: a big number that counts up ("$800+")
+// with a small label. cta: an Instagram-style "Comment EDIT" bubble.
+export type ReelGraphic = { kind: "sticker" | "stat" | "cta"; text: string; sub?: string };
 
 // A sound effect that plays when a word is spoken. soundId is a built-in sound or a library item.
 // A change the creator asked for at a moment in the reel (atMs is in finished-reel time).
@@ -156,7 +166,7 @@ export type SoundCue = { id: string; soundId: string; wordId: string; volume: nu
 export type MusicBed = { soundId: string; volume: number; duck: boolean; enabled: boolean };
 
 // An overlay ready to draw: the asset's details are included so the video doesn't need the library.
-export type ResolvedOverlay = Overlay & { src: string; kind: AssetKind; width: number; height: number };
+export type ResolvedOverlay = Overlay & { src: string; kind: AssetKind | "graphic"; width: number; height: number };
 
 // One carousel slide or story frame made from a reel.
 export type Slide = {

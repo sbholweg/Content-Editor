@@ -1,7 +1,8 @@
 import { Gif } from "@remotion/gif";
 import React from "react";
 import { AbsoluteFill, Img, OffthreadVideo, Sequence, spring, useCurrentFrame, useVideoConfig } from "remotion";
-import type { ResolvedOverlay } from "../shared/types";
+import type { ReelStyle, ResolvedOverlay } from "../shared/types";
+import { Graphic, GRAPHIC_Y } from "./Graphic";
 
 // A broken b-roll file shouldn't stop the whole reel from previewing or exporting.
 const ignoreMediaError = (err: Error) => console.warn("Overlay media failed to play:", err.message);
@@ -12,7 +13,7 @@ export const PLACEMENT_TOP: Record<Exclude<ResolvedOverlay["placement"], "full">
   bottom: 62,
 };
 
-export const Overlays: React.FC<{ items: { overlay: ResolvedOverlay; startMs: number; endMs: number }[] }> = ({ items }) => {
+export const Overlays: React.FC<{ items: { overlay: ResolvedOverlay; startMs: number; endMs: number }[]; brand: ReelStyle }> = ({ items, brand }) => {
   const { fps } = useVideoConfig();
   return (
     <>
@@ -21,7 +22,7 @@ export const Overlays: React.FC<{ items: { overlay: ResolvedOverlay; startMs: nu
         const length = Math.max(1, Math.round((endMs / 1000) * fps) - from);
         return (
           <Sequence key={overlay.id} from={from} durationInFrames={length} premountFor={fps}>
-            <OverlayItem overlay={overlay} length={length} />
+            <OverlayItem overlay={overlay} length={length} brand={brand} />
           </Sequence>
         );
       })}
@@ -29,7 +30,7 @@ export const Overlays: React.FC<{ items: { overlay: ResolvedOverlay; startMs: nu
   );
 };
 
-const OverlayItem: React.FC<{ overlay: ResolvedOverlay; length: number }> = ({ overlay, length }) => {
+const OverlayItem: React.FC<{ overlay: ResolvedOverlay; length: number; brand: ReelStyle }> = ({ overlay, length, brand }) => {
   const frame = useCurrentFrame();
   const { fps, width: frameWidth } = useVideoConfig();
 
@@ -51,6 +52,20 @@ const OverlayItem: React.FC<{ overlay: ResolvedOverlay; length: number }> = ({ o
   const scale = Math.max(0, enter - exit);
   const width = Math.round(frameWidth * overlay.size);
   const height = Math.round((width * overlay.height) / Math.max(1, overlay.width));
+  if (overlay.kind === "graphic" && overlay.graphic) {
+    return (
+      <div
+        style={{
+          position: "absolute",
+          left: `${overlay.x ?? 50}%`,
+          top: `${overlay.y ?? GRAPHIC_Y[overlay.graphic.kind]}%`,
+          transform: `translate(-50%, -50%) scale(${scale}) rotate(${(1 - enter) * -8}deg)`,
+        }}
+      >
+        <Graphic graphic={overlay.graphic} brand={brand} />
+      </div>
+    );
+  }
   const box: React.CSSProperties = { width, height, borderRadius: 28, overflow: "hidden", boxShadow: "0 18px 50px rgba(0,0,0,0.35)" };
 
   return (

@@ -69,7 +69,7 @@ export const Reel: React.FC<ReelProps> = (props) => {
             ))
           : null}
       </AbsoluteFill>
-      <Overlays items={placed} />
+      <Overlays items={placed} brand={brand} />
       <Sounds sounds={sounds ?? []} music={music ?? null} words={timeline.words} />
       <Hook text={hookText} subText={hookSubText ?? ""} brand={brand} />
       <Captions words={timeline.words} brand={brand} hookText={hookText} />

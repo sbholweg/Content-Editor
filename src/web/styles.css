@@ -606,3 +606,21 @@ a.btn.primary { color: #fff; }
 .grade-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 420px; }
 .grade-compare figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
 .grade-compare figcaption { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: center; }
+
+/* Suggested graphics: Keep / Change / Drop */
+.gfx-cards { display: flex; flex-direction: column; gap: 10px; }
+.gfx-card { display: flex; gap: 14px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+.gfx-card.suggested { border: 1px dashed var(--accent); background: #fdfaff; }
+.gfx-preview { width: 120px; flex-shrink: 0; aspect-ratio: 4 / 3; border-radius: 10px; background: #2a2431; display: grid; place-items: center; overflow: hidden; padding: 8px; }
+.gfx-preview img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
+.gfx-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.gfx-when { text-align: left; font-weight: 500; font-size: 13px; color: var(--muted); min-height: 0; }
+.tag-suggested { font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); }
+.mini-sticker { transform: rotate(-4deg); background: var(--violet); color: var(--ink); border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); border-radius: 6px; padding: 4px 8px; font-weight: 800; font-size: 11px; text-transform: uppercase; text-align: center; }
+.mini-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.mini-stat b { font-family: var(--poster); font-weight: 400; font-size: 30px; color: var(--violet); -webkit-text-stroke: 1px var(--ink); text-shadow: 2px 2px 0 var(--ink); line-height: 1; }
+.mini-stat small { background: var(--ink); color: #fff; font-size: 9px; padding: 1px 5px; border-radius: 4px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mini-cta { background: #fff; border: 2px solid var(--ink); border-radius: 10px; padding: 4px 10px; display: flex; flex-direction: column; align-items: center; }
+.mini-cta small { font-size: 9px; color: var(--muted); }
+.mini-cta b { background: var(--violet); padding: 0 6px; border-radius: 4px; font-family: var(--poster); font-weight: 400; font-size: 16px; text-transform: uppercase; }
+@media (max-width: 560px) { .gfx-card { flex-direction: column; } .gfx-preview { width: 100%; aspect-ratio: 16 / 7; } }

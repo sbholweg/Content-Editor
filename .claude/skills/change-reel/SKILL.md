@@ -85,6 +85,11 @@ style and zoom. Save it as a named look with `npm run engine -- brand look.json`
 - "my brand colors": use `looks` to read their default look and saved looks; prefer those colors.
 - "cut the first sentence": cut the word numbers up to and including its last word.
 - "add <clip> when I talk about X": find the words in `show`, find the item with `library`, use addMedia.
+- "suggest graphics" / "add some graphics": `npm run engine -- suggest <id>`. They land on the reel
+  marked SUGGESTED; tell them to keep, change or drop each in Visuals › Graphics, or do it for them:
+  `"keepSuggestions": "all"` (or ids), `"removeMedia": ["ov-…"]`. To add one yourself:
+  `"addGraphics": [{"kind": "sticker|stat|cta", "text": "SAVE THIS", "sub": "label", "fromWord": 12, "toWord": 18}]`.
+  stat = a number that counts up (only numbers they actually said); cta = comment-keyword bubble.
 - "apply my notes" / "I left notes": `show` lists the notes they added in the editor ("Notes for
   Claude" under the preview), each with its time and the word playing then. Make each change, then
   include `"clearNotes": true` in the same edits file. Tell them in a line per note what you did.

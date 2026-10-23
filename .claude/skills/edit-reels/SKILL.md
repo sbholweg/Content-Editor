@@ -24,6 +24,8 @@ description: Turn raw clips into finished, on-brand reels. Use when the person s
    - **hookText**: 3-8 words, lowercase, conversational, in their voice, based only on what they say.
    - **autoSounds: true**: sounds by moment (clicks on key words, pops on emojis/stickers, shutter on
      screenshots, cash register on money talk). Add one by hand only for a moment it can't see.
+   - Graphics: after applying, run `npm run engine -- suggest <id>` and mention they can keep, change
+     or drop each suggestion in Visuals › Graphics (or say "keep them all").
    - **postCaption**: hook line; 2-4 short lines for their ideal client; their call to action on its
      own line (from the business profile or saved calls to action); blank line; 3-5 hashtags.
      At most 2 emojis. Never invent results or numbers.

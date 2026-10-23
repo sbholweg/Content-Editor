@@ -88,6 +88,7 @@ export const api = {
   writeCaption: (id: string, cta: string) => request<Project>(`/api/projects/${id}/caption`, { method: "POST", body: JSON.stringify({ cta }) }),
   makeTrialReels: (id: string) => request<Project[]>(`/api/projects/${id}/trial-reels`, { method: "POST" }),
   listTrialReels: (id: string) => request<Project[]>(`/api/projects/${id}/trial-reels`),
+  suggestGraphics: (id: string) => request<Project & { suggestedBy: "claude" | "rules"; suggestedCount: number }>(`/api/projects/${id}/suggest-graphics`, { method: "POST", body: "{}" }),
   colorStats: (id: string) => request<Project>(`/api/projects/${id}/color-stats`, { method: "POST", body: "{}" }),
   phoneLink: () => request<{ links: string[]; token: string }>("/api/phone-link"),
   aiStatus: () => request<{ source: "api" | "claude-code" | "rules" }>("/api/ai-status"),

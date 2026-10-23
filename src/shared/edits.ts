@@ -73,6 +73,18 @@ export const ReelEdits = z
       .record(z.string(), z.object({ x: z.number().min(0).max(100), y: z.number().min(0).max(100) }))
       .describe("overlay id -> new center, % of the frame"),
     removeMedia: z.array(z.string()).describe("overlay ids"),
+    addGraphics: z.array(
+      z.object({
+        kind: z.enum(["sticker", "stat", "cta"]),
+        text: z.string().min(1).max(40),
+        sub: z.string().max(40).optional(),
+        fromWord: z.number().int().nonnegative(),
+        toWord: z.number().int().nonnegative(),
+        x: z.number().min(0).max(100).optional(),
+        y: z.number().min(0).max(100).optional(),
+      }),
+    ).describe("brand-styled graphics: sticker tag, counting number (stat), comment-keyword bubble (cta)"),
+    keepSuggestions: z.union([z.literal("all"), z.array(z.string())]).describe('accept suggested graphics: "all" or overlay ids'),
     addSounds: z.array(
       z.object({
         sound: z.string().describe("starter sound name (Whoosh, Pop, Click, Ding...) or library sound name"),
@@ -154,6 +166,26 @@ export function applyEdits(project: Project, edits: ReelEdits, brand: BrandKit, 
         ...(m.x !== undefined && m.y !== undefined ? { x: m.x, y: m.y } : {}),
       },
     ];
+  }
+  for (const g of edits.addGraphics ?? []) {
+    const [from, to] = [Math.min(g.fromWord, g.toWord), Math.max(g.fromWord, g.toWord)];
+    overlays = [
+      ...overlays,
+      {
+        id: `ov-${Date.now()}-${overlays.length}`,
+        assetId: "",
+        graphic: { kind: g.kind, text: g.text, sub: g.sub },
+        startWordId: at(from).id,
+        endWordId: at(to).id,
+        placement: "middle",
+        size: 0.6,
+        ...(g.x !== undefined && g.y !== undefined ? { x: g.x, y: g.y } : {}),
+      },
+    ];
+  }
+  if (edits.keepSuggestions) {
+    const keep = edits.keepSuggestions;
+    overlays = overlays.map((o) => (o.suggested && (keep === "all" || keep.includes(o.id)) ? { ...o, suggested: false } : o));
   }
   for (const [id, place] of Object.entries(edits.moveMedia ?? {})) {
     if (!overlays.some((o) => o.id === id)) throw new Error(`No media "${id}" on this reel. Use the ov-… ids from \`show\`.`);

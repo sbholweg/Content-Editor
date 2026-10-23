@@ -31,7 +31,8 @@ export function reelProps(
     durationMs: reel.durationMs,
     removePauses: reel.removePauses,
     silences: reel.silences ?? [],
-    overlays: reel.overlays.flatMap((o) => {
+    overlays: reel.overlays.flatMap((o): ReelProps["overlays"] => {
+      if (o.graphic) return [{ ...o, src: "", kind: "graphic" as const, width: 0, height: 0 }];
       const a = byId.get(o.assetId);
       return a && (a.kind === "gif" || a.kind === "image" || a.kind === "video")
         ? [{ ...o, src: urls.library(a.file), kind: a.kind, width: a.width, height: a.height }]

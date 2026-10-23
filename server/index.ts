@@ -18,6 +18,7 @@ import { subscribe } from "./events.ts";
 import { planEdit } from "./highlights.ts";
 import { smartCut } from "./smartcut.ts";
 import { phoneLinks } from "./phone.ts";
+import { suggestGraphics } from "./graphics.ts";
 import { colorStats, detectSilences, extractAudio, normalizeVideo, probe } from "./media.ts";
 import { queueRender } from "./render.ts";
 import { ensureWhisper } from "./setup-whisper.ts";
@@ -217,6 +218,17 @@ app.post("/api/projects/:id/apply", async (req, res) => {
 app.get("/api/events", subscribe);
 
 // Which writer the ✨ buttons use: an API key, the person's Claude Code, or simple rules.
+// Claude suggests graphics (stickers, counting numbers, comment bubbles, library GIFs). They go on
+// the reel marked "suggested" for Keep / Change / Drop; earlier undecided suggestions are replaced.
+app.post("/api/projects/:id/suggest-graphics", async (req, res) => {
+  const project = await readProject(req.params.id);
+  if (!project) return res.status(404).json({ error: "Not found" });
+  const brand = await readBrand();
+  const { overlays, by } = await suggestGraphics(project.words, await listAssets(), { ...brand.business, voice: brand.voice });
+  const updated = await updateProject(project.id, (p) => ({ overlays: [...p.overlays.filter((o) => !o.suggested), ...overlays] }));
+  res.json({ ...updated, suggestedBy: by, suggestedCount: overlays.length });
+});
+
 // Measures a reel's average color for grading (reels made before grading existed don't have it).
 app.post("/api/projects/:id/color-stats", async (req, res) => {
   const project = await readProject(req.params.id);

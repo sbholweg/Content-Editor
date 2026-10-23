@@ -101,7 +101,8 @@ function describe(p: Project, assets: Asset[]) {
     lines.push("", "  Media:");
     for (const o of p.overlays) {
       const a = assets.find((x) => x.id === o.assetId);
-      lines.push(`  - ${o.id}: ${a ? `${a.name} (${a.kind})` : "missing"} · ${o.placement} · words [${index.get(o.startWordId)}]-[${index.get(o.endWordId)}]`);
+      const what = o.graphic ? `${o.graphic.kind} "${o.graphic.text}"${o.graphic.sub ? ` / "${o.graphic.sub}"` : ""}` : a ? `${a.name} (${a.kind})` : "missing";
+      lines.push(`  - ${o.id}: ${what}${o.suggested ? " · SUGGESTED, not yet kept" : ""} · ${o.x !== undefined ? `at ${o.x}%/${o.y}%` : o.placement} · words [${index.get(o.startWordId)}]-[${index.get(o.endWordId)}]`);
     }
   }
   if (p.music || p.sounds.length) {
@@ -226,6 +227,14 @@ const commands: Record<string, (args: string[]) => Promise<void>> = {
     const edits = await readEdits(args[1]);
     const p = await call<Project>("POST", `/api/projects/${id}/apply`, { edits });
     console.log(`✓ Updated. The editor shows the change now.\n\n${describe(p, await call<Asset[]>("GET", "/api/library"))}`);
+  },
+
+  // Claude suggests graphics for a reel (they wait for Keep / Change / Drop in the editor).
+  async suggest(args) {
+    const id = await resolveId(args[0]);
+    const p = await call<Project & { suggestedBy: string; suggestedCount: number }>("POST", `/api/projects/${id}/suggest-graphics`);
+    console.log(`✓ ${p.suggestedCount} graphic${p.suggestedCount === 1 ? "" : "s"} suggested (${p.suggestedBy === "claude" ? "by Claude" : "built-in rules"}). They're on the reel in the editor under Visuals › Graphics.\n`);
+    console.log(describe(p, await call<Asset[]>("GET", "/api/library")));
   },
 
   // The link to open the editor on a phone on the same Wi-Fi.
@@ -362,6 +371,7 @@ const HELP = `Engine commands (npm run engine -- <command>):
   import [files] [--do-it-all]  import clips (default: everything in the inbox folder)
   list                       list reels
   show [id|latest]           show a reel: words with numbers, hook, look, media, caption
+  suggest [id|latest]        Claude suggests graphics (stickers, counting numbers, comment bubbles, GIFs)
   phone                      the link to open the editor on your phone (same Wi-Fi)
   tighten [id|latest]        cut pauses, ums, repeats and restarted sentences
   apply [id|latest] <json>   change a reel (JSON text, a .json file, or - for stdin)

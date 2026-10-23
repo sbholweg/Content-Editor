@@ -5,7 +5,8 @@ import { api } from "../api";
 import { LibraryBrowser, Modal, OverlayAdjust, Thumb } from "../Media";
 import { formatTime, useEditor } from "./context";
 import { LookGallery } from "./LookGallery";
-import { CaptionsPanel, FontsPanel, HookPanel, ColorPanel } from "./panels";
+import { GraphicsCards } from "./GraphicsCards";
+import { CaptionsPanel, ColorPanel, FontsPanel, HookPanel } from "./panels";
 
 type Section = "captions" | "hook" | "fonts" | "color";
 
@@ -31,6 +32,7 @@ export function VisualsTab({ previewProps }: { previewProps: ReelProps }) {
           <button className={view === "lines" ? "on" : ""} onClick={() => setView("lines")}>Lines & media</button>
         </div>
       </section>
+      <GraphicsCards />
       {view === "style" ? <StyleView previewProps={previewProps} /> : <LinesView />}
     </>
   );
@@ -200,6 +202,17 @@ function VisualLine({ line, first }: { line: Line; first: boolean }) {
           ) : null}
           {overlays.map((o) => {
             const a = assets.find((x) => x.id === o.assetId);
+            if (o.graphic) {
+              return (
+                <div key={o.id} className="item">
+                  <span className="item-icon">✦</span>
+                  <span className="grow left">
+                    <strong>Graphic: “{o.graphic.text}”{o.suggested ? " · suggested" : ""}</strong>
+                    <span className="muted small">change it in Graphics above</span>
+                  </span>
+                </div>
+              );
+            }
             return (
               <div key={o.id} className="item-wrap">
                 <div className="item">
