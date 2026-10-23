@@ -4,7 +4,7 @@ import type { ReelProps, Word } from "../shared/types";
 
 // Sound effects sit well under the voice (like a pro mix): every effect is scaled by this,
 // so a cue at full volume still never competes with what's being said.
-const SFX_MIX = 0.35;
+export const SFX_MIX = 0.35;
 
 // Sound effects play when their word is spoken; music plays under the whole reel and
 // dips while the creator is talking.

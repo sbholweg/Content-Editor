@@ -202,6 +202,17 @@ function VisualLine({ line, first }: { line: Line; first: boolean }) {
           ) : null}
           {overlays.map((o) => {
             const a = assets.find((x) => x.id === o.assetId);
+            if (o.gifQuery && !a) {
+              return (
+                <div key={o.id} className="item">
+                  <span className="item-icon">✦</span>
+                  <span className="grow left">
+                    <strong>GIF suggestion: “{o.gifQuery}”</strong>
+                    <span className="muted small">pick the GIF in Graphics above</span>
+                  </span>
+                </div>
+              );
+            }
             if (o.graphic) {
               return (
                 <div key={o.id} className="item">

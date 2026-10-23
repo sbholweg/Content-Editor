@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Asset, AssetKind, Overlay, OverlayPlacement } from "../shared/types";
 import { api, libraryUrl } from "./api";
+import { GiphySearch } from "./Giphy";
 import { Label, Options, Slider } from "./ui";
 
 type VisualKind = "gif" | "image" | "video";
@@ -46,6 +47,7 @@ export function LibraryBrowser({
   onAuthError: (err: unknown) => void;
 }) {
   const [filter, setFilter] = useState<VisualKind | "all">("all");
+  const [source, setSource] = useState<"mine" | "giphy">("mine");
   const input = useRef<HTMLInputElement>(null);
   const visuals = assets.filter((a) => (VISUAL as AssetKind[]).includes(a.kind) && a.collection !== "inspo");
   const shown = filter === "all" ? visuals : visuals.filter((a) => a.kind === filter);
@@ -53,6 +55,21 @@ export function LibraryBrowser({
 
   return (
     <div className="library-browser">
+      <div className="segmented big">
+        <button className={source === "mine" ? "on" : ""} onClick={() => setSource("mine")}>Your library</button>
+        <button className={source === "giphy" ? "on" : ""} onClick={() => setSource("giphy")}>Search GIPHY</button>
+      </div>
+      {source === "giphy" ? (
+        <GiphySearch
+          onAuthError={onAuthError}
+          onPicked={(a) => {
+            onAssets([a, ...assets]);
+            if (onPick) onPick(a);
+            else setSource("mine");
+          }}
+        />
+      ) : (
+      <>
       <Options
         value={filter}
         onChange={setFilter}
@@ -106,6 +123,8 @@ export function LibraryBrowser({
         ))}
       </div>
       {error ? <p className="error small">{error}</p> : null}
+      </>
+      )}
     </div>
   );
 }

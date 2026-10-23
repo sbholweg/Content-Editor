@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { Overlay, ReelGraphic } from "../../shared/types";
 import { api, libraryUrl } from "../api";
+import { GiphySearch } from "../Giphy";
 import { Options } from "../ui";
 import { formatTime, useEditor } from "./context";
 
@@ -9,12 +10,12 @@ const KIND_LABEL: Record<ReelGraphic["kind"], string> = { sticker: "Sticker", st
 // Claude suggests graphics; each one is a card you Keep, Change or Drop. Suggestions already show
 // in the preview, so you can judge them in place.
 export function GraphicsCards() {
-  const { project, reel, update, assets, outputTimes, seekToWord, notify, onAuthError } = useEditor();
+  const { project, reel, update, assets, setAssets, outputTimes, seekToWord, notify, onAuthError } = useEditor();
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const index = new Map(reel.words.map((w, i) => [w.id, i]));
   const items = reel.overlays
-    .filter((o) => o.graphic || o.suggested)
+    .filter((o) => o.graphic || o.suggested || o.gifQuery)
     .sort((a, b) => (index.get(a.startWordId) ?? 0) - (index.get(b.startWordId) ?? 0));
   const pending = items.filter((o) => o.suggested).length;
 
@@ -71,18 +72,33 @@ export function GraphicsCards() {
             const asset = o.graphic ? undefined : assets.find((a) => a.id === o.assetId);
             return (
               <div key={o.id} className={`gfx-card ${o.suggested ? "suggested" : ""}`}>
-                <div className="gfx-preview">{o.graphic ? <MiniGraphic graphic={o.graphic} /> : asset ? <img src={libraryUrl(asset.thumb ?? asset.file)} alt="" /> : null}</div>
+                <div className="gfx-preview">
+                  {o.graphic ? <MiniGraphic graphic={o.graphic} /> : asset ? <img src={libraryUrl(asset.thumb ?? asset.file)} alt="" /> : <span className="mini-gif">GIF<small>“{o.gifQuery}”</small></span>}
+                </div>
                 <div className="gfx-body">
                   <div className="row">
-                    <strong className="grow">{o.graphic ? KIND_LABEL[o.graphic.kind] : asset ? `${asset.kind === "gif" ? "GIF" : "Image"}: ${asset.name}` : "Missing from library"}</strong>
+                    <strong className="grow">
+                      {o.graphic ? KIND_LABEL[o.graphic.kind] : asset ? `${asset.kind === "gif" ? "GIF" : "Image"}: ${asset.name}` : o.gifQuery ? "GIF from GIPHY: pick one" : "Missing from library"}
+                    </strong>
                     {o.suggested ? <span className="tag-suggested">Suggested</span> : <span className="muted small">Kept ✓</span>}
                   </div>
                   <button className="link gfx-when" onClick={() => seekToWord(o.startWordId)}>
                     <span className="mono">{at ? formatTime(at.startMs) : "cut"}</span> · on “{words.length > 60 ? `${words.slice(0, 60)}…` : words}”
                   </button>
                   {o.why ? <p className="muted small">{o.why}</p> : null}
+                  {o.gifQuery && !asset ? (
+                    <GiphySearch
+                      compact
+                      initialQuery={o.gifQuery}
+                      onAuthError={onAuthError}
+                      onPicked={(a) => {
+                        setAssets([a, ...assets]);
+                        set(o.id, { assetId: a.id, gifQuery: undefined, suggested: false });
+                      }}
+                    />
+                  ) : null}
                   <div className="row">
-                    {o.suggested ? <button className="chip accent" onClick={() => set(o.id, { suggested: false })}>Keep</button> : null}
+                    {o.suggested && !o.gifQuery ? <button className="chip accent" onClick={() => set(o.id, { suggested: false })}>Keep</button> : null}
                     <button className="chip" onClick={() => setEditing(editing === o.id ? null : o.id)}>{editing === o.id ? "Done" : "Change"}</button>
                     <button className="chip" onClick={() => drop(o.id)}>{o.suggested ? "Drop" : "Remove"}</button>
                   </div>

@@ -71,7 +71,7 @@ export const Reel: React.FC<ReelProps> = (props) => {
       </AbsoluteFill>
       <Overlays items={placed} brand={brand} />
       <Sounds sounds={sounds ?? []} music={music ?? null} words={timeline.words} />
-      <Hook text={hookText} subText={hookSubText ?? ""} brand={brand} />
+      <Hook text={hookText} subText={hookSubText ?? ""} brand={brand} typingSounds={props.typingSounds} />
       <Captions words={timeline.words} brand={brand} hookText={hookText} />
       {logoSrc && brand.logo && brand.logo !== "off" ? (
         <Img

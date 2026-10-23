@@ -9,10 +9,11 @@ import { businessContext } from "./highlights.ts";
 const Suggestions = z.object({
   suggestions: z.array(
     z.object({
-      type: z.enum(["sticker", "stat", "cta", "media"]),
+      type: z.enum(["sticker", "stat", "cta", "media", "gif"]),
       text: z.string().describe("sticker words, the number exactly as said (e.g. $800+), or the comment keyword"),
       sub: z.string().optional().describe("stat: short label under the number"),
       asset: z.string().optional().describe("media: the library item's exact name"),
+      search: z.string().optional().describe("gif: 1-3 word GIPHY search for a reaction GIF"),
       fromWord: z.number().int(),
       toWord: z.number().int(),
       why: z.string(),
@@ -28,6 +29,7 @@ Graphic types:
 - "stat": a big number that counts up, with a short label ("sub"). ONLY for a number they actually say (money, %, clients, hours, followers). Write it as they'd show it: "$10,000", "3x", "45k", "80%". Never invent or round a number they didn't say.
 - "cta": a comment-keyword bubble, ONLY when they ask people to comment or DM a specific word ("comment EDIT", "DM me HOURS"). text = the keyword, sub = "Comment" or "DM me".
 - "media": one of their library GIFs/images, only when its name clearly matches what they're saying at that moment. Use the exact name.
+- "gif" (only if GIPHY is available, see below): a reaction GIF for a big emotional beat, as a 1-3 word GIPHY search ("mind blown", "eye roll", "slow clap", "this is fine"). They pick the actual GIF. At most 2 per reel; prefer stickers for most moments.
 
 Rules:
 - Quality over quantity: about one graphic per 8-12 seconds of reel, never two overlapping, none in the first 2 seconds (the hook is on screen). Short reels may only deserve 1-2.
@@ -48,7 +50,8 @@ export async function suggestGraphics(
   if (kept.length < 5) return { overlays: [], by: "rules" };
   const media = library.filter((a) => (a.kind === "gif" || a.kind === "image") && a.collection !== "inspo");
   const script = kept.map(({ w, i }) => `${i}:${w.text}`).join(" ");
-  const request = `${businessContext(business)}Library GIFs/images: ${media.map((a) => `"${a.name}" (${a.kind})`).join(", ") || "(none)"}\n\nScript:\n${script}`;
+  const giphy = Boolean(process.env.GIPHY_API_KEY?.trim());
+  const request = `${businessContext(business)}GIPHY: ${giphy ? "available" : "not available (don't suggest \"gif\")"}\nLibrary GIFs/images: ${media.map((a) => `"${a.name}" (${a.kind})`).join(", ") || "(none)"}\n\nScript:\n${script}`;
 
   let raw: Suggestion[] | null = null;
   if (process.env.ANTHROPIC_API_KEY) {
@@ -97,7 +100,10 @@ function toOverlays(list: Suggestion[], words: Word[], media: Asset[]): Overlay[
     if (!text) continue;
     let overlay: Overlay | null = null;
     const base = { id: `ov-${Date.now()}-${out.length}`, startWordId: words[from].id, endWordId: words[to].id, placement: "middle" as const, size: 0.6, suggested: true, why: s.why.slice(0, 160) };
-    if (s.type === "media") {
+    if (s.type === "gif") {
+      const search = (s.search ?? s.text).trim().slice(0, 40);
+      if (search && process.env.GIPHY_API_KEY?.trim()) overlay = { ...base, assetId: "", gifQuery: search };
+    } else if (s.type === "media") {
       const asset = media.find((a) => a.name.toLowerCase() === (s.asset ?? "").toLowerCase());
       if (asset) overlay = { ...base, assetId: asset.id };
     } else if (s.type === "stat") {

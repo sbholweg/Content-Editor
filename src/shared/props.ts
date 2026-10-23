@@ -51,6 +51,7 @@ export function reelProps(
     })(),
     customFonts: assets.filter((a) => a.kind === "font").map((a) => ({ name: a.name, url: urls.library(a.file) })),
     colorStats: reel.colorStats,
+    typingSounds: reel.soundsEnabled ? ["key-1.mp3", "key-2.mp3", "key-3.mp3"].map(urls.sfx) : [],
     logoSrc: (() => {
       const logo = byId.get(logoAssetId);
       return logo ? urls.library(logo.file) : "";

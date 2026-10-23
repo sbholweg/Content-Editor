@@ -101,7 +101,9 @@ function describe(p: Project, assets: Asset[]) {
     lines.push("", "  Media:");
     for (const o of p.overlays) {
       const a = assets.find((x) => x.id === o.assetId);
-      const what = o.graphic ? `${o.graphic.kind} "${o.graphic.text}"${o.graphic.sub ? ` / "${o.graphic.sub}"` : ""}` : a ? `${a.name} (${a.kind})` : "missing";
+      const what = o.graphic
+        ? `${o.graphic.kind} "${o.graphic.text}"${o.graphic.sub ? ` / "${o.graphic.sub}"` : ""}`
+        : a ? `${a.name} (${a.kind})` : o.gifQuery ? `GIPHY GIF "${o.gifQuery}" (they pick it in the editor)` : "missing";
       lines.push(`  - ${o.id}: ${what}${o.suggested ? " · SUGGESTED, not yet kept" : ""} · ${o.x !== undefined ? `at ${o.x}%/${o.y}%` : o.placement} · words [${index.get(o.startWordId)}]-[${index.get(o.endWordId)}]`);
     }
   }

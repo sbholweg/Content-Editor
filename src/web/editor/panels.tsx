@@ -186,6 +186,18 @@ export function HookPanel({ previewProps }: { previewProps: ReelProps }) {
         ))}
       </div>
 
+      <Label>How it appears</Label>
+      <Options
+        value={look.hookAnimation ?? "pop"}
+        onChange={(v) => set("hookAnimation", v)}
+        options={[
+          { value: "pop", label: "Pop in", note: "appears with a bounce" },
+          { value: "typewriter", label: "Type on", note: "letter by letter, a key click each" },
+        ]}
+      />
+      {look.hookAnimation === "typewriter" && reel.hookSubText.trim() && look.hookLayout !== "headline" ? (
+        <p className="muted small">The big line pops in and the small line types under it.</p>
+      ) : null}
       <Label>Where it sits</Label>
       <p className="muted small">Or tap “✥ Move” above the preview and drag it anywhere.{look.hookPlace ? " (It's in a spot you dragged it to; pick one below to reset.)" : ""}</p>
       <Options

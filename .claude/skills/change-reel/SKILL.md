@@ -85,6 +85,9 @@ style and zoom. Save it as a named look with `npm run engine -- brand look.json`
 - "my brand colors": use `looks` to read their default look and saved looks; prefer those colors.
 - "cut the first sentence": cut the word numbers up to and including its last word.
 - "add <clip> when I talk about X": find the words in `show`, find the item with `library`, use addMedia.
+- "type the hook on" / "typewriter hook": `"style": {"hookAnimation": "typewriter"}` (a key click per
+  letter, synced; with a hookSubText and an eyebrow/subhead layout, the small line types under the
+  big one). `"pop"` goes back.
 - "suggest graphics" / "add some graphics": `npm run engine -- suggest <id>`. They land on the reel
   marked SUGGESTED; tell them to keep, change or drop each in Visuals › Graphics, or do it for them:
   `"keepSuggestions": "all"` (or ids), `"removeMedia": ["ov-…"]`. To add one yourself:

@@ -37,6 +37,7 @@ export const ReelEdits = z
           .nullable()
           .describe("hook center as % of the frame (x across, y down); null = use hookPosition"),
         hookLayout: z.enum(["headline", "eyebrow", "subhead"]),
+        hookAnimation: z.enum(["pop", "typewriter"]).describe("typewriter = types on with a key click per letter"),
         hookDurationMs: z.number().int().min(0),
         textColor: color,
         outlineColor: color,

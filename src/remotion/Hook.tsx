@@ -1,5 +1,7 @@
 import React from "react";
-import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { Audio, interpolate, Sequence, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { typedLine, typeTimes } from "../shared/typewriter";
+import { SFX_MIX } from "./Sounds";
 import type { ReelStyle } from "../shared/types";
 import { getFont } from "./fonts";
 
@@ -14,7 +16,24 @@ const SHADOW = "0 2px 8px rgba(0,0,0,0.35), 0 6px 40px rgba(0,0,0,0.35)";
 
 // The title on the reel ("nobody's saying it, so I will"), optionally with a smaller second line:
 // above it ("eyebrow") or below it ("subhead").
-export const Hook: React.FC<{ text: string; subText: string; brand: ReelStyle }> = ({ text, subText, brand }) => {
+// A line that types on: every character keeps its place (so the line never jumps), unrevealed
+// ones are invisible, and a caret blinks at the end while it's typing.
+const Typed: React.FC<{ times: ReturnType<typeof typeTimes>; ms: number; color: string }> = ({ times, ms, color }) => {
+  const shown = times.filter((t) => t.atMs <= ms).length;
+  const typing = shown < times.length;
+  return (
+    <>
+      {times.map((t, i) => (
+        <span key={i} style={{ opacity: i < shown ? 1 : 0 }}>
+          {t.char}
+          {typing && i === shown - 1 ? <span style={{ position: "absolute", marginLeft: 2, color, opacity: Math.floor(ms / 400) % 2 ? 0.2 : 1 }}>|</span> : null}
+        </span>
+      ))}
+    </>
+  );
+};
+
+export const Hook: React.FC<{ text: string; subText: string; brand: ReelStyle; typingSounds?: string[] }> = ({ text, subText, brand, typingSounds = [] }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
   const font = getFont(brand.displayFont);
@@ -29,6 +48,12 @@ export const Hook: React.FC<{ text: string; subText: string; brand: ReelStyle }>
   const exit = interpolate(frame, [endFrame - 8, endFrame], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 
   const layout = subText.trim() ? brand.hookLayout : "headline";
+  const ms = (frame / fps) * 1000;
+  const typewriter = brand.hookAnimation === "typewriter";
+  const typed = typedLine(text, layout === "headline" ? "" : subText);
+  const times = typewriter ? typeTimes(typed.text, typed.startMs, (endFrame / fps) * 1000) : [];
+  const subContent = typewriter && typed.line === "sub" ? <Typed times={times} ms={ms} color={brand.textColor} /> : subText;
+  const mainContent = typewriter && typed.line === "main" ? <Typed times={times} ms={ms} color={brand.hookColor} /> : text;
   const second = (
     <div
       style={{
@@ -43,7 +68,7 @@ export const Hook: React.FC<{ text: string; subText: string; brand: ReelStyle }>
         margin: layout === "eyebrow" ? "0 0 14px" : "16px 0 0",
       }}
     >
-      {subText}
+      {subContent}
     </div>
   );
 
@@ -72,9 +97,19 @@ export const Hook: React.FC<{ text: string; subText: string; brand: ReelStyle }>
           color: brand.hookColor,
         }}
       >
-        {text}
+        {mainContent}
       </div>
       {layout === "subhead" ? second : null}
+      {/* A soft key click as each letter appears (spaces are silent). */}
+      {typewriter && typingSounds.length
+        ? times.map((t, i) =>
+            t.click ? (
+              <Sequence key={i} from={Math.round((t.atMs / 1000) * fps)} durationInFrames={Math.round(fps * 0.3)} layout="none">
+                <Audio src={typingSounds[i % typingSounds.length]} volume={0.55 * SFX_MIX} />
+              </Sequence>
+            ) : null,
+          )
+        : null}
     </div>
   );
 };

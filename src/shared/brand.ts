@@ -8,6 +8,7 @@ export const DEFAULT_STYLE: ReelStyle = {
   hookPosition: "top",
   hookPlace: null,
   hookLayout: "headline",
+  hookAnimation: "pop",
   hookDurationMs: 5000,
   textColor: "#FFFFFF",
   outlineColor: "#000000",

@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import express from "express";
 import multer from "multer";
@@ -370,6 +371,31 @@ app.post("/api/library", libraryUpload.single("file"), async (req, res) => {
     res.json(await addAsset({ ...req.file, collection: req.body?.collection === "inspo" ? "inspo" : undefined }));
   } catch (err) {
     res.status(400).json({ error: (err as Error).message });
+  }
+});
+
+// GIPHY: searches run in the browser (GIPHY asks for searches to come from the app itself), so the
+// browser needs the key. Picked GIFs are normally fetched by the browser and uploaded like any file;
+// this is the fallback when the browser can't fetch the file itself. Only GIPHY's own media hosts.
+app.get("/api/giphy-key", (_req, res) => res.json({ key: process.env.GIPHY_API_KEY?.trim() ?? "" }));
+app.post("/api/library/from-giphy", async (req, res) => {
+  const url = String(req.body?.url ?? "");
+  const name = String(req.body?.name ?? "GIPHY").slice(0, 80).replace(/[^\w .,'!?-]/g, "") || "GIPHY";
+  let host = "";
+  try {
+    host = new URL(url).hostname;
+  } catch {
+    // not a URL
+  }
+  if (!/(^|\.)giphy\.com$/.test(host)) return res.status(400).json({ error: "That isn't a GIPHY link." });
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`GIPHY sent ${response.status}`);
+    const tmp = path.join(os.tmpdir(), `giphy-${crypto.randomUUID()}.gif`);
+    await fs.writeFile(tmp, Buffer.from(await response.arrayBuffer()));
+    res.json(await addAsset({ path: tmp, originalname: `${name}.gif`, mimetype: "image/gif", source: url }));
+  } catch (err) {
+    res.status(502).json({ error: `Couldn't download that GIF: ${(err as Error).message}` });
   }
 });
 

@@ -35,6 +35,8 @@ export type ReelStyle = {
   hookPlace: { x: number; y: number } | null;
   // "headline": one big line. "eyebrow": small line above a big one. "subhead": big line, small line below.
   hookLayout: HookLayout;
+  // How the hook appears: pops in, or types on letter by letter with a key click per letter.
+  hookAnimation: "pop" | "typewriter";
   // How long the hook stays on screen. 0 = the whole video.
   hookDurationMs: number;
   textColor: string;
@@ -108,6 +110,8 @@ export type ReelProps = {
   logoSrc: string;
   // Average color of the video, used by color grading.
   colorStats?: { r: number; g: number; b: number; luma: number; white?: { r: number; g: number; b: number } };
+  // Key-click sounds for the typewriter hook (empty when sound effects are off).
+  typingSounds?: string[];
 };
 
 export type AssetKind = "gif" | "image" | "video" | "audio" | "font";
@@ -150,6 +154,8 @@ export type Overlay = {
   suggested?: boolean;
   // Why Claude suggested it, shown on its card.
   why?: string;
+  // A GIPHY GIF Claude suggested by search words; the creator picks the GIF (assetId is "" until then).
+  gifQuery?: string;
 };
 
 // sticker: a tilted tag ("UNPOPULAR OPINION"). stat: a big number that counts up ("$800+")

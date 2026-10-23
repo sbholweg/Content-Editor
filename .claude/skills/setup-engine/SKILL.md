@@ -43,3 +43,10 @@ If something fails, read the full error before retrying. Common fixes:
 - Away from home it won't connect: the editor lives on this computer. (Advanced option: a private
   network app like Tailscale on both devices, then set PHONE_URL in .env to the computer's Tailscale
   address with :3000. Only suggest this if they ask.)
+
+## "Add my GIPHY key"
+They get a free key at developers.giphy.com (create an account, create an app, choose API, copy
+the key). Put it in `.env` as `GIPHY_API_KEY=<key>` using your file tools (don't print the key back
+in chat), then restart the editor (stop it and run `npm run local` again in the background). In the
+editor: any "Add image/GIF" picker has a "Search GIPHY" tab, and Claude's graphic suggestions can
+offer GIPHY GIFs. If searches fail with "didn't accept the key", the key was mistyped.
