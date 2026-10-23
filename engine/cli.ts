@@ -220,6 +220,15 @@ const commands: Record<string, (args: string[]) => Promise<void>> = {
     console.log(`✓ Updated. The editor shows the change now.\n\n${describe(p, await call<Asset[]>("GET", "/api/library"))}`);
   },
 
+  // The link to open the editor on a phone on the same Wi-Fi.
+  async phone() {
+    const { links } = await call<{ links: string[] }>("GET", "/api/phone-link");
+    if (!links.length) return console.log("✗ This computer doesn't seem to be on a Wi-Fi/home network right now.");
+    console.log(`On your phone (same Wi-Fi as this computer), open:\n  ${links[0]}`);
+    if (links.length > 1) console.log(`If that doesn't load, try: ${links.slice(1).join("  or  ")}`);
+    console.log("Or in the editor on this computer, tap “📱 Open on phone” and scan the QR code with your phone's camera.");
+  },
+
   async tighten(args) {
     const id = await resolveId(args[0]);
     const before = await call<Project>("GET", `/api/projects/${id}`);
@@ -345,6 +354,7 @@ const HELP = `Engine commands (npm run engine -- <command>):
   import [files] [--do-it-all]  import clips (default: everything in the inbox folder)
   list                       list reels
   show [id|latest]           show a reel: words with numbers, hook, look, media, caption
+  phone                      the link to open the editor on your phone (same Wi-Fi)
   tighten [id|latest]        cut pauses, ums, repeats and restarted sentences
   apply [id|latest] <json>   change a reel (JSON text, a .json file, or - for stdin)
   caption [id] [call to action]  write the post caption

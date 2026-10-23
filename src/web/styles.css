@@ -519,3 +519,22 @@ a.btn.primary { color: #fff; }
 .move-handle.media { background: var(--lime); }
 .move-handle:active { cursor: grabbing; }
 .move-hint { position: absolute; left: 12px; right: 12px; bottom: 16px; padding: 8px 10px; border-radius: 10px; background: rgba(17, 16, 20, 0.75); color: #fff; font-size: 12px; text-align: center; }
+
+/* Open on phone */
+.topnav-right { display: flex; align-items: center; gap: 10px; }
+.phone-link { display: grid; grid-template-columns: 200px 1fr; gap: 20px; align-items: start; }
+.phone-qr { width: 200px; padding: 10px; background: #fff; border: 2px solid var(--ink); border-radius: 14px; box-shadow: 4px 4px 0 var(--violet); }
+.phone-qr svg { display: block; width: 100%; height: auto; }
+.phone-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 10px; }
+.phone-link > p { grid-column: 1 / -1; }
+@media (max-width: 560px) { .phone-link { grid-template-columns: 1fr; } .phone-qr { margin: 0 auto; } }
+@media (max-width: 860px) {
+  .studio-preview { flex-direction: column; align-items: center; }
+  .preview-tools { justify-content: center; margin-bottom: 6px; }
+  .preview-tools .chip { min-height: 30px; padding: 4px 12px; font-size: 12px; }
+  .phone-btn { display: none; }
+  .hero-copy .eyebrow { padding-right: 52px; }
+  .studio-bar .time { display: none; }
+  .studio-bar .bar-actions .btn:not(.primary) { display: none; }
+}
+@media (pointer: coarse) { .phone-btn { display: none; } }

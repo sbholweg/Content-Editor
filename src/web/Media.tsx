@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Asset, AssetKind, Overlay, OverlayPlacement } from "../shared/types";
 import { api, libraryUrl } from "./api";
 import { Label, Options, Slider } from "./ui";
@@ -110,7 +111,9 @@ export function LibraryBrowser({
 }
 
 export function Modal({ title, eyebrow, subtitle, onClose, children }: { title: string; eyebrow?: string; subtitle?: string; onClose: () => void; children: React.ReactNode }) {
-  return (
+  // Rendered at the page level so a sticky, blurred header can't trap it (fixed elements inside a
+  // backdrop-filter are positioned relative to that element, not the screen).
+  return createPortal(
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" role="dialog" aria-label={title} onClick={(e) => e.stopPropagation()}>
         <div className="row">
@@ -123,7 +126,8 @@ export function Modal({ title, eyebrow, subtitle, onClose, children }: { title: 
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

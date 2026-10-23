@@ -12,6 +12,19 @@ function currentRoute() {
   return match ? match[1] : null;
 }
 
+// Scanning the "Open on phone" QR code lands here with ?k=<token>: log the phone straight in,
+// then drop the token from the address bar.
+function adoptLinkToken() {
+  const params = new URLSearchParams(window.location.search);
+  const k = params.get("k");
+  if (!k) return;
+  setToken(k);
+  params.delete("k");
+  const rest = params.toString();
+  window.history.replaceState(null, "", `${window.location.pathname}${rest ? `?${rest}` : ""}${window.location.hash}`);
+}
+adoptLinkToken();
+
 export function App() {
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [projectId, setProjectId] = useState<string | null>(currentRoute());

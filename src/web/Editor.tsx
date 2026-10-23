@@ -15,6 +15,7 @@ import { InstagramOverlay, MoveLayer } from "./editor/PreviewLayers";
 import { SoundPicker, SoundTab } from "./editor/SoundTab";
 import { VisualsTab } from "./editor/VisualsTab";
 import { LibraryBrowser, Modal } from "./Media";
+import { PhoneButton } from "./PhoneLink";
 
 const TABS = [
   { id: "cut", label: "Cut", next: "Next: Visuals" },
@@ -263,6 +264,8 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   }
 
   const rendering = project.render.status === "rendering";
+  // On a phone, "Save" opens the share sheet (Save Video -> Photos); on a computer, offer the QR code.
+  const onPhone = typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
   const exportControls = rendering ? (
     <div className="grow stack tight">
       <span className="small">Exporting… {Math.round(project.render.progress * 100)}%</span>
@@ -271,8 +274,9 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   ) : project.render.status === "done" && !changedSinceExport ? (
     <>
       <button className="btn" onClick={exportReel}>Export again</button>
+      {onPhone ? null : <PhoneButton className="btn" label="📱 To my phone" />}
       <button className="btn primary" disabled={!exportFile} onClick={saveVideo}>
-        {exportFile ? "Save video" : "Preparing…"}
+        {exportFile ? (onPhone ? "Save to Photos" : "Save video") : "Preparing…"}
       </button>
     </>
   ) : (

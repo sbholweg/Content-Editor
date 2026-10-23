@@ -17,6 +17,7 @@ import { config } from "./config.ts";
 import { subscribe } from "./events.ts";
 import { planEdit } from "./highlights.ts";
 import { smartCut } from "./smartcut.ts";
+import { phoneLinks } from "./phone.ts";
 import { detectSilences, extractAudio, normalizeVideo, probe } from "./media.ts";
 import { queueRender } from "./render.ts";
 import { ensureWhisper } from "./setup-whisper.ts";
@@ -211,6 +212,10 @@ app.get("/api/events", subscribe);
 // Which writer the ✨ buttons use: an API key, the person's Claude Code, or simple rules.
 app.get("/api/ai-status", (_req, res) => res.json({ source: claudeSource() }));
 
+// Links a phone on the same Wi-Fi can use to open the editor. The token lets the QR code log
+// the phone straight in (it's only ever shown on this computer's screen, to someone already in).
+app.get("/api/phone-link", (_req, res) => res.json({ links: phoneLinks(config.port), token: accessToken ?? "" }));
+
 // Tighten an existing reel: detect the quiet parts of its audio (older reels don't have this
 // yet) and cut ums, repeats and restarted sentences.
 app.post("/api/projects/:id/tighten", async (req, res) => {
@@ -376,6 +381,8 @@ for (const p of await listProjects()) {
 
 app.listen(config.port, () => {
   console.log(`Content Editor running on http://localhost:${config.port}`);
+  const phone = phoneLinks(config.port)[0];
+  if (phone) console.log(`On your phone (same Wi-Fi): ${phone}`);
   console.log(`Data folder: ${projectsDir}`);
 });
 

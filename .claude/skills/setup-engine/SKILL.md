@@ -28,3 +28,18 @@ Goal: the editor running at http://localhost:3000 and the person able to use it.
 If something fails, read the full error before retrying. Common fixes:
 - `whisper-cli` missing on Windows: delete the `whisper.cpp` folder and run `npm run setup` again.
 - Port 3000 busy: an editor is probably already running; check with `doctor`.
+
+## "Use it on my phone" / "my phone can't open the editor"
+- The phone must be on the same Wi-Fi as this computer, and the editor must be running here.
+  `npm run engine -- phone` prints the link; in the editor, "📱 Open on phone" shows a QR code that
+  logs the phone straight in. Exported reels: tap "Save to Photos" on the phone, then "Save Video".
+- Windows blocks it until Node.js is allowed through the firewall on **private** networks. Check
+  with `powershell -Command "Get-NetFirewallRule -DisplayName '*Node*' | Select DisplayName,Enabled,Profile,Direction,Action"`.
+  If it's missing or blocked, explain in plain words, then ask before adding a rule (it changes a
+  system setting): `powershell -Command "Start-Process powershell -Verb RunAs -ArgumentList 'New-NetFirewallRule -DisplayName ''The Cutroom'' -Direction Inbound -Protocol TCP -LocalPort 3000 -Action Allow -Profile Private'"`
+  (Windows will show a yes/no prompt). Also make sure the Wi-Fi is set to a **Private** network
+  (Settings › Network & internet › Wi-Fi › the network › Private), not Public.
+- Some guest/public Wi-Fi (cafés, hotels) blocks devices from seeing each other; use home Wi-Fi.
+- Away from home it won't connect: the editor lives on this computer. (Advanced option: a private
+  network app like Tailscale on both devices, then set PHONE_URL in .env to the computer's Tailscale
+  address with :3000. Only suggest this if they ask.)

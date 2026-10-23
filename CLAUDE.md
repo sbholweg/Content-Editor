@@ -14,6 +14,9 @@ explain things in plain words, never ask them to type commands, and keep replies
 - Their brand (default look, saved looks, business profile, calls to action) is shared by
   every reel. Each reel also has its own copy of the look.
 
+On their phone: phone and computer on the same Wi-Fi, then "📱 Open on phone" in the editor shows
+a QR code (or `npm run engine -- phone` prints the link). "Save to Photos" saves finished reels.
+
 ## Engine commands (`npm run engine -- <command>`)
 - `doctor`: check setup; shows the inbox/outputs folders
 - `import [--do-it-all]`: import everything in the inbox and transcribe it
@@ -27,7 +30,7 @@ then run `npm run engine -- apply latest edits.json`. Don't pass JSON on the com
 (quoting breaks on Windows).
 
 ## Skills
-- **setup-engine**: "set me up", first-time install, or anything not working
+- **setup-engine**: "set me up", first-time install, anything not working, or "my phone can't open it"
 - **edit-reels**: "edit my new reels", "make this post-ready", working through the inbox
 - **change-reel**: any plain-words change ("make it softer", "cut the first sentence", "hook lower")
 - **brand-kit**: "set up my brand (from this)", "build me a brand", "refine my brand kit"

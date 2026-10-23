@@ -1,5 +1,6 @@
 import React from "react";
 import { APP_NAME } from "../shared/app";
+import { PhoneButton } from "./PhoneLink";
 
 // The Cutroom wordmark: no icon, just the name with "cut" in a violet block.
 export function Brandmark({ size = 22 }: { size?: number }) {
@@ -42,7 +43,10 @@ export function TopNav({ active, right }: { active: "reels" | "brand"; right?: R
         <a className={active === "reels" ? "on" : ""} href="#">Reels</a>
         <a className={active === "brand" ? "on" : ""} href="#/brand">Brand kit</a>
       </nav>
-      <div className="topnav-right">{right}</div>
+      <div className="topnav-right">
+        <PhoneButton className="chip phone-btn" />
+        {right}
+      </div>
     </header>
   );
 }
