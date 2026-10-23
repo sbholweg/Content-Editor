@@ -110,6 +110,14 @@ function describe(p: Project, assets: Asset[]) {
     if (p.music) lines.push(`  - music: ${soundName(p.music.soundId)} · volume ${p.music.volume}${p.music.duck ? " · quieter while talking" : ""}${p.music.enabled ? "" : " · off"}`);
     for (const c of p.sounds) lines.push(`  - ${c.id}: ${soundName(c.soundId)} on word [${index.get(c.wordId)}]`);
   }
+  if (p.notes?.length) {
+    lines.push("", "  Notes on the draft (the creator's requests; apply them, then send \"clearNotes\": true):");
+    for (const n of p.notes) {
+      // The word playing at that moment of the finished reel.
+      const at = timeline.words.find((w) => n.atMs < w.endMs) ?? timeline.words.at(-1);
+      lines.push(`  - at ${fmt(n.atMs)}${at ? ` (around word [${index.get(at.id)}] "${at.text}")` : ""}: ${n.text}`);
+    }
+  }
   lines.push("", `  Post caption: ${p.postCaption ? `\n    ${p.postCaption.replace(/\n/g, "\n    ")}` : "(none yet)"}`);
   return lines.join("\n");
 }

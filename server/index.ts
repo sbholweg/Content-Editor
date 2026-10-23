@@ -8,7 +8,7 @@ import { autoSounds } from "../src/shared/autoSounds.ts";
 import { normalizeBrand, normalizeStyle } from "../src/shared/brand.ts";
 import { applyEdits, ReelEdits } from "../src/shared/edits.ts";
 import { draftSlides } from "../src/shared/repurpose.ts";
-import type { BrandKit, MusicBed, Overlay, Project, Slide, SlideFormat, SoundCue, Word } from "../src/shared/types.ts";
+import type { BrandKit, MusicBed, Overlay, Project, ReelNote, Slide, SlideFormat, SoundCue, Word } from "../src/shared/types.ts";
 import { tighten } from "../src/shared/words.ts";
 import { accessToken, checkPassword, requireAuth } from "./auth.ts";
 import { writeCaption } from "./caption.ts";
@@ -182,6 +182,12 @@ app.patch("/api/projects/:id", async (req, res) => {
   if (req.body && "music" in req.body) patch.music = req.body.music as MusicBed | null;
   if (typeof req.body?.soundsEnabled === "boolean") patch.soundsEnabled = req.body.soundsEnabled;
   if (typeof req.body?.posted === "boolean") patch.posted = req.body.posted;
+  if (Array.isArray(req.body?.notes)) {
+    patch.notes = (req.body.notes as ReelNote[])
+      .filter((n) => n && typeof n.text === "string" && typeof n.atMs === "number")
+      .map((n) => ({ id: String(n.id), atMs: Math.max(0, Math.round(n.atMs)), text: n.text.slice(0, 500) }))
+      .slice(0, 50);
+  }
   if (typeof req.body?.coverMs === "number") patch.coverMs = Math.max(0, Math.round(req.body.coverMs));
   if (req.body?.broll && Array.isArray(req.body.broll.clipIds)) patch.broll = { clipIds: req.body.broll.clipIds, lengthMs: Number(req.body.broll.lengthMs) || 7000 };
   // On b-roll trial reels (which have no in-editor "export again" state), a change to what's in

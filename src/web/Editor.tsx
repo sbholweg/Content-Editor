@@ -11,6 +11,7 @@ import { BrollEditor } from "./BrollEditor";
 import { CutTab } from "./editor/CutTab";
 import { EditorContext, formatTime, type EditorApi, type PickerTarget, type ReelState } from "./editor/context";
 import { FinishTab } from "./editor/FinishTab";
+import { NotesBox } from "./editor/Notes";
 import { InstagramOverlay, MoveLayer } from "./editor/PreviewLayers";
 import { SoundPicker, SoundTab } from "./editor/SoundTab";
 import { VisualsTab } from "./editor/VisualsTab";
@@ -26,7 +27,7 @@ const TABS = [
 type Tab = (typeof TABS)[number]["id"];
 
 const EDITABLE: (keyof ReelState)[] = [
-  "words", "hookText", "hookSubText", "postCaption", "removePauses", "style", "overlays", "sounds", "music", "soundsEnabled", "carousel", "stories", "slideDesign",
+  "words", "hookText", "hookSubText", "postCaption", "removePauses", "style", "overlays", "sounds", "music", "soundsEnabled", "carousel", "stories", "slideDesign", "notes",
 ];
 const pickReel = (p: Project): ReelState => Object.fromEntries(EDITABLE.map((k) => [k, p[k]])) as ReelState;
 
@@ -43,6 +44,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   const [exportFile, setExportFile] = useState<File | null>(null);
   const [changedSinceExport, setChangedSinceExport] = useState(false);
   const [toast, setToast] = useState("");
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const notify = useCallback((message: string) => {
     setToast(message);
@@ -110,13 +112,14 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
     (patch: Partial<ReelState>) => {
       lastLocalEdit.current = Date.now();
       setReel((prev) => (prev ? { ...prev, ...patch } : prev));
-      setChangedSinceExport(true);
+      // Notes for Claude don't change the video, so they don't make the export out of date.
+      if (Object.keys(patch).some((k) => k !== "notes")) setChangedSinceExport(true);
       pending.current = { ...pending.current, ...patch };
       clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
         const changes = pending.current;
         pending.current = {};
-        api.saveProject(id, changes).catch(onAuthError);
+        api.saveProject(id, changes).then(() => setSavedAt(new Date()), onAuthError);
       }, 500);
     },
     [id, onAuthError],
@@ -284,6 +287,13 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
   );
 
   const current = TABS.findIndex((t) => t.id === tab);
+  // A dot on each step you've already made decisions in.
+  const touched: Record<Tab, boolean> = {
+    cut: reel.words.some((w) => w.cut),
+    visuals: Boolean(reel.hookText) || reel.words.some((w) => w.highlight) || reel.overlays.length > 0,
+    sound: reel.sounds.length > 0 || Boolean(reel.music),
+    finish: project.render.status === "done",
+  };
   const editor: EditorApi = {
     project,
     reel,
@@ -296,6 +306,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
     outputTimes,
     lines,
     timeMs,
+    seekMs,
     seekToWord: (wordId) => {
       const out = outputTimes.get(wordId);
       if (out) seekMs(out.startMs);
@@ -312,36 +323,26 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
           <button className="link" onClick={onBack}>‹ My reels</button>
           <div className="studio-title">
             <strong>{reel.hookText || project.originalName}</strong>
-            <span className="muted small">
-              {project.variantLabel ? `Trial reel · ${project.variantLabel} · ` : ""}
-              {formatTime(timeline.durationMs)} long
+            <span className="muted small mono">
+              {project.variantLabel ? `trial reel · ${project.variantLabel} · ` : ""}
+              raw {formatTime(project.durationMs)} → reel {formatTime(timeline.durationMs)}
             </span>
           </div>
-          <nav className="tabs" role="tablist">
-            {TABS.map((t, i) => (
+          <nav className="pill-tabs" role="tablist" aria-label="Editing steps">
+            {TABS.map((t) => (
               <button key={t.id} role="tab" aria-selected={tab === t.id} className={tab === t.id ? "on" : ""} onClick={() => setTab(t.id)}>
-                {i < current ? "✓ " : tab === t.id ? "● " : ""}
                 {t.label}
+                {touched[t.id] ? <span className="tab-dot" aria-label="(changed)" /> : null}
               </button>
             ))}
           </nav>
+          <div className={`head-actions ${tab === "finish" ? "on-finish" : ""}`}>
+            {savedAt ? <span className="saved muted small">Saved {savedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span> : null}
+            {tab === "finish" ? exportControls : <button className="btn primary small-btn" onClick={() => setTab(TABS[current + 1].id)}>{TABS[current].next} ›</button>}
+          </div>
         </header>
 
         <div className="studio-body">
-          <div className="studio-main">
-            {tab === "cut" ? (
-              <CutTab
-                onTightened={(p) => {
-                  setProject(p);
-                  notify(`Tightened: now ${formatTime(buildTimeline(p.words, p.durationMs, true, p.silences, p.style.speed).durationMs)} long. Cut lines are at the bottom.`);
-                }}
-              />
-            ) : null}
-            {tab === "visuals" && inputProps ? <VisualsTab previewProps={inputProps} /> : null}
-            {tab === "sound" ? <SoundTab /> : null}
-            {tab === "finish" ? <FinishTab exportControls={exportControls} onProject={setProject} /> : null}
-          </div>
-
           <aside className="studio-preview">
             <div className="preview-tools">
               <button className={`chip ${moving ? "accent" : ""}`} onClick={() => setMoving(!moving)} aria-pressed={moving}>
@@ -352,7 +353,6 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
               </button>
             </div>
             <div className="phone">
-              {moving || showIg ? null : <span className="phone-badge">Preview</span>}
               {inputProps ? (
                 <Player
                   ref={player}
@@ -369,29 +369,47 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
               {showIg ? <InstagramOverlay handle={brand.name.toLowerCase().replace(/[^a-z0-9._]/g, "") || "yourname"} /> : null}
               {moving ? <MoveLayer /> : null}
             </div>
+            <div className="player-controls">
+              <button className="chip" onClick={() => seekMs(Math.max(0, timeMs - 5000))} aria-label="Back 5 seconds">−5s</button>
+              <button className="btn primary play-btn" onClick={() => player.current?.toggle()}>
+                {playing ? "❚❚ Pause" : "▶ Play"}
+              </button>
+              <button className="chip" onClick={() => seekMs(Math.min(timeline.durationMs, timeMs + 5000))} aria-label="Forward 5 seconds">+5s</button>
+            </div>
+            <input
+              className="scrub"
+              type="range"
+              min={0}
+              max={Math.max(1, timeline.durationMs)}
+              value={Math.min(timeMs, timeline.durationMs)}
+              onChange={(e) => seekMs(Number(e.target.value))}
+              aria-label="Position in the reel"
+            />
+            <div className="mono small muted scrub-time">
+              {formatTime(timeMs)} / {formatTime(timeline.durationMs)}
+            </div>
+            <div className="desktop-only">
+              <NotesBox />
+            </div>
           </aside>
-        </div>
 
-        <footer className="studio-bar">
-          <button className="play" onClick={() => player.current?.toggle()} aria-label={playing ? "Pause" : "Play"}>
-            {playing ? "❚❚" : "▶"}
-          </button>
-          <span className="mono time">
-            <strong>{formatTime(timeMs)}</strong> / {formatTime(timeline.durationMs)}
-          </span>
-          <input
-            className="scrub"
-            type="range"
-            min={0}
-            max={Math.max(1, timeline.durationMs)}
-            value={Math.min(timeMs, timeline.durationMs)}
-            onChange={(e) => seekMs(Number(e.target.value))}
-            aria-label="Position in the reel"
-          />
-          <div className="bar-actions">
-            {tab === "finish" ? exportControls : <button className="btn primary" onClick={() => setTab(TABS[current + 1].id)}>{TABS[current].next} ›</button>}
+          <div className="studio-main">
+            {tab === "cut" ? (
+              <CutTab
+                onTightened={(p) => {
+                  setProject(p);
+                  notify(`Tightened: now ${formatTime(buildTimeline(p.words, p.durationMs, true, p.silences, p.style.speed).durationMs)} long. Cut lines are at the bottom.`);
+                }}
+              />
+            ) : null}
+            {tab === "visuals" && inputProps ? <VisualsTab previewProps={inputProps} /> : null}
+            {tab === "sound" ? <SoundTab /> : null}
+            {tab === "finish" ? <FinishTab exportControls={exportControls} onProject={setProject} /> : null}
+            <div className="mobile-only">
+              <NotesBox />
+            </div>
           </div>
-        </footer>
+        </div>
       </main>
 
       {toast ? <div className="toast" role="status">{toast}</div> : null}

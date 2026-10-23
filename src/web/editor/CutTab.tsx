@@ -18,6 +18,29 @@ export function CutTab({ onTightened }: { onTightened: (p: Project) => void }) {
   const setCut = (ids: Set<string>, value: boolean) => update({ words: words.map((w) => (ids.has(w.id) ? { ...w, cut: value } : w)) });
   const toggleWord = (id: string) => update({ words: words.map((w) => (w.id === id ? { ...w, cut: !w.cut } : w)) });
 
+  // How much silence was trimmed between two kept words (shown as a small marker in the text).
+  const speed = timeline.speed || 1;
+  const trimmedBetween = (a: (typeof words)[number], b: (typeof words)[number]) => {
+    const oa = outputTimes.get(a.id);
+    const ob = outputTimes.get(b.id);
+    if (!oa || !ob) return 0;
+    return b.startMs - a.endMs - (ob.startMs - oa.endMs) * speed;
+  };
+  let pausesTrimmed = 0;
+  let prev: (typeof words)[number] | undefined;
+  let cutBetween = false;
+  for (const w of words) {
+    if (w.cut) {
+      cutBetween = true;
+      continue;
+    }
+    if (prev && !cutBetween && trimmedBetween(prev, w) >= 250) pausesTrimmed++;
+    prev = w;
+    cutBetween = false;
+  }
+  const wordsCut = words.filter((w) => w.cut).length;
+  const umsCut = words.filter((w) => w.cut && isFiller(w.text)).length;
+
   const row = (line: (typeof lines)[number]) => {
     const firstKept = line.words.find((w) => !w.cut);
     const out = firstKept ? outputTimes.get(firstKept.id) : undefined;
@@ -26,20 +49,32 @@ export function CutTab({ onTightened }: { onTightened: (p: Project) => void }) {
       return o && timeMs >= o.startMs && timeMs < o.endMs;
     });
     const lineCut = isLineCut(line);
+    let prevKept: (typeof words)[number] | undefined;
+    let cutSincePrev = false;
     return (
       <div key={line.id} className={`line ${playing ? "playing" : ""} ${lineCut ? "is-cut" : ""}`}>
-        <button className="line-num" onClick={() => firstKept && seekToWord(firstKept.id)} title="Play from here">
-          <span>{String(line.number).padStart(2, "0")}</span>
-          <small>{out ? formatTime(out.startMs) : "cut"}</small>
+        <button className="line-time mono" onClick={() => firstKept && seekToWord(firstKept.id)} title="Play from here">
+          {out ? formatTime(out.startMs) : "cut"}
         </button>
         <p className="line-words">
-          {line.words.map((w) => (
-            <React.Fragment key={w.id}>
-              <span role="button" tabIndex={0} className={`lw ${w.cut ? "cut" : ""}`} onClick={() => toggleWord(w.id)}>
-                {w.text}
-              </span>{" "}
-            </React.Fragment>
-          ))}
+          {line.words.map((w) => {
+            let chip: React.ReactNode = null;
+            if (!w.cut) {
+              const trimmed = prevKept && !cutSincePrev ? trimmedBetween(prevKept, w) : 0;
+              if (trimmed >= 250) chip = <span className="pause-chip" title="Pause trimmed">⏸ {(trimmed / 1000).toFixed(1)}s</span>;
+              prevKept = w;
+              cutSincePrev = false;
+            } else cutSincePrev = true;
+            return (
+              <React.Fragment key={w.id}>
+                {chip}
+                {chip ? " " : null}
+                <span role="button" tabIndex={0} className={`lw ${w.cut ? "cut" : ""}`} onClick={() => toggleWord(w.id)}>
+                  {w.text}
+                </span>{" "}
+              </React.Fragment>
+            );
+          })}
         </p>
         <button className="chip line-action" onClick={() => setCut(new Set(line.words.map((w) => w.id)), !lineCut)}>
           {lineCut ? "Bring back" : "✂ Cut line"}
@@ -55,8 +90,10 @@ export function CutTab({ onTightened }: { onTightened: (p: Project) => void }) {
           <h2>Your cut</h2>
           <p className="muted small">Tap a word to cut it. Tap again to bring it back.</p>
         </div>
-        <span className="mono muted">{formatTime(timeline.durationMs)} long</span>
       </header>
+      <p className="cut-stats mono">
+        reel {formatTime(timeline.durationMs)} · {wordsCut} word{wordsCut === 1 ? "" : "s"} cut · {umsCut} um{umsCut === 1 ? "" : "s"} cut · {pausesTrimmed} pause{pausesTrimmed === 1 ? "" : "s"} trimmed{speed !== 1 ? ` · ${speed}× speed` : ""}
+      </p>
 
       <div className="tighten">
         <div className="grow">

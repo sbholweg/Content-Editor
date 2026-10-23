@@ -143,6 +143,9 @@ export type Overlay = {
 };
 
 // A sound effect that plays when a word is spoken. soundId is a built-in sound or a library item.
+// A change the creator asked for at a moment in the reel (atMs is in finished-reel time).
+export type ReelNote = { id: string; atMs: number; text: string };
+
 export type SoundCue = { id: string; soundId: string; wordId: string; volume: number };
 
 // Background music for the whole reel.
@@ -237,6 +240,8 @@ export type Project = {
   coverMs?: number;
   // Marked by the creator once it's been posted (moves it to the Posted folder).
   posted?: boolean;
+  // "Notes on the draft": what to change at a moment of the finished reel, for Claude to apply.
+  notes?: ReelNote[];
   // Set on trial reel versions: the reel they were made from and which angle they use.
   parentId?: string;
   variantLabel?: string;

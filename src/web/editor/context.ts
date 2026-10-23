@@ -6,7 +6,7 @@ import type { Asset, BrandKit, Project, Word } from "../../shared/types";
 // The parts of a reel you can edit; saved together.
 export type ReelState = Pick<
   Project,
-  "words" | "hookText" | "hookSubText" | "postCaption" | "removePauses" | "style" | "overlays" | "sounds" | "music" | "soundsEnabled" | "carousel" | "stories" | "slideDesign"
+  "words" | "hookText" | "hookSubText" | "postCaption" | "removePauses" | "style" | "overlays" | "sounds" | "music" | "soundsEnabled" | "carousel" | "stories" | "slideDesign" | "notes"
 >;
 
 // What the library picker was opened for.
@@ -31,6 +31,7 @@ export type EditorApi = {
   lines: Line[];
   timeMs: number;
   seekToWord: (wordId: string) => void;
+  seekMs: (ms: number) => void;
   openPicker: (target: PickerTarget) => void;
   // Shows a short confirmation at the bottom of the screen.
   notify: (message: string) => void;

@@ -81,6 +81,7 @@ export const ReelEdits = z
     ),
     removeSounds: z.array(z.string()).describe('sound cue ids, or "all"'),
     soundsEnabled: z.boolean(),
+    clearNotes: z.boolean().describe("true once you've applied the creator's notes on the draft"),
     autoSounds: z.boolean().describe("true adds sound effects by moment: clicks on key words, pops on stickers/emojis, shutters on screenshots, cash register on money talk"),
     music: z
       .object({
@@ -161,6 +162,7 @@ export function applyEdits(project: Project, edits: ReelEdits, brand: BrandKit, 
 
   if (edits.hookSubText !== undefined) changes.hookSubText = edits.hookSubText;
   if (edits.soundsEnabled !== undefined) changes.soundsEnabled = edits.soundsEnabled;
+  if (edits.clearNotes) changes.notes = [];
 
   const findSound = (name: string) => {
     const key = name.trim().toLowerCase();

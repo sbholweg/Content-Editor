@@ -85,6 +85,9 @@ style and zoom. Save it as a named look with `npm run engine -- brand look.json`
 - "my brand colors": use `looks` to read their default look and saved looks; prefer those colors.
 - "cut the first sentence": cut the word numbers up to and including its last word.
 - "add <clip> when I talk about X": find the words in `show`, find the item with `library`, use addMedia.
+- "apply my notes" / "I left notes": `show` lists the notes they added in the editor ("Notes for
+  Claude" under the preview), each with its time and the word playing then. Make each change, then
+  include `"clearNotes": true` in the same edits file. Tell them in a line per note what you did.
 - "speed it up" / "slow it down": `"style": {"speed": 1.2}` (1 to 1.5; 1.2 is their usual). The pitch
   of their voice stays natural.
 - "it still has pauses" / "cut the dead air" / "tighter": run `npm run engine -- tighten <id>`. It
