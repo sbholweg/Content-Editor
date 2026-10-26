@@ -10,52 +10,37 @@ import { RecipesCard } from "./Recipes";
 import { plainHook } from "../../shared/hookText";
 import { CaptionsPanel, ColorPanel, FontsPanel, HookPanel } from "./panels";
 
-type Section = "captions" | "hook" | "fonts" | "color";
+type Section = "lines" | "captions" | "hook" | "fonts" | "color" | "recipes";
 
 const EMOJIS = ["🔥", "💰", "✨", "💡", "🚀", "💜", "😂", "👀", "✅", "❌", "⏰", "📈", "🙌", "💸", "🎯"];
 const LAYOUT_LABEL = { headline: "Headline", eyebrow: "Eyebrow + headline", subhead: "Headline + subhead" };
 const PLACEMENT_LABEL = { top: "top", middle: "middle", bottom: "lower", full: "full screen" };
 
+// Simple first: pick a look and check Claude's graphics. Everything else is folded under "Fine-tune".
 export function VisualsTab({ previewProps }: { previewProps: ReelProps }) {
-  const [view, setView] = useState<"style" | "lines">("style");
+  const [open, setOpen] = useState<Section | null>(null);
+  const sections: { id: Section; title: string; hint: string; body: React.ReactNode }[] = [
+    { id: "lines", title: "Key words, emojis & media", hint: "line by line: tap words, add GIFs, images or b-roll", body: <LinesView /> },
+    { id: "captions", title: "Captions", hint: "style, placement, size, zoom", body: <CaptionsPanel /> },
+    { id: "hook", title: "Hook", hint: "the title, its style and position", body: <HookPanel previewProps={previewProps} /> },
+    { id: "fonts", title: "Fonts & colors", hint: "your fonts and colors", body: <FontsPanel /> },
+    { id: "color", title: "Color grading", hint: "fix the light, before & after", body: <ColorPanel previewProps={previewProps} /> },
+    { id: "recipes", title: "Recipes", hint: "save this whole setup and reuse it on other reels", body: <RecipesCard /> },
+  ];
   return (
     <>
       <section className="panel-card">
         <header className="panel-head">
           <div>
-            <h2>Your visuals</h2>
-            <p className="muted small">
-              {view === "style" ? "Pick a look, then fine-tune captions, hook, fonts and colors." : "Line by line: key words, emojis, and GIFs, images or b-roll on any line."}
-            </p>
+            <h2>Look</h2>
+            <p className="muted small">Tap one to try it on.</p>
           </div>
         </header>
-        <div className="segmented big">
-          <button className={view === "style" ? "on" : ""} onClick={() => setView("style")}>Style</button>
-          <button className={view === "lines" ? "on" : ""} onClick={() => setView("lines")}>Lines & media</button>
-        </div>
-      </section>
-      <RecipesCard />
-      <GraphicsCards />
-      {view === "style" ? <StyleView previewProps={previewProps} /> : <LinesView />}
-    </>
-  );
-}
-
-function StyleView({ previewProps }: { previewProps: ReelProps }) {
-  const [open, setOpen] = useState<Section | null>(null);
-  const sections: { id: Section; title: string; hint: string; body: React.ReactNode }[] = [
-    { id: "captions", title: "Captions", hint: "style, placement, size, zoom jumps", body: <CaptionsPanel /> },
-    { id: "hook", title: "Hook", hint: "the title, its style and position", body: <HookPanel previewProps={previewProps} /> },
-    { id: "fonts", title: "Fonts & colors", hint: "your fonts, upload your own, colors", body: <FontsPanel /> },
-    { id: "color", title: "Color grading", hint: "auto-fix the light, or a look · before & after", body: <ColorPanel previewProps={previewProps} /> },
-  ];
-  return (
-    <>
-      <section className="panel-card">
-        <h3>Looks</h3>
         <LookGallery previewProps={previewProps} />
       </section>
+      <GraphicsCards />
       <section className="panel-card accordion">
+        <div className="label">Fine-tune (optional)</div>
         {sections.map((sec) => (
           <div key={sec.id} className={`acc ${open === sec.id ? "open" : ""}`}>
             <button className="acc-head" onClick={() => setOpen(open === sec.id ? null : sec.id)}>

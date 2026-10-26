@@ -16,6 +16,8 @@ export function GraphicsCards() {
   const { project, reel, update, assets, setAssets, outputTimes, seekToWord, notify, onAuthError, timeMs } = useEditor();
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const index = new Map(reel.words.map((w, i) => [w.id, i]));
   const items = reel.overlays
     .filter((o) => o.graphic || o.suggested || o.gifQuery)
@@ -72,12 +74,15 @@ export function GraphicsCards() {
       <header className="panel-head">
         <div>
           <h3>Graphics</h3>
-          <p className="muted small">Claude suggests stickers, counting numbers, comment bubbles and GIFs from your library. Keep, change or drop each one.</p>
+          <p className="muted small">Claude picks a few moments for a sticker, number or GIF. Keep or drop each one.</p>
         </div>
         <button className="btn primary small-btn" disabled={busy} onClick={suggest}>
           {busy ? "Watching your reel…" : items.length ? "✨ Suggest again" : "✨ Suggest graphics"}
         </button>
       </header>
+      <button className="chip" onClick={() => setAdding(!adding)}>{adding ? "Done adding" : "＋ Add your own (circle, arrow, sticker)"}</button>
+      {adding ? (
+        <>
       <div className="row">
         <span className="muted small grow">Draw on the paused moment:</span>
         <button className="chip" onClick={() => addMark("circle")}>◯ Circle</button>
@@ -91,6 +96,8 @@ export function GraphicsCards() {
         ))}
       </div>
       <p className="muted small">Have your own stickers or logo marks? Add them as PNGs through any “Add image” button and pick “No frame”.</p>
+        </>
+      ) : null}
       {pending > 1 ? (
         <div className="row">
           <span className="muted small grow">{pending} suggestions waiting</span>
@@ -100,7 +107,7 @@ export function GraphicsCards() {
       ) : null}
       {items.length ? (
         <div className="gfx-cards">
-          {items.map((o) => {
+          {(showAll ? items : items.slice(0, 3)).map((o) => {
             const at = outputTimes.get(o.startWordId);
             const words = reel.words.slice(index.get(o.startWordId), (index.get(o.endWordId) ?? 0) + 1).filter((w) => !w.cut).map((w) => w.text).join(" ");
             const asset = o.graphic ? undefined : assets.find((a) => a.id === o.assetId);
@@ -212,6 +219,9 @@ export function GraphicsCards() {
               </div>
             );
           })}
+          {items.length > 3 ? (
+            <button className="chip" onClick={() => setShowAll(!showAll)}>{showAll ? "Show fewer" : `Show ${items.length - 3} more`}</button>
+          ) : null}
         </div>
       ) : null}
     </section>

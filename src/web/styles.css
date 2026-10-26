@@ -1,5 +1,6 @@
 :root {
-  /* Purple Punk: cream and ink like a zine, shock violet as the star, lime as the pop. */
+  /* Purple Punk v5: loud where it counts, calm everywhere else. Shell + white, ink type, shock violet
+     blocks with white text, lilac for soft cards, lime only for small highlights (always ink text). */
   --bg: #fbf4ef;
   --card: #ffffff;
   --line: #e9dfd8;
@@ -8,7 +9,9 @@
   --muted: #5e5560;
   /* A deeper violet for text and links, so it stays readable on cream. */
   --accent: #8f35e8;
-  --accent-soft: #f1e4ff;
+  --accent-soft: #e9dbff;
+  --lilac: #e9dbff;
+  --white: #ffffff;
   /* The brand violet and lime, for blocks behind black text and stickers. */
   --violet: #b14eff;
   --lime: #c1ff72;
@@ -97,7 +100,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 
 .tag.error { color: var(--danger); }
 
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 1px 2px rgba(30, 21, 51, 0.04); padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-.label { font-size: 11px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+.label { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
 
 .options { display: flex; flex-wrap: wrap; gap: 8px; }
 .option {
@@ -202,7 +205,7 @@ a.chip.accent { color: #fff; }
 .time strong { color: var(--ink); font-size: 18px; }
 .scrub { flex: 1; min-width: 60px; }
 .bar-actions { display: flex; gap: 10px; align-items: center; min-width: 0; }
-.mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; white-space: nowrap; }
+.mono { font-family: var(--mono); white-space: nowrap; }
 
 .panel-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 1px 3px rgba(30, 21, 51, 0.05); padding: 20px; display: flex; flex-direction: column; gap: 12px; }
 .panel-card h2 { font-size: 26px; letter-spacing: -0.02em; }
@@ -253,7 +256,7 @@ a.chip.accent { color: #fff; }
 .lookbook-item { position: relative; display: flex; flex-direction: column; gap: 6px; text-align: left; border-radius: 16px; padding: 6px; border: 1px solid transparent; }
 .lookbook-item.on { border-color: var(--accent); background: var(--accent-soft); }
 .lookbook-label { font-size: 13px; font-weight: 600; padding: 0 4px 2px; }
-.on-badge { position: absolute; left: 14px; bottom: 34px; font-size: 11px; font-weight: 700; color: #fff; background: #2f8f5b; padding: 3px 8px; border-radius: 999px; }
+.on-badge { position: absolute; left: 14px; bottom: 34px; font-size: 11px; font-weight: 700; color: var(--ink); background: var(--lime); padding: 3px 8px; border-radius: 999px; }
 .colors-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
 .font-groups { display: flex; flex-wrap: wrap; gap: 6px; }
 .library-browser { display: flex; flex-direction: column; gap: 10px; }
@@ -271,7 +274,7 @@ a.chip.accent { color: #fff; }
 .sound-pick { padding: 6px 0; }
 .toggle { width: 44px; height: 26px; border-radius: 999px; background: var(--line); position: relative; flex-shrink: 0; transition: background 0.2s; }
 .toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); transition: transform 0.2s; }
-.toggle.on { background: #2f8f5b; }
+.toggle.on { background: var(--violet); }
 .toggle.on::after { transform: translateX(18px); }
 
 /* Phone: preview pinned on top, tabs under the header, play bar at the bottom. */
@@ -353,12 +356,12 @@ a.chip { color: var(--ink); }
 .display { font-family: var(--poster); font-weight: 400; text-transform: uppercase; letter-spacing: 0; line-height: 0.92; font-size: clamp(44px, 6.4vw, 84px); margin: 0; }
 .display.small { font-size: 40px; }
 /* The one emphasized word: italic serif in a violet block, like the brand board. */
-.display .accent-text { display: inline-block; font-family: var(--serif); font-style: italic; text-transform: none; font-size: 0.9em; line-height: 0.9; color: var(--ink); background: var(--violet); padding: 0.02em 0.14em 0.08em; border-radius: 0.08em; transform: rotate(-2deg); }
+.display .accent-text { display: inline-block; font-family: var(--serif); font-style: italic; text-transform: none; font-size: 0.9em; line-height: 0.9; color: var(--ink); background: var(--lime); padding: 0.02em 0.14em 0.08em; border-radius: 0.08em; }
 .display.light, .lede.light { color: #fff; }
 .eyebrow { display: inline-block; font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); margin-bottom: 16px; }
 .lede { font-size: 18px; line-height: 1.5; color: var(--muted); max-width: 560px; margin-top: 16px; }
 .brandmark { display: inline-flex; align-items: baseline; font-family: var(--poster); font-weight: 400; text-transform: uppercase; letter-spacing: 0.01em; color: var(--ink); text-decoration: none; white-space: nowrap; }
-.brandmark-cut { display: inline-block; margin: 0 0.04em 0 0.22em; padding: 0 0.12em; background: var(--violet); color: var(--ink); transform: rotate(-3deg); }
+.brandmark-cut { display: inline-block; margin: 0 0.04em 0 0.22em; padding: 0 0.12em; background: var(--violet); color: var(--white); }
 .topnav { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 28px; padding: 14px 32px; background: rgba(251, 244, 239, 0.92); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
 .topnav-links { display: flex; gap: 6px; }
 .topnav-links a { padding: 8px 14px; border-radius: 999px; font-weight: 600; color: var(--muted); text-decoration: none; }
@@ -373,7 +376,6 @@ a.chip { color: var(--ink); }
   padding: 48px; border-radius: 28px; background: var(--card); border: 1px solid var(--line);
   box-shadow: 0 1px 2px rgba(22, 18, 31, 0.04), 0 24px 60px -30px rgba(22, 18, 31, 0.18); overflow: hidden;
 }
-.hero-burst { position: absolute; right: 26px; top: 22px; width: 64px; height: 64px; transform: rotate(12deg); pointer-events: none; }
 .hero.dragging { outline: 3px dashed var(--accent); outline-offset: -10px; }
 .hero-actions { display: flex; flex-direction: column; gap: 12px; position: relative; z-index: 1; }
 .action-card { display: grid; grid-template-columns: 44px 1fr; grid-template-rows: auto auto; column-gap: 14px; text-align: left; padding: 18px 20px; border-radius: 20px; border: 1px solid var(--line); background: var(--card); transition: transform 0.15s, box-shadow 0.15s; }
@@ -411,8 +413,6 @@ a.chip { color: var(--ink); }
 .login { min-height: 100%; display: grid; grid-template-columns: 1.15fr 1fr; background: var(--card); }
 .login-art { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 40px; padding: 40px 48px; background: var(--bg); color: var(--ink); border-right: 1px solid var(--line); overflow: hidden; }
 .login-art > * { position: relative; z-index: 1; }
-.login-burst { position: absolute; right: 48px; top: 36px; width: 92px; height: 92px; transform: rotate(14deg); z-index: 0; }
-.login-sparkle { position: absolute; left: 46%; bottom: 120px; width: 40px; height: 40px; z-index: 0; }
 .login-chips { display: flex; flex-wrap: wrap; gap: 14px; }
 /* Sticker tags with a hard offset shadow. */
 .sticker { display: inline-block; padding: 8px 14px; border: 2px solid var(--ink); border-radius: 8px; box-shadow: 4px 4px 0 var(--ink); background: #fff; color: var(--ink); font-family: var(--mono); font-size: 13px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
@@ -434,8 +434,6 @@ a.chip { color: var(--ink); }
   .login { grid-template-columns: 1fr; }
   .login-art { padding: 28px 24px; gap: 24px; }
   .login-form { padding: 28px 24px; }
-  .login-burst { right: 16px; top: 14px; width: 48px; height: 48px; }
-  .hero-burst { width: 44px; height: 44px; right: 14px; top: 12px; }
 }
 
 .tighten { display: flex; align-items: center; gap: 16px; padding: 14px 16px; border-radius: 16px; background: var(--accent-soft); border: 1px solid #e2ccff; }
@@ -682,3 +680,17 @@ a.btn.primary { color: #fff; }
 .select-toggle + .select-toggle { margin-left: 8px; }
 .select-toggle.on { text-decoration: underline; }
 .grid-view { margin: 12px 0 20px; }
+
+/* Tell Claude */
+.ask-box { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; padding: 16px; background: var(--card); border: 2px solid var(--ink); border-radius: 16px; box-shadow: 5px 5px 0 var(--violet); }
+.ask-head { display: flex; flex-direction: column; gap: 1px; }
+.ask-box textarea { width: 100%; resize: vertical; min-height: 54px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); }
+.ask-examples { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip.tiny { font-size: 12px; padding: 4px 10px; min-height: 0; }
+.ask-result { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 12px; background: var(--lilac); font-size: 14px; }
+.ask-result.bad { background: #fde9e8; }
+.check.small { font-size: 12px; letter-spacing: 0; font-weight: 500; }
+.acc-body > .panel-card { border: 0; box-shadow: none; padding: 0; background: transparent; }
+.welcome { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; padding: 14px 16px; border-radius: 16px; background: var(--lilac); }
+.welcome ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; flex: 1; font-size: 14px; }
+.welcome b { font-weight: 700; }

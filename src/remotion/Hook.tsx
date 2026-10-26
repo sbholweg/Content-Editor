@@ -22,11 +22,12 @@ const SHADOW = "0 2px 8px rgba(0,0,0,0.35), 0 6px 40px rgba(0,0,0,0.35)";
 export function accentStyle(brand: ReelStyle, visible: boolean): React.CSSProperties {
   const accent = getFont(brand.accentFont || "Instrument Serif");
   const base: React.CSSProperties = { fontFamily: accent.fontFamily, fontWeight: accent.fontWeight, fontStyle: accent.fontStyle, fontSize: "1.06em" };
-  if (brand.hookAccent === "color") return { ...base, color: brand.highlightColor };
+  const block = brand.accentColor || brand.highlightColor;
+  if (brand.hookAccent === "color") return { ...base, color: block };
   return {
     ...base,
-    color: brand.highlightTextColor,
-    background: visible ? brand.highlightColor : "transparent",
+    color: brand.accentTextColor || brand.highlightTextColor,
+    background: visible ? block : "transparent",
     textShadow: "none",
     padding: "0 0.14em",
     borderRadius: "0.12em",

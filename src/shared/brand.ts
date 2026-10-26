@@ -10,6 +10,9 @@ export const DEFAULT_STYLE: ReelStyle = {
   hookLayout: "headline",
   hookAnimation: "pop",
   hookAccent: "block",
+  // Empty = use the key word colors.
+  accentColor: "",
+  accentTextColor: "",
   accentFont: "Instrument Serif",
   captionAnimation: "pop",
   hookDurationMs: 5000,

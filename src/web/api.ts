@@ -102,6 +102,8 @@ export const api = {
 
   applyRecipe: (projectIds: string[], recipe: { recipeId?: string; recipe?: unknown }) =>
     request<{ applied: number; recipe: string; suggesting: boolean }>("/api/recipes/apply", { method: "POST", body: JSON.stringify({ projectIds, ...recipe }) }),
+  ask: (id: string, change: string) =>
+    request<{ project: Project; summary: string }>(`/api/projects/${id}/ask`, { method: "POST", body: JSON.stringify({ request: change }) }),
   makeCover: (id: string, cover: { design: string; title: string; sub: string }) =>
     request<Project>(`/api/projects/${id}/cover`, { method: "POST", body: JSON.stringify(cover) }),
   writeScript: (idea: string) => request<{ script: string }>("/api/script", { method: "POST", body: JSON.stringify({ idea }) }),

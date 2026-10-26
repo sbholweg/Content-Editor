@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Cover, COVER_SIZE } from "../../remotion/Cover";
 import { toOriginalMs } from "../../shared/timeline";
 import type { CoverDesign, CoverProps, Project } from "../../shared/types";
-import { BusinessCard, PostCaptionCard } from "../sections";
+import { PostCaptionCard } from "../sections";
 import { TrialReelsCard } from "../TrialReels";
 import { api, libraryUrl, projectFileUrl } from "../api";
 import { formatTime, useEditor } from "./context";
@@ -31,6 +31,7 @@ function CoverCard({ onProject }: { onProject: (p: Project) => void }) {
   const [title, setTitle] = useState(project.cover?.title ?? reel.hookText);
   const [sub, setSub] = useState(project.cover?.sub ?? "");
   const [busy, setBusy] = useState(false);
+  const [words, setWords] = useState(false);
   const [grid, setGrid] = useState<Project[] | null>(null);
   const customFonts = assets.filter((a) => a.kind === "font").map((a) => ({ name: a.name, url: libraryUrl(a.file) }));
   const props: CoverProps = { background: projectFileUrl(project.id, `frame-${Math.round(coverMs)}.jpg`), title, sub, design, style: reel.style, customFonts };
@@ -63,7 +64,7 @@ function CoverCard({ onProject }: { onProject: (p: Project) => void }) {
         </div>
         <div className="stack tight grow">
           <h3>Cover</h3>
-          <p className="muted small">Pause the preview on a frame you like, pick a design, and save. The dashed box is what shows in your profile grid.</p>
+          <p className="muted small">Pause the preview on a frame you like, pick a design, save. The dashed box is what your grid shows.</p>
           <div className="row wrap">
             <button
               className="chip"
@@ -81,7 +82,9 @@ function CoverCard({ onProject }: { onProject: (p: Project) => void }) {
               </button>
             ))}
           </div>
-          {design === "plain" ? null : (
+          {design === "plain" ? null : !words ? (
+            <button className="link small left" onClick={() => setWords(true)}>✎ Change the words on the cover</button>
+          ) : (
             <>
               <input value={title} placeholder="Words on the cover" onChange={(e) => setTitle(e.target.value)} aria-label="Cover words" />
               <input value={sub} placeholder="Small line (optional), e.g. part 2" onChange={(e) => setSub(e.target.value)} aria-label="Cover small line" />
@@ -119,47 +122,47 @@ export function GridPreview({ projects, highlight }: { projects: Project[]; high
   );
 }
 
+// Simple first: save the video, the caption and the cover. The extras are folded underneath.
 export function FinishTab({ exportControls, onProject }: { exportControls: React.ReactNode; onProject: (p: Project) => void }) {
   const { project, reel, update, timeline, brand, updateBrand, onAuthError } = useEditor();
+  const [more, setMore] = useState<"endcard" | "trials" | "repurpose" | null>(null);
+  const extras: { id: NonNullable<typeof more>; title: string; hint: string; body: React.ReactNode; show: boolean }[] = [
+    { id: "endcard", title: "End card", hint: reel.endCard?.on ? "on" : "a 2-second card with your call to action", body: <EndCardPanel />, show: true },
+    {
+      id: "trials",
+      title: "Trial reels",
+      hint: "3 short versions with different hooks, to test on non-followers",
+      body: <TrialReelsCard projectId={project.id} onOpen={(id) => (window.location.hash = `#/p/${id}`)} onAuthError={onAuthError} />,
+      show: !project.parentId,
+    },
+    { id: "repurpose", title: "Carousel & stories", hint: "turn this reel into slides", body: <RepurposeCard />, show: !project.parentId },
+  ];
   return (
     <>
       <section className="panel-card">
         <header className="panel-head">
           <div>
             <h2>Finish</h2>
-            <p className="muted small">Export your reel at full quality, ready to post.</p>
+            <p className="muted small">Tap <strong>Save video</strong> to get it at full quality, ready to post.</p>
           </div>
           <span className="mono muted">{formatTime(timeline.durationMs)} long</span>
         </header>
-        <div className="row">{exportControls}</div>
+        <div className="mobile-only">
+          <div className="row wrap">{exportControls}</div>
+        </div>
         {project.render.status === "error" ? <p className="error small">Export failed: {project.render.error}</p> : null}
-      </section>
-
-      <EndCardPanel />
-
-      <CoverCard onProject={onProject} />
-
-      <section className="panel-card">
-        <div className="row">
-          <div className="grow">
-            <h3>Posted it?</h3>
-            <p className="muted small">Mark it as posted to move it to your Posted folder.</p>
-          </div>
-          <button
-            className={`chip ${project.posted ? "accent" : ""}`}
-            onClick={async () => {
+        <label className="check small">
+          <input
+            type="checkbox"
+            checked={Boolean(project.posted)}
+            onChange={async () => {
               const p = await api.saveProject(project.id, { posted: !project.posted }).catch(onAuthError);
               if (p) onProject(p);
             }}
-          >
-            {project.posted ? "✓ Posted" : "Mark as posted"}
-          </button>
-        </div>
+          />
+          I've posted it (moves it to your Posted folder)
+        </label>
       </section>
-
-      {!project.parentId ? (
-        <TrialReelsCard projectId={project.id} onOpen={(id) => (window.location.hash = `#/p/${id}`)} onAuthError={onAuthError} />
-      ) : null}
 
       <PostCaptionCard
         caption={reel.postCaption}
@@ -176,9 +179,23 @@ export function FinishTab({ exportControls, onProject }: { exportControls: React
         }}
       />
 
-      {!project.parentId ? <RepurposeCard /> : null}
+      <CoverCard onProject={onProject} />
 
-      <BusinessCard brand={brand} onBrand={updateBrand} />
+      <section className="panel-card accordion">
+        <div className="label">Make more from this reel (optional)</div>
+        {extras.filter((x) => x.show).map((x) => (
+          <div key={x.id} className={`acc ${more === x.id ? "open" : ""}`}>
+            <button className="acc-head" onClick={() => setMore(more === x.id ? null : x.id)}>
+              <span className="grow left">
+                <strong>{x.title}</strong>
+                <span className="muted small">{x.hint}</span>
+              </span>
+              <span className="acc-caret">{more === x.id ? "–" : "+"}</span>
+            </button>
+            {more === x.id ? <div className="acc-body">{x.body}</div> : null}
+          </div>
+        ))}
+      </section>
     </>
   );
 }

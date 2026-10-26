@@ -36,6 +36,8 @@ export type EditorApi = {
   // Shows a short confirmation at the bottom of the screen.
   notify: (message: string) => void;
   onAuthError: (err: unknown) => void;
+  // Shows a change Claude made (from the "Tell Claude" box) as one undo step.
+  takeClaudeChange: (before: ReelState, project: Project) => void;
 };
 
 export const EditorContext = createContext<EditorApi | null>(null);

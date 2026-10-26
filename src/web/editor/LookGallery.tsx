@@ -20,6 +20,7 @@ export function LookGallery({ previewProps }: { previewProps: ReelProps }) {
   const { reel, update, brand, updateBrand, timeline } = useEditor();
   const [naming, setNaming] = useState(false);
   const [name, setName] = useState("");
+  const [all, setAll] = useState(false);
   // A moment where both the hook and a caption are on screen.
   const frame = Math.min(outputFrames(previewProps) - 1, Math.round(((timeline.words[1]?.startMs ?? 600) / 1000) * REEL_FPS) + 4);
 
@@ -29,10 +30,16 @@ export function LookGallery({ previewProps }: { previewProps: ReelProps }) {
     ...STARTER_LOOKS,
   ];
 
+  // Your own looks first; the starter looks wait behind "See all" so there are only a few to choose from.
+  const onIndex = looks.findIndex((l) => same(reel.style, l.style));
+  const firstFew = looks.slice(0, 4);
+  if (onIndex >= 4) firstFew[3] = looks[onIndex];
+  const shown = all ? looks : firstFew;
+
   return (
     <div className="look-gallery-wrap">
       <div className="look-gallery">
-        {looks.map((l) => (
+        {shown.map((l) => (
           <div key={l.id} className={`look-tile ${same(reel.style, l.style) ? "on" : ""}`}>
             <button className="look-pick" onClick={() => update({ style: withLook(reel.style, l.style) })}>
               <Thumbnail
@@ -62,6 +69,9 @@ export function LookGallery({ previewProps }: { previewProps: ReelProps }) {
           </div>
         ))}
       </div>
+      {looks.length > 4 ? (
+        <button className="chip" onClick={() => setAll(!all)}>{all ? "Show fewer" : `See all ${looks.length} looks`}</button>
+      ) : null}
       {naming ? (
         <form
           className="row"
@@ -83,7 +93,6 @@ export function LookGallery({ previewProps }: { previewProps: ReelProps }) {
           <button className="chip" disabled={same(reel.style, brand.defaultStyle)} onClick={() => updateBrand({ ...brand, defaultStyle: reel.style })}>
             {same(reel.style, brand.defaultStyle) ? "✓ This is your default" : "Make this my default"}
           </button>
-          <span className="muted small">Saw a caption style you love? Send Claude the video and say “make this a look”.</span>
         </div>
       )}
     </div>

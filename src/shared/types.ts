@@ -39,6 +39,9 @@ export type ReelStyle = {
   hookAnimation: "pop" | "typewriter";
   // Words in the hook marked with *stars*: in the accent font inside a key-color block, or just colored.
   hookAccent: "block" | "color";
+  // The block color behind *starred* hook words, and their text color (default: the key word colors).
+  accentColor?: string;
+  accentTextColor?: string;
   // The brand's accent font (an italic serif or script) for *starred* hook words and "accent" key words.
   accentFont: string;
   // How each caption line arrives.

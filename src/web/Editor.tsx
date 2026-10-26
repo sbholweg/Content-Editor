@@ -12,7 +12,7 @@ import { BrollEditor } from "./BrollEditor";
 import { CutTab } from "./editor/CutTab";
 import { EditorContext, formatTime, type EditorApi, type PickerTarget, type ReelState } from "./editor/context";
 import { FinishTab } from "./editor/FinishTab";
-import { NotesBox } from "./editor/Notes";
+import { AskClaude, Welcome } from "./editor/Notes";
 import { InstagramOverlay, MoveLayer } from "./editor/PreviewLayers";
 import { SoundPicker, SoundTab } from "./editor/SoundTab";
 import { VisualsTab } from "./editor/VisualsTab";
@@ -169,6 +169,19 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
       setHistoryVersion((v) => v + 1);
     },
     [save],
+  );
+  // A change Claude made from the "Tell Claude" box: show it, and make it one undo step.
+  const takeClaudeChange = useCallback(
+    (before: ReelState, p: Project) => {
+      past.current = [...past.current.slice(-99), before];
+      future.current = [];
+      lastStep.current = { at: 0, keys: "" };
+      lastLocalEdit.current = 0;
+      setHistoryVersion((v) => v + 1);
+      setProject(p);
+      adopt(p);
+    },
+    [adopt],
   );
   const undo = useCallback(() => restore(past, future), [restore]);
   const redo = useCallback(() => restore(future, past), [restore]);
@@ -382,6 +395,7 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
     openPicker: setPicker,
     notify,
     onAuthError,
+    takeClaudeChange,
   };
 
   return (
@@ -460,12 +474,11 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
             <div className="mono small muted scrub-time">
               {formatTime(timeMs)} / {formatTime(timeline.durationMs)}
             </div>
-            <div className="desktop-only">
-              <NotesBox />
-            </div>
           </aside>
 
           <div className="studio-main">
+            <Welcome />
+            <AskClaude />
             {tab === "cut" ? (
               <CutTab
                 onTightened={(p) => {
@@ -477,9 +490,6 @@ export function Editor({ id, onBack, onAuthError }: { id: string; onBack: () => 
             {tab === "visuals" && inputProps ? <VisualsTab previewProps={inputProps} /> : null}
             {tab === "sound" ? <SoundTab /> : null}
             {tab === "finish" ? <FinishTab exportControls={exportControls} onProject={setProject} /> : null}
-            <div className="mobile-only">
-              <NotesBox />
-            </div>
           </div>
         </div>
       </main>

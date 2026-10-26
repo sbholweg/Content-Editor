@@ -32,6 +32,7 @@ import {
 import { addAsset, deleteAsset, libraryDir, listAssets, syncBrollFolder } from "./library.ts";
 import { transcribeWords } from "./transcribe.ts";
 import { frameAt, renderCover, renderSlides } from "./repurpose.ts";
+import { askForEdits } from "./ask.ts";
 import { createTrialReels, NoBrollError } from "./trials.ts";
 import { BrandAnswersSchema, generateBrand } from "./brand-gen.ts";
 
@@ -223,6 +224,24 @@ app.post("/api/projects/:id/apply", async (req, res) => {
     res.json(updated);
   } catch (err) {
     res.status(400).json({ error: (err as Error).message });
+  }
+});
+
+// "Tell Claude": a plain-words change typed in the editor, turned into edits and applied.
+app.post("/api/projects/:id/ask", async (req, res) => {
+  const request = String(req.body?.request ?? "").trim().slice(0, 1000);
+  const project = await readProject(req.params.id);
+  if (!project) return res.status(404).json({ error: "Not found" });
+  if (!request) return res.status(400).json({ error: "Type what you'd like changed." });
+  const [brand, library] = await Promise.all([readBrand(), listAssets()]);
+  const answer = await askForEdits(project, request, brand, library);
+  if ("error" in answer) return res.status(503).json({ error: answer.error });
+  try {
+    const updated = await updateProject(project.id, (p) => applyEdits(p, answer.edits, brand, library));
+    if (updated.style.cleanAudio) void ensureCleanAudio(updated.id);
+    res.json({ project: updated, summary: answer.summary });
+  } catch (err) {
+    res.status(400).json({ error: `Claude's change didn't fit: ${(err as Error).message}` });
   }
 });
 

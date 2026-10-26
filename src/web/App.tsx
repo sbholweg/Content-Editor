@@ -1,5 +1,5 @@
 import { APP_TAGLINE } from "../shared/app";
-import { Brandmark, Sparkle, Starburst } from "./Brandmark";
+import { Brandmark } from "./Brandmark";
 import React, { useCallback, useEffect, useState } from "react";
 import { api, AuthError, setToken } from "./api";
 import { BrandKitPage } from "./BrandKit";
@@ -68,8 +68,6 @@ function Login({ onDone }: { onDone: () => void }) {
   return (
     <div className="login">
       <aside className="login-art">
-        <Starburst className="login-burst" />
-        <Sparkle className="login-sparkle" />
         <Brandmark size={26} />
         <div>
           <span className="eyebrow">{APP_TAGLINE}</span>

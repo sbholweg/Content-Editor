@@ -1,5 +1,4 @@
 import React, { useRef, useState } from "react";
-import { isLineCut } from "../../shared/lines";
 import { autoSounds } from "../../shared/autoSounds";
 import { BUILTIN_SOUNDS, builtinSound, SOUND_GROUP_HINTS, SOUND_GROUPS } from "../../shared/sounds";
 import type { Asset } from "../../shared/types";
@@ -26,10 +25,12 @@ export function soundInfo(id: string, assets: Asset[]) {
 }
 
 export function SoundTab() {
-  const { project, reel, update, lines, outputTimes, assets, openPicker, notify } = useEditor();
+  const { project, reel, update, outputTimes, assets, openPicker, notify, timeMs, timeline, seekMs } = useEditor();
+  const [showAll, setShowAll] = useState(false);
+  // The word playing at the paused moment, to add a sound right there.
+  const hereWord = timeline.words.find((w) => timeMs < w.endMs) ?? timeline.words.at(-1);
   const clean = reel.style.cleanAudio;
   const cleanStatus = project.cleanAudio;
-  const kept = lines.filter((l) => !isLineCut(l));
   const music = reel.music;
   const musicInfo = music ? soundInfo(music.soundId, assets) : null;
 
@@ -56,17 +57,10 @@ export function SoundTab() {
       </section>
 
       <section className="panel-card">
-        <header className="panel-head">
-          <div>
-            <h2>Your sound</h2>
-            <p className="muted small">Timed to every move. Swap any sound in one tap.</p>
-          </div>
-        </header>
-
         <div className="sound-row music">
           <span className="mono accent-text">0:00</span>
           <span className="grow left">
-            <strong>Music bed</strong>
+            <strong>Background music</strong>
             <span className="muted small">{musicInfo ? musicInfo.name : "No background music yet"}</span>
           </span>
           {music && musicInfo ? (
@@ -93,44 +87,46 @@ export function SoundTab() {
 
       <section className="panel-card">
         <header className="panel-head">
-          <h3>Sound effects</h3>
-          <div className="row">
-            <button className="chip" onClick={addForMe}>✨ Add sounds for me</button>
-            <Toggle on={reel.soundsEnabled} onChange={(on) => update({ soundsEnabled: on })} />
+          <div>
+            <h3>Sound effects</h3>
+            <p className="muted small">
+              {reel.sounds.length ? `${reel.sounds.length} sound${reel.sounds.length === 1 ? "" : "s"}, timed to your words.` : "Little clicks and pops on key moments."}
+            </p>
           </div>
+          <Toggle on={reel.soundsEnabled} onChange={(on) => update({ soundsEnabled: on })} />
         </header>
-        <div className={`sound-lines ${reel.soundsEnabled ? "" : "muted-block"}`}>
-          {kept.map((line) => {
-            const ids = new Set(line.words.map((w) => w.id));
-            const cues = reel.sounds.filter((c) => ids.has(c.wordId));
-            const firstKept = line.words.find((w) => !w.cut)!;
-            return (
-              <div key={line.id} className="sound-line">
-                <div className="muted small">
-                  {String(line.number).padStart(2, "0")} · {line.words.filter((w) => !w.cut).map((w) => w.text).join(" ")}
-                </div>
-                {cues.map((c) => {
-                  const info = soundInfo(c.soundId, assets);
-                  const word = reel.words.find((w) => w.id === c.wordId);
-                  const at = outputTimes.get(c.wordId);
-                  return (
-                    <div key={c.id} className="sound-row">
-                      <span className="mono accent-text">{at ? formatTime(at.startMs) : "–"}</span>
-                      <span className="grow left">
-                        <strong>{info.name}</strong>
-                        <span className="muted small">on “{word?.text}”</span>
-                      </span>
-                      <button className="icon-btn" onClick={() => info.src && preview(info.src)} aria-label="Play">▶</button>
-                      <button className="chip" onClick={() => openPicker({ kind: "sound-swap", cueId: c.id })}>⇄ Swap</button>
-                      <button className="icon-btn" aria-label="Remove" onClick={() => update({ sounds: reel.sounds.filter((x) => x.id !== c.id) })}>✕</button>
-                    </div>
-                  );
-                })}
-                <button className="add-look" onClick={() => openPicker({ kind: "sound-add", wordId: firstKept.id })}>＋ Add a sound</button>
-              </div>
-            );
-          })}
+        <div className="row wrap">
+          <button className="chip accent" onClick={addForMe}>✨ {reel.sounds.length ? "Add more for me" : "Add sounds for me"}</button>
+          {hereWord ? (
+            <button className="chip" onClick={() => openPicker({ kind: "sound-add", wordId: hereWord.id })}>＋ Add one at {formatTime(timeMs)}</button>
+          ) : null}
+          {reel.sounds.length ? (
+            <button className="chip" onClick={() => setShowAll(!showAll)}>{showAll ? "Hide the list" : `See all ${reel.sounds.length} ▾`}</button>
+          ) : null}
         </div>
+        {showAll ? (
+          <div className={`sound-lines ${reel.soundsEnabled ? "" : "muted-block"}`}>
+            {[...reel.sounds]
+              .sort((a, b) => (outputTimes.get(a.wordId)?.startMs ?? 0) - (outputTimes.get(b.wordId)?.startMs ?? 0))
+              .map((c) => {
+                const info = soundInfo(c.soundId, assets);
+                const word = reel.words.find((w) => w.id === c.wordId);
+                const at = outputTimes.get(c.wordId);
+                return (
+                  <div key={c.id} className="sound-row">
+                    <button className="mono accent-text link" onClick={() => at && seekMs(at.startMs)} title="Jump there">{at ? formatTime(at.startMs) : "–"}</button>
+                    <span className="grow left">
+                      <strong>{info.name}</strong>
+                      <span className="muted small">on “{word?.text}”</span>
+                    </span>
+                    <button className="icon-btn" onClick={() => info.src && preview(info.src)} aria-label="Play">▶</button>
+                    <button className="chip" onClick={() => openPicker({ kind: "sound-swap", cueId: c.id })}>⇄ Swap</button>
+                    <button className="icon-btn" aria-label="Remove" onClick={() => update({ sounds: reel.sounds.filter((x) => x.id !== c.id) })}>✕</button>
+                  </div>
+                );
+              })}
+          </div>
+        ) : null}
       </section>
     </>
   );

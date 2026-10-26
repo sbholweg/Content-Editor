@@ -39,6 +39,8 @@ export const ReelEdits = z
         hookLayout: z.enum(["headline", "eyebrow", "subhead"]),
         hookAnimation: z.enum(["pop", "typewriter"]).describe("typewriter = types on with a key click per letter"),
         hookAccent: z.enum(["block", "color"]).describe("style of *starred* hook words"),
+        accentColor: color.describe("block color behind *starred* hook words (default: highlightColor)"),
+        accentTextColor: color.describe("text color of *starred* hook words (default: highlightTextColor)"),
         accentFont: z.string(),
         captionAnimation: z.enum(["pop", "bounce", "slide", "fade", "reveal"]),
         hookDurationMs: z.number().int().min(0),

@@ -14,9 +14,19 @@
       "role": "text"
     },
     {
+      "hex": "#FFFFFF",
+      "name": "White",
+      "role": "cards, text on violet"
+    },
+    {
       "hex": "#B14EFF",
       "name": "Shock Violet",
       "role": "primary"
+    },
+    {
+      "hex": "#E9DBFF",
+      "name": "Lilac",
+      "role": "soft cards, stickers"
     },
     {
       "hex": "#C1FF72",
@@ -40,7 +50,7 @@
       "encouraging"
     ]
   },
-  "story": "Purple Punk: cream and black like a zine, with shock violet as the star and lime as a tiny pop. Big Anton headlines, one italic serif word in a violet block, sticker tags with hard shadows. Violet sits behind black text; lime is only for highlighter swipes, stickers and small accents.",
+  "story": "Purple Punk v5: bold, clean and real. Loud where it counts, calm everywhere else. Shell and white backgrounds, Ink headlines in Anton caps. One italic Instrument Serif word per headline gets a Volt Lime swipe with Ink text. Shock Violet blocks carry White text for the main moment; Lilac for soft cards and stickers. Lime is for small highlights and labels only and always has Ink text. Tiny labels in IBM Plex Mono. One or two offset-shadow blocks per page. Avoid: light text on lime, stars or starbursts, the lightning bolt outside the logo, more than one italic word at a time.",
   "defaultStyle": {
     "font": "DM Sans",
     "displayFont": "Anton",
@@ -50,7 +60,7 @@
     "textColor": "#FFFFFF",
     "outlineColor": "#111014",
     "highlightColor": "#B14EFF",
-    "highlightTextColor": "#111014",
+    "highlightTextColor": "#FFFFFF",
     "style": "pill",
     "captionMode": "phrase",
     "textEffect": "shadow",
@@ -62,7 +72,9 @@
     "speed": 1.2,
     "accentFont": "Instrument Serif",
     "hookAccent": "block",
-    "captionAnimation": "pop"
+    "captionAnimation": "pop",
+    "accentColor": "#C1FF72",
+    "accentTextColor": "#111014"
   },
   "addLook": {
     "name": "Purple Punk",
@@ -71,7 +83,7 @@
       "displayFont": "Anton",
       "hookColor": "#FFFFFF",
       "highlightColor": "#B14EFF",
-      "highlightTextColor": "#111014",
+      "highlightTextColor": "#FFFFFF",
       "style": "pill",
       "captionMode": "phrase",
       "wordsPerLine": 3,
@@ -79,7 +91,9 @@
       "zoomJumps": true,
       "speed": 1.2,
       "accentFont": "Instrument Serif",
-      "hookAccent": "block"
+      "hookAccent": "block",
+      "accentColor": "#C1FF72",
+      "accentTextColor": "#111014"
     }
   }
 }
